@@ -41,7 +41,7 @@ export default function Overstock() {
           <h1 className="page-title">Overstock Analysis</h1>
           <p className="page-subtitle">
             Items with &gt;180 days of stock — Total tied-up capital:{' '}
-            <span className="font-semibold text-foreground">${totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="font-semibold text-foreground">€{totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
         <ExportButton data={exportData} filename="overstock.csv" />

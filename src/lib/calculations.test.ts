@@ -758,13 +758,16 @@ describe("seasonality flag", () => {
   const endDate = new Date("2026-03-08");
 
   it("sets flag when last 30d > 150% of avg", () => {
-    // Make last 30d very high relative to overall average
+    // avg_daily_demand over 90d is low, but last 30d demand is concentrated
+    // Total = 10+10+10+300+300 = 630, avg_daily_demand = 630/90 = 7/day
+    // avgLast30 = (300+300)/30 = 20/day
+    // 20 > 7 * 1.5 = 10.5 → flag should be set
     const rows = [
       makeRow({ date: "2026-01-10", sold_qty: 10 }),
       makeRow({ date: "2026-01-20", sold_qty: 10 }),
       makeRow({ date: "2026-02-01", sold_qty: 10 }),
-      makeRow({ date: "2026-03-01", sold_qty: 200 }),
-      makeRow({ date: "2026-03-05", sold_qty: 200 }),
+      makeRow({ date: "2026-02-15", sold_qty: 300 }),
+      makeRow({ date: "2026-03-01", sold_qty: 300 }),
     ];
     const map = parseRows(rows);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);

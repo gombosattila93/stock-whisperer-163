@@ -472,6 +472,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       pendingHeaders,
       pendingRawData,
       setPendingFile,
+      pendingAppend: pendingAppend ? { analysis: pendingAppend.analysis, fileName: pendingAppend.fileName } : null,
+      confirmAppend,
+      cancelAppend,
     }}>
       {children}
     </InventoryContext.Provider>

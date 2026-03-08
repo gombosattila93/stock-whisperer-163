@@ -1,3 +1,12 @@
+export type ServiceLevelKey = '90%' | '95%' | '99%';
+
+export interface ServiceLevelSettings {
+  usePerClassServiceLevel: boolean;
+  classA: ServiceLevelKey;
+  classB: ServiceLevelKey;
+  classC: ServiceLevelKey;
+}
+
 export interface CostSettings {
   // Holding cost
   holdingCostEnabled: boolean;

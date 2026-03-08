@@ -488,6 +488,18 @@ export default function ReorderList() {
                           </td>
                         );
                       })()}
+                      {hasReservations && (
+                        <td className="text-right text-xs">
+                          {s.reserved_qty > 0 ? (
+                            <div>
+                              <span className="font-medium">{s.reserved_qty}</span>
+                              <div className={`text-[10px] ${s.available_qty < 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                                avail: {s.available_qty}
+                              </div>
+                            </div>
+                          ) : '—'}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

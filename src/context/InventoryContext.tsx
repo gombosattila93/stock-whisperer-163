@@ -332,6 +332,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (resv && resv.length > 0) {
         setReservations(resv);
       }
+      if (fx && typeof fx === 'object' && 'usdEur' in (fx as any)) {
+        setFxRatesRaw(fx as FxRateConfig);
+      }
       setPersistenceLoaded(true);
 
       // 4f) Check IndexedDB availability

@@ -170,8 +170,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         setRawRows(validated);
         const dateSamples = rawParsed.map(r => r['date'] || '').filter(Boolean);
         const fmt = detectDateFormat(dateSamples);
+        const samplePreview = dateSamples.slice(0, 3).join(', ');
         toast.success(`Loaded ${validated.length} rows from ${file.name}`, {
-          description: `Date format detected: ${getDateFormatLabel(fmt)}`,
+          description: `Date format: ${getDateFormatLabel(fmt)} — samples: ${samplePreview}`,
         });
       }
     } catch (err) {

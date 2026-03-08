@@ -223,7 +223,7 @@ export default function Suppliers() {
                                     <td className="py-1.5 px-2">{s.category}</td>
                                     <td className="py-1.5 px-2 text-right">{s.stock_qty.toLocaleString()}</td>
                                     <td className="py-1.5 px-2 text-right">{s.ordered_qty.toLocaleString()}</td>
-                                    <td className="py-1.5 px-2 text-right">{s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}</td>
+                                    <td className="py-1.5 px-2 text-right">{s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}</td>
                                     <td className="py-1.5 px-2 text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
                                     <td className="py-1.5 px-2 text-right">€{s.order_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className="py-1.5 px-2">

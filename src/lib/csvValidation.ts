@@ -14,6 +14,25 @@ export const csvRowSchema = z.object({
   lead_time_days: z.union([z.string(), z.number()]).transform(v => String(v)),
   ordered_qty: z.union([z.string(), z.number()]).transform(v => String(v)),
   expected_delivery_date: z.string().optional().default(''),
+  // Multi-currency optional columns
+  selling_price_huf: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_currency: z.string().optional().default(''),
+  purchase_price_1: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_1: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_2: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_2: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_3: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_3: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_4: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_4: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_5: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_5: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_6: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_6: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_7: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_7: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_price_8: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
+  purchase_qty_8: z.union([z.string(), z.number()]).transform(v => String(v)).optional().default(''),
 });
 
 export type CsvValidationResult = {
@@ -34,6 +53,12 @@ const ALL_COLUMNS = [
   'sku', 'sku_name', 'supplier', 'category', 'date', 'partner_id',
   'sold_qty', 'unit_price', 'stock_qty', 'lead_time_days',
   'ordered_qty', 'expected_delivery_date',
+  // Multi-currency columns
+  'selling_price_huf', 'purchase_currency',
+  'purchase_price_1', 'purchase_qty_1', 'purchase_price_2', 'purchase_qty_2',
+  'purchase_price_3', 'purchase_qty_3', 'purchase_price_4', 'purchase_qty_4',
+  'purchase_price_5', 'purchase_qty_5', 'purchase_price_6', 'purchase_qty_6',
+  'purchase_price_7', 'purchase_qty_7', 'purchase_price_8', 'purchase_qty_8',
 ] as const;
 
 export function validateCsvHeaders(headers: string[]): { valid: boolean; missing: string[]; extra: string[] } {

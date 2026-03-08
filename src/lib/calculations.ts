@@ -1,7 +1,9 @@
-import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection, SkuCapability } from './types';
+import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection, SkuCapability, PriceData } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from './classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 import { parseFlexibleDate } from './dateUtils';
+import { FxRateConfig, FALLBACK_RATES } from './fxRates';
+import { buildPriceData } from './priceUtils';
 
 export const SERVICE_LEVELS: Record<string, number> = {
   '90%': 1.28,
@@ -41,6 +43,24 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     };
 
     const existing = map.get(row.sku);
+
+    // Parse multi-currency fields from row
+    const rawSellingHuf = parseFloat(String(row.selling_price_huf ?? ''));
+    const sellingPriceHuf = (!isNaN(rawSellingHuf) && rawSellingHuf > 0) ? rawSellingHuf : undefined;
+    const rawPurchaseCurrency = String(row.purchase_currency ?? '').toUpperCase().trim();
+    const purchaseCurrency: 'USD' | 'EUR' = rawPurchaseCurrency === 'USD' ? 'USD' : 'EUR';
+
+    // Parse price breaks from wide-format columns
+    const purchasePrices: Array<{ qty: number; price: number }> = [];
+    const rowAny = row as unknown as Record<string, unknown>;
+    for (let i = 1; i <= 8; i++) {
+      const p = parseFloat(String(rowAny[`purchase_price_${i}`] ?? ''));
+      const q = parseFloat(String(rowAny[`purchase_qty_${i}`] ?? ''));
+      if (!isNaN(p) && p > 0) {
+        purchasePrices.push({ qty: (!isNaN(q) && q > 0) ? q : (i === 1 ? 1 : 0), price: p });
+      }
+    }
+
     if (existing) {
       const parsedStock = Number(row.stock_qty);
       existing.stock_qty = (isFinite(parsedStock) && parsedStock >= 0) ? parsedStock : existing.stock_qty;
@@ -51,6 +71,10 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
         : existing.expected_delivery_date;
       existing.unit_price = unitPrice || existing.unit_price;
+      // Update multi-currency fields (latest row wins)
+      if (sellingPriceHuf !== undefined) existing.selling_price_huf = sellingPriceHuf;
+      existing.purchase_currency = purchaseCurrency;
+      if (purchasePrices.length > 0) existing.purchase_prices = purchasePrices;
       existing.sales.push(sale);
     } else {
       map.set(row.sku, {
@@ -67,6 +91,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
           : '',
         sales: [sale],
         supplierOptions: [],
+        selling_price_huf: sellingPriceHuf ?? null,
+        purchase_currency: purchaseCurrency,
+        purchase_prices: purchasePrices.length > 0 ? purchasePrices : undefined,
       });
     }
   }
@@ -94,6 +121,7 @@ export function analyzeSkus(
   serviceFactor: number = 1.65,
   thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS,
   costSettings: CostSettings = DEFAULT_COST_SETTINGS,
+  fxRates: FxRateConfig = FALLBACK_RATES,
 ): SkuAnalysis[] {
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;
@@ -339,6 +367,26 @@ export function analyzeSkus(
       else if (days_of_stock > shelfLifeDays * 0.75) shelfLifeRisk = 'warning';
     }
 
+    // ─── Build price data from raw fields ─────────────────────────
+    // Construct a row-like object for buildPriceData
+    const latestRawForPrice: Record<string, unknown> = {
+      unit_price: sku.unit_price,
+      selling_price_huf: sku.selling_price_huf,
+      purchase_currency: sku.purchase_currency,
+    };
+    // Copy price break fields from purchase_prices array
+    if (sku.purchase_prices) {
+      for (let i = 0; i < sku.purchase_prices.length && i < 8; i++) {
+        latestRawForPrice[`purchase_price_${i + 1}`] = sku.purchase_prices[i].price;
+        latestRawForPrice[`purchase_qty_${i + 1}`] = sku.purchase_prices[i].qty;
+      }
+    }
+
+    const suggestedQty = (reorder_point !== null)
+      ? getSuggestedOrderQty(reorder_point, effective_stock)
+      : 0;
+    const priceData = buildPriceData(latestRawForPrice, suggestedQty, fxRates);
+
     analyses.push({
       ...sku,
       avg_daily_demand,
@@ -372,6 +420,7 @@ export function analyzeSkus(
       reserved_qty: 0,
       available_qty: sku.stock_qty,
       capability,
+      priceData,
       // Edge case flags
       insufficientData,
       singleRecordEstimate,

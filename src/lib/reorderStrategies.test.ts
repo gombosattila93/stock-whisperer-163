@@ -55,6 +55,14 @@ const makeSku = (overrides: Partial<SkuAnalysis> = {}): SkuAnalysis => ({
   leadTimeClamped: false,
   shelfLifeLtWarning: false,
   overdueDelivery: false,
+  priceData: {
+    sellingPriceHuf: null, sellingPriceEur: null, sellingPriceEstimated: false,
+    purchaseCurrency: 'EUR', priceBreaks: [],
+    basePurchasePriceEur: null, bestPurchasePriceEur: null, effectivePurchasePriceEur: null,
+    marginEur: null, marginPct: null, marginAtBestBreakEur: null, marginAtBestBreakPct: null,
+    hasPurchasePrice: false, hasSellingPrice: false, hasMarginData: false,
+    nextPriceBreakQty: null, nextPriceBreakSaving: null,
+  },
   ...overrides,
 });
 

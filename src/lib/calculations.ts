@@ -43,7 +43,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         stock_qty: Number(row.stock_qty) || 0,
         lead_time_days: Number(row.lead_time_days) || 0,
         ordered_qty: Number(row.ordered_qty) || 0,
-        expected_delivery_date: row.expected_delivery_date || '',
+        expected_delivery_date: row.expected_delivery_date
+          ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
+          : '',
         sales: [sale],
       });
     }

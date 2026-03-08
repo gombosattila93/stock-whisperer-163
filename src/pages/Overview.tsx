@@ -220,6 +220,53 @@ export default function Overview() {
         )}
       </div>
 
+      {/* Data Quality Card */}
+      {dataQuality && dataQuality.completePct < 100 && (
+        <div className="bg-card border rounded-lg p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold text-sm">Data Quality</h2>
+            <span className="text-xs text-muted-foreground ml-auto">{dataQuality.completePct}% complete</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2 mb-3">
+            <div
+              className="bg-primary rounded-full h-2 transition-all"
+              style={{ width: `${dataQuality.completePct}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
+            <div className="rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1.5">
+              <span className="font-semibold">{dataQuality.tiers.full}</span>
+              <span className="text-muted-foreground ml-1">Full analysis</span>
+            </div>
+            {dataQuality.missingLeadTime > 0 && (
+              <div className="rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.missingLeadTime}</span>
+                <span className="text-muted-foreground ml-1">Missing lead time</span>
+              </div>
+            )}
+            {dataQuality.missingPrice > 0 && (
+              <div className="rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.missingPrice}</span>
+                <span className="text-muted-foreground ml-1">Missing price</span>
+              </div>
+            )}
+            {dataQuality.noSales > 0 && (
+              <div className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.noSales}</span>
+                <span className="text-muted-foreground ml-1">No sales history</span>
+              </div>
+            )}
+            {dataQuality.noStock > 0 && (
+              <div className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.noStock}</span>
+                <span className="text-muted-foreground ml-1">No stock data</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2 bg-card border rounded-lg p-6">
           <h2 className="font-semibold mb-4">ABC-XYZ Classification Matrix</h2>

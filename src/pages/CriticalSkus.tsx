@@ -10,7 +10,7 @@ import { EditableCell } from "@/components/EditableCell";
 import { TrendBadge } from "@/components/TrendBadge";
 
 export default function CriticalSkus() {
-  const { filtered, hasData, stockOverrides, setStockOverride } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)

@@ -206,7 +206,13 @@ export default function ReorderPlan() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Reorder Plan</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Reorder Plan</h1>
+            <HelpTooltip
+              text="Budget-constrained purchasing optimizer that prioritizes items by urgency, ABC class, and demand trend."
+              tip="Set a budget in Cost Model, then click 'Optimize' to auto-select the highest-priority items. Use the What-If slider to simulate different budget scenarios."
+            />
+          </div>
           <p className="page-subtitle">
             Budget-constrained reorder prioritization
             {budgetEnabled && (

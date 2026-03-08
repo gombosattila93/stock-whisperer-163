@@ -3,12 +3,21 @@ import { SkuStrategyOverrides } from './skuStrategyOverrides';
 import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 2; // Bumped version for new stores
+const DB_VERSION = 3; // Bumped for stock-overrides store
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
+const STOCK_OVERRIDES_STORE = 'stock-overrides';
 const DATA_KEY = 'rawRows';
 const OVERRIDES_KEY = 'strategyOverrides';
 const EOQ_SETTINGS_KEY = 'eoqSettings';
+
+export interface StockOverride {
+  stock_qty?: number;
+  ordered_qty?: number;
+  lead_time_days?: number;
+}
+
+export type StockOverrides = Record<string, StockOverride>;
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -20,6 +29,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
         db.createObjectStore(SETTINGS_STORE);
+      }
+      if (!db.objectStoreNames.contains(STOCK_OVERRIDES_STORE)) {
+        db.createObjectStore(STOCK_OVERRIDES_STORE);
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -137,5 +149,41 @@ export async function loadEoqSettings(): Promise<EoqSettings> {
     });
   } catch {
     return DEFAULT_EOQ_SETTINGS;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stock Overrides (manual edits to stock_qty, ordered_qty, lead_time_days)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STOCK_OVERRIDES_KEY = 'all';
+
+export async function saveStockOverrides(overrides: StockOverrides): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STOCK_OVERRIDES_STORE, 'readwrite');
+      const store = tx.objectStore(STOCK_OVERRIDES_STORE);
+      store.put(overrides, STOCK_OVERRIDES_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save stock overrides to IndexedDB');
+  }
+}
+
+export async function loadStockOverrides(): Promise<StockOverrides> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STOCK_OVERRIDES_STORE, 'readonly');
+      const store = tx.objectStore(STOCK_OVERRIDES_STORE);
+      const request = store.get(STOCK_OVERRIDES_KEY);
+      request.onsuccess = () => resolve(request.result || {});
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return {};
   }
 }

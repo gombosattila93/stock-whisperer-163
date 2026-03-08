@@ -233,3 +233,41 @@ export async function loadCostSettings(): Promise<CostSettings> {
     return DEFAULT_COST_SETTINGS;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKU Supplier Options
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type SkuSupplierOptionsMap = Record<string, SupplierOption[]>;
+
+const SKU_SUPPLIER_KEY = 'all';
+
+export async function saveSkuSupplierOptions(options: SkuSupplierOptionsMap): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SKU_SUPPLIER_OPTIONS_STORE, 'readwrite');
+      const store = tx.objectStore(SKU_SUPPLIER_OPTIONS_STORE);
+      store.put(options, SKU_SUPPLIER_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save SKU supplier options to IndexedDB');
+  }
+}
+
+export async function loadSkuSupplierOptions(): Promise<SkuSupplierOptionsMap> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SKU_SUPPLIER_OPTIONS_STORE, 'readonly');
+      const store = tx.objectStore(SKU_SUPPLIER_OPTIONS_STORE);
+      const request = store.get(SKU_SUPPLIER_KEY);
+      request.onsuccess = () => resolve(request.result || {});
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return {};
+  }
+}

@@ -155,8 +155,7 @@ SKU001,Widget A,Supplier X,Electronics,2024-01-01,P001,10,25.50,100,7,50,2024-01
 
       expect(capturedBlob).not.toBeNull();
       // Read the blob content synchronously via Papa re-parse
-      const reader = new FileReaderSync?.() ?? null;
-      // In test env, read blob as text
+      // Read blob content as text
       return (capturedBlob as Blob).text().then(csvText => {
         // BOM prefix expected
         expect(csvText.startsWith('\uFEFF')).toBe(true);

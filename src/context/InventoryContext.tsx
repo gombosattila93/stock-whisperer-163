@@ -61,6 +61,9 @@ interface InventoryContextType {
   // Cost settings
   costSettings: CostSettings;
   setCostSettings: (s: CostSettings) => void;
+  // Supplier options
+  skuSupplierOptions: SkuSupplierOptionsMap;
+  setSkuSupplierOptions: (sku: string, options: SupplierOption[]) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);

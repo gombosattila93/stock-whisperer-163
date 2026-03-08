@@ -3,6 +3,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
+import { HighlightText } from "@/components/HighlightText";
+import { DemandSparkline } from "@/components/DemandSparkline";
 
 export default function CriticalSkus() {
   const { filtered, hasData } = useInventory();
@@ -47,6 +49,7 @@ export default function CriticalSkus() {
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
+                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
                   <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
@@ -57,10 +60,11 @@ export default function CriticalSkus() {
               <tbody>
                 {paginatedData.map(s => (
                   <tr key={s.sku} className={s.days_of_stock < 7 ? 'row-critical' : ''}>
-                    <td className="font-mono font-medium">{s.sku}</td>
-                    <td>{s.sku_name}</td>
-                    <td>{s.supplier}</td>
-                    <td>{s.category}</td>
+                    <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
+                    <td><HighlightText text={s.sku_name} /></td>
+                    <td><HighlightText text={s.supplier} /></td>
+                    <td><HighlightText text={s.category} /></td>
+                    <td><DemandSparkline sku={s} /></td>
                     <td className={`text-right font-semibold ${s.days_of_stock < 7 ? 'text-destructive' : 'text-warning'}`}>
                       {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
                     </td>

@@ -623,7 +623,8 @@ export default function ReorderList() {
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">SKUs to Order</th>
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Qty</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Value (€)</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">EUR Value</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">USD Value</th>
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Avg Urgency</th>
                       </tr>
                     </thead>
@@ -633,7 +634,17 @@ export default function ReorderList() {
                           <td className="font-medium">{row.supplier}</td>
                           <td className="text-right">{row.skuCount}</td>
                           <td className="text-right">{row.totalQty.toLocaleString()}</td>
-                          <td className="text-right">€{row.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td className="text-right">
+                            €{(row.totalValueEur - row.totalValueUsdAsEur).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </td>
+                          <td className="text-right">
+                            {row.hasUsd ? (
+                              <span>
+                                ${row.totalValueUsdRaw.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                <span className="text-muted-foreground text-[10px] ml-1">(≈ €{row.totalValueUsdAsEur.toLocaleString(undefined, { maximumFractionDigits: 0 })})</span>
+                              </span>
+                            ) : '—'}
+                          </td>
                           <td>
                             <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[row.avgUrgency]}`}>
                               {row.avgUrgency}
@@ -645,7 +656,12 @@ export default function ReorderList() {
                         <td>Grand Total</td>
                         <td className="text-right">{grandTotal.skuCount}</td>
                         <td className="text-right">{grandTotal.totalQty.toLocaleString()}</td>
-                        <td className="text-right">€{grandTotal.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="text-right">€{grandTotal.totalValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                        <td className="text-right">
+                          {grandTotal.hasAnyUsd && (
+                            <span className="text-muted-foreground text-xs">ebből USD: ${grandTotal.totalUsdRaw.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          )}
+                        </td>
                         <td></td>
                       </tr>
                     </tbody>

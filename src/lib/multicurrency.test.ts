@@ -307,8 +307,6 @@ describe('buildPriceData', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('analyzeSkus priceData integration', () => {
-  // Use dynamic import syntax that vitest handles
-  const { parseRows, analyzeSkus } = require('./calculations') as typeof import('./calculations');
 
   function makeRow(overrides: Partial<import('./types').RawRow> = {}): import('./types').RawRow {
     return {

@@ -35,6 +35,9 @@ function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STOCK_OVERRIDES_STORE)) {
         db.createObjectStore(STOCK_OVERRIDES_STORE);
       }
+      if (!db.objectStoreNames.contains(COST_SETTINGS_STORE)) {
+        db.createObjectStore(COST_SETTINGS_STORE);
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);

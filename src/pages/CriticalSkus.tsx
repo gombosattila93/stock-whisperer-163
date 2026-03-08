@@ -7,6 +7,7 @@ import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { VirtualizedTable } from "@/components/VirtualizedTable";
 import { EditableCell } from "@/components/EditableCell";
+import { TrendBadge } from "@/components/TrendBadge";
 
 export default function CriticalSkus() {
   const { filtered, hasData, stockOverrides, setStockOverride } = useInventory();

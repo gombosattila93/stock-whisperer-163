@@ -77,7 +77,7 @@ export default function ReorderPlan() {
         const moq = primaryOpt?.moq || 1;
         const effectiveMoq = Math.max(1, moq);
         const raw = result.suggested_order_qty;
-        const qty = Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq);
+        const qty = raw > 0 ? Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq) : 0;
         const urgency = getUrgency(s.days_of_stock, s.lead_time_days);
         const score = priorityScore(urgency, s.abc_class, s.trend);
         return {

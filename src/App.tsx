@@ -14,6 +14,7 @@ import AbcXyzDetail from "./pages/AbcXyzDetail";
 import Suppliers from "./pages/Suppliers";
 import CostModel from "./pages/CostModel";
 import Projects from "./pages/Projects";
+import ReorderPlan from "./pages/ReorderPlan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/overview" element={<Overview />} />
               <Route path="/critical" element={<CriticalSkus />} />
               <Route path="/reorder" element={<ReorderList />} />
+              <Route path="/reorder-plan" element={<ReorderPlan />} />
               <Route path="/overstock" element={<Overstock />} />
               <Route path="/abc-xyz" element={<AbcXyzDetail />} />
               <Route path="/projects" element={<Projects />} />

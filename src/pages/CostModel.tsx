@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer, Target, Hourglass } from "lucide-react";
+import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer, Target, Hourglass, Wallet } from "lucide-react";
 import { CostSettings, DEFAULT_COST_SETTINGS, DEFAULT_SHELF_LIFE, ServiceLevelKey } from "@/lib/costSettings";
 import { useCallback } from "react";
 import {
@@ -177,6 +177,7 @@ export default function CostModel() {
     costSettings.ewmaEnabled,
     costSettings.serviceLevelSettings.usePerClassServiceLevel,
     costSettings.shelfLifeEnabled,
+    costSettings.budgetEnabled,
   ].filter(Boolean).length;
 
   const hasLeadTimeStats = Object.keys(costSettings.supplierLeadTimeStats).length > 0;
@@ -195,7 +196,7 @@ export default function CostModel() {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary" className="text-xs">
-            {enabledCount}/11 modules active
+            {enabledCount}/12 modules active
           </Badge>
           <Button
             variant="outline"
@@ -596,6 +597,42 @@ export default function CostModel() {
                 <span className="text-[10px] text-muted-foreground">Press Enter to add</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Budget Constraints */}
+        <div className="bg-card border rounded-lg p-5 space-y-4">
+          <SectionHeader
+            icon={Wallet}
+            title="Budget Constraints"
+            enabled={costSettings.budgetEnabled}
+            onToggle={(v) => update('budgetEnabled', v)}
+            tip="Set monthly reorder budgets (total and per-supplier). When enabled, the Reorder Plan page will prioritize orders within budget limits."
+          />
+          <div className={`space-y-3 ${!costSettings.budgetEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            <NumericField
+              label="Monthly budget"
+              value={costSettings.monthlyBudget}
+              onChange={(v) => update('monthlyBudget', v)}
+              disabled={!costSettings.budgetEnabled}
+              suffix="€"
+            />
+            <NumericField
+              label="Budget period"
+              value={costSettings.budgetPeriodDays}
+              onChange={(v) => update('budgetPeriodDays', v)}
+              disabled={!costSettings.budgetEnabled}
+              suffix="days"
+              min={1}
+            />
+            <SupplierCostEditor
+              costs={costSettings.supplierBudgets}
+              suppliers={suppliers}
+              onChange={(v) => update('supplierBudgets', v)}
+              disabled={!costSettings.budgetEnabled}
+              label="Per-supplier budget caps"
+              suffix="€"
+            />
           </div>
         </div>
       </div>

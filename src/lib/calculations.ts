@@ -387,19 +387,27 @@ export function analyzeSkus(
   }
 
   // ─── ABC classification ────────────────────────────────────────
-  const sortedByRevenue = [...analyses].sort((a, b) => b.total_revenue - a.total_revenue);
+  // Only classify SKUs that have price AND demand history
+  const classifiable = analyses.filter(a => a.capability.hasPrice && a.capability.hasDemandHistory);
+  const nonClassifiable = analyses.filter(a => !a.capability.hasPrice || !a.capability.hasDemandHistory);
+  for (const item of nonClassifiable) {
+    item.abc_class = 'N/A';
+    item.abcInfo = !item.capability.hasPrice ? 'Price data required for ABC' : 'Demand data required for ABC';
+  }
+
+  const sortedByRevenue = [...classifiable].sort((a, b) => b.total_revenue - a.total_revenue);
   const totalRevenue = sortedByRevenue.reduce((s, a) => s + a.total_revenue, 0);
 
-  // 3c) All SKUs zero revenue
+  // 3c) All classifiable SKUs zero revenue
   if (totalRevenue === 0) {
-    for (const item of analyses) {
+    for (const item of classifiable) {
       item.abc_class = 'C';
       item.abcInfo = 'ABC classification requires unit_price data';
     }
   }
   // 3a) Single SKU → always A
-  else if (analyses.length === 1) {
-    analyses[0].abc_class = 'A';
+  else if (classifiable.length === 1) {
+    classifiable[0].abc_class = 'A';
   }
   // 3b) All SKUs equal revenue → distribute by count
   else if (sortedByRevenue.length > 1 && sortedByRevenue[0].total_revenue === sortedByRevenue[sortedByRevenue.length - 1].total_revenue) {

@@ -112,6 +112,7 @@ function makeSku(sku: string, unitPrice: number, soldQty: number): SkuData {
     ordered_qty: 0,
     expected_delivery_date: "2026-02-01",
     sales: [{ sku, date: "2026-01-15", sold_qty: soldQty, partner_id: "P001" }],
+    supplierOptions: [],
   };
 }
 

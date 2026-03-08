@@ -18,7 +18,9 @@ import {
 import { useMemo } from "react";
 
 export default function CriticalSkus() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
+
+  const hasReservations = Object.keys(reservedQtyMap).length > 0;
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)

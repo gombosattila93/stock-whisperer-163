@@ -98,7 +98,7 @@ export default function CriticalSkus() {
         <VirtualizedTable
           data={paginatedData}
           rowKey={(s) => s.sku}
-          rowClassName={(s) => s.days_of_stock < 7 ? 'row-critical' : ''}
+          rowClassName={(s) => (s.days_of_stock ?? Infinity) < 7 ? 'row-critical' : ''}
           columns={[
             {
               key: 'sku',

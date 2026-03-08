@@ -38,7 +38,7 @@ export function DashboardAlerts() {
     }
 
     // Warning: High tied-up capital in overstock
-    const overstockItems = filtered.filter(s => s.days_of_stock > 180 && s.avg_daily_demand > 0);
+    const overstockItems = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && s.avg_daily_demand > 0);
     if (overstockItems.length > 0) {
       const tiedUp = overstockItems.reduce((sum, s) => {
         const idealStock = s.avg_daily_demand * 180;

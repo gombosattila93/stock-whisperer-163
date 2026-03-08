@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useMemo } from "react";
 import { PackageX } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
   return (

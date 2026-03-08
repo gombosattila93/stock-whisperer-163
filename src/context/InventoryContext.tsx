@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { RawRow, SkuAnalysis, XyzClass } from '@/lib/types';
-import { parseRows, analyzeSkus, SERVICE_LEVELS } from '@/lib/calculations';
+import { SERVICE_LEVELS } from '@/lib/calculations';
 import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
@@ -8,6 +8,7 @@ import { saveRows, loadRows, clearRows } from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';
 import { toast } from 'sonner';
+import type { WorkerRequest, WorkerResponse } from '@/workers/inventoryWorker';
 
 interface InventoryContextType {
   analysis: SkuAnalysis[];
@@ -33,6 +34,8 @@ interface InventoryContextType {
   validationErrors: CsvValidationError[];
   thresholds: ClassificationThresholds;
   setThresholds: (t: ClassificationThresholds) => void;
+  isCalculating: boolean;
+  calculationProgress: number;
   // For column mapping flow
   pendingFile: File | null;
   pendingHeaders: string[];
@@ -54,8 +57,15 @@ function clampDemandDays(v: number): number {
   return Math.round(v);
 }
 
+function createWorker() {
+  return new Worker(new URL('../workers/inventoryWorker.ts', import.meta.url), { type: 'module' });
+}
+
 export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [rawRows, setRawRows] = useState<RawRow[]>([]);
+  const [analysis, setAnalysis] = useState<SkuAnalysis[]>([]);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [calculationProgress, setCalculationProgress] = useState(0);
   const [filterSupplier, setFilterSupplier] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [demandDays, setDemandDaysRaw] = useState(90);
@@ -68,8 +78,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
   const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
 
+  const workerRef = useRef<Worker | null>(null);
+
   const setDemandDays = useCallback((v: number) => {
     setDemandDaysRaw(clampDemandDays(v));
+  }, []);
+
+  // Cleanup worker on unmount
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate();
+    };
   }, []);
 
   useEffect(() => {
@@ -90,18 +109,52 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const serviceFactor = SERVICE_LEVELS[serviceLevel] ?? 1.65;
 
-  const processData = useCallback((rows: RawRow[], days: number, factor: number, t: ClassificationThresholds) => {
-    const skuMap = parseRows(rows);
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    return analyzeSkus(skuMap, startDate, endDate, days, factor, t);
-  }, []);
+  // Run analysis via Web Worker whenever inputs change
+  useEffect(() => {
+    if (rawRows.length === 0) {
+      setAnalysis([]);
+      return;
+    }
 
-  const analysis = useMemo(() => {
-    if (rawRows.length === 0) return [];
-    return processData(rawRows, demandDays, serviceFactor, thresholds);
-  }, [rawRows, demandDays, serviceFactor, thresholds, processData]);
+    // Terminate any in-flight worker
+    workerRef.current?.terminate();
+
+    const worker = createWorker();
+    workerRef.current = worker;
+
+    setIsCalculating(true);
+    setCalculationProgress(0);
+
+    worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+      if (e.data.type === 'PROGRESS') {
+        setCalculationProgress(e.data.payload.pct);
+      } else if (e.data.type === 'RESULT') {
+        setAnalysis(e.data.payload);
+        setIsCalculating(false);
+        setCalculationProgress(100);
+        worker.terminate();
+        if (workerRef.current === worker) {
+          workerRef.current = null;
+        }
+      }
+    };
+
+    worker.onerror = (err) => {
+      console.error('Worker error:', err);
+      setIsCalculating(false);
+      toast.error('Calculation failed');
+      worker.terminate();
+      if (workerRef.current === worker) {
+        workerRef.current = null;
+      }
+    };
+
+    const message: WorkerRequest = {
+      type: 'ANALYZE',
+      payload: { rows: rawRows, demandDays, serviceFactor, thresholds },
+    };
+    worker.postMessage(message);
+  }, [rawRows, demandDays, serviceFactor, thresholds]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
@@ -142,7 +195,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const loadFile = useCallback(async (file: File) => {
     try {
-      // First check if headers match; if not, open column mapper
       const rawParsed = await parseCsvFileRaw(file);
       if (rawParsed.length === 0) {
         toast.error('CSV file contains no data');
@@ -156,7 +208,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (missingRequired.length > 0) {
-        // Open column mapper with raw data for date preview
         setPendingFile(file);
         setPendingHeaders(headers);
         setPendingRawData(rawParsed);
@@ -185,7 +236,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const loadFileWithMapping = useCallback(async (file: File, mapping: ColumnMapping) => {
     try {
       const rawParsed = await parseCsvFileRaw(file);
-      // Apply mapping: remap columns
       const remapped: Record<string, unknown>[] = rawParsed.map(row => {
         const newRow: Record<string, unknown> = {};
         for (const [targetField, sourceCol] of Object.entries(mapping)) {
@@ -246,8 +296,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearData = useCallback(() => {
+    workerRef.current?.terminate();
+    workerRef.current = null;
     setRawRows([]);
+    setAnalysis([]);
     setValidationErrors([]);
+    setIsCalculating(false);
+    setCalculationProgress(0);
     clearRows();
     toast.info('Data cleared');
   }, []);
@@ -277,6 +332,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       validationErrors,
       thresholds,
       setThresholds,
+      isCalculating,
+      calculationProgress,
       pendingFile,
       pendingHeaders,
       pendingRawData,

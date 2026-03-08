@@ -48,6 +48,9 @@ export interface CostSettings {
 
   // Lead time variability per supplier
   supplierLeadTimeStats: Record<string, { avgLeadTimeActual: number; stdDevLeadTime: number }>;
+
+  // Per-ABC service levels
+  serviceLevelSettings: ServiceLevelSettings;
 }
 
 export const DEFAULT_COST_SETTINGS: CostSettings = {

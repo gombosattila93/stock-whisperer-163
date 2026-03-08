@@ -28,7 +28,7 @@ export function DashboardAlerts() {
     }
 
     // Warning: SKUs below reorder point
-    const reorderCount = filtered.filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0).length;
+    const reorderCount = filtered.filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0).length;
     if (reorderCount > 0) {
       result.push({
         id: 'below-reorder',

@@ -25,6 +25,12 @@ const createMockContext = (overrides = {}) => ({
   analysis: Array(25).fill({}),
   loadFile: vi.fn(),
   loadSample: vi.fn(),
+  serviceLevel: '95%',
+  setServiceLevel: vi.fn(),
+  thresholds: { abcA: 80, abcB: 95, xyzX: 0.5, xyzY: 1.0 },
+  setThresholds: vi.fn(),
+  stockOverrideCount: 0,
+  clearStockOverrides: vi.fn(),
   ...overrides,
 });
 

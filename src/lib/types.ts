@@ -84,6 +84,20 @@ export interface SkuAnalysis extends SkuData {
   // Reservations
   reserved_qty: number;
   available_qty: number;
+  // ─── Edge case flags ───
+  insufficientData: boolean;      // actual sales days < demandDays × 0.3
+  singleRecordEstimate: boolean;  // only 1 sale record → std_dev estimated
+  dead_stock: boolean;            // avg_daily_demand === 0 AND stock_qty > 0
+  ewmaFallback: boolean;          // EWMA requested but < 3 data points
+  pastDueOrders: boolean;         // ordered_qty has past expected_delivery_date
+  safetyStockCapped: boolean;     // safety stock was capped
+  noStockData: boolean;           // stock_qty was missing for all rows
+  leadTimeClamped: boolean;       // lead_time_days was clamped (0→1 or >365→365)
+  shelfLifeLtWarning: boolean;    // shelf life < lead time
+  overdueDelivery: boolean;       // expected_delivery_date is in the past
+  // ABC/XYZ info flags
+  abcInfo?: string;               // special classification info
+  xyzInfo?: string;               // special classification info
 }
 
 export interface ProjectReservation {
@@ -97,17 +111,16 @@ export interface ProjectReservation {
   createdAt: string;
 }
 
-export interface InventoryState {
-  rawData: RawRow[];
-  skuMap: Map<string, SkuData>;
-  analysis: SkuAnalysis[];
-  suppliers: string[];
-  categories: string[];
-  filterSupplier: string;
-  filterCategory: string;
-  dateRangeStart: Date;
-  dateRangeEnd: Date;
-  demandDays: number;
+export interface ImportSummary {
+  totalRows: number;
+  validRows: number;
+  skippedRows: number;
+  skippedReasons: { reason: string; count: number }[];
+  detectedDateFormat: string;
+  detectedEncoding: string;
+  uniqueSkus: number;
+  dateRange: { from: string; to: string };
+  dataWarnings: string[];
 }
 
 export interface InventoryState {

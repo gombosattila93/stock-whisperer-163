@@ -5,7 +5,7 @@ import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 6; // Bumped for project-reservations store
+const DB_VERSION = 6;
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';
@@ -24,36 +24,54 @@ export interface StockOverride {
 
 export type StockOverrides = Record<string, StockOverride>;
 
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(DATA_STORE)) {
-        db.createObjectStore(DATA_STORE);
-      }
-      if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
-        db.createObjectStore(SETTINGS_STORE);
-      }
-      if (!db.objectStoreNames.contains(STOCK_OVERRIDES_STORE)) {
-        db.createObjectStore(STOCK_OVERRIDES_STORE);
-      }
-      if (!db.objectStoreNames.contains(COST_SETTINGS_STORE)) {
-        db.createObjectStore(COST_SETTINGS_STORE);
-      }
-      if (!db.objectStoreNames.contains(SKU_SUPPLIER_OPTIONS_STORE)) {
-        db.createObjectStore(SKU_SUPPLIER_OPTIONS_STORE);
-      }
-      if (!db.objectStoreNames.contains(RESERVATIONS_STORE)) {
-        db.createObjectStore(RESERVATIONS_STORE);
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+// 4f) Track IndexedDB availability
+let _indexedDBAvailable: boolean | null = null;
+let _indexedDBWarningShown = false;
+
+export function isIndexedDBAvailable(): boolean {
+  return _indexedDBAvailable !== false;
 }
 
-// ... keep existing code (saveRows through loadSkuSupplierOptions)
+export function wasIndexedDBWarningShown(): boolean {
+  return _indexedDBWarningShown;
+}
+
+export function markIndexedDBWarningShown() {
+  _indexedDBWarningShown = true;
+}
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    try {
+      if (typeof indexedDB === 'undefined') {
+        _indexedDBAvailable = false;
+        reject(new Error('IndexedDB not available'));
+        return;
+      }
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(DATA_STORE)) db.createObjectStore(DATA_STORE);
+        if (!db.objectStoreNames.contains(SETTINGS_STORE)) db.createObjectStore(SETTINGS_STORE);
+        if (!db.objectStoreNames.contains(STOCK_OVERRIDES_STORE)) db.createObjectStore(STOCK_OVERRIDES_STORE);
+        if (!db.objectStoreNames.contains(COST_SETTINGS_STORE)) db.createObjectStore(COST_SETTINGS_STORE);
+        if (!db.objectStoreNames.contains(SKU_SUPPLIER_OPTIONS_STORE)) db.createObjectStore(SKU_SUPPLIER_OPTIONS_STORE);
+        if (!db.objectStoreNames.contains(RESERVATIONS_STORE)) db.createObjectStore(RESERVATIONS_STORE);
+      };
+      request.onsuccess = () => {
+        _indexedDBAvailable = true;
+        resolve(request.result);
+      };
+      request.onerror = () => {
+        _indexedDBAvailable = false;
+        reject(request.error);
+      };
+    } catch (err) {
+      _indexedDBAvailable = false;
+      reject(err);
+    }
+  });
+}
 
 export async function saveRows(rows: RawRow[]): Promise<void> {
   try {

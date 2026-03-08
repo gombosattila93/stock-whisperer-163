@@ -206,7 +206,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'days_of_stock',
-              header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" tooltip="Current stock ÷ avg daily demand. Red if < 7 days. Shows how long stock will last at current consumption rate." />,
               render: (s) => (
                 <span className={`text-right font-semibold ${(s.days_of_stock ?? Infinity) < 7 ? 'text-destructive' : 'text-warning'}`}>
                   {s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
@@ -215,7 +215,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'reorder_point',
-              header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" tooltip="ROP = (avg daily demand × lead time) + safety stock. When effective stock falls below this, a reorder is triggered." />,
               render: (s) => <span className="text-right">{s.reorder_point !== null ? Math.round(s.reorder_point) : '—'}</span>,
             },
             {

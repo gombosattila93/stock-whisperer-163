@@ -1,6 +1,7 @@
 import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
+import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { Package, AlertTriangle, ShoppingCart, PackageX } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
 
@@ -75,6 +76,8 @@ export default function Overview() {
           filename="overview-export.csv"
         />
       </div>
+
+      <DashboardAlerts />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard icon={Package} label="Total SKUs" value={totalSkus} />

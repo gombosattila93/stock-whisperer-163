@@ -1,5 +1,11 @@
 import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass } from './types';
 
+export const SERVICE_LEVELS: Record<string, number> = {
+  '90%': 1.28,
+  '95%': 1.65,
+  '99%': 2.33,
+};
+
 export function parseRows(rows: RawRow[]): Map<string, SkuData> {
   const map = new Map<string, SkuData>();
 
@@ -49,7 +55,8 @@ export function analyzeSkus(
   skuMap: Map<string, SkuData>,
   startDate: Date,
   endDate: Date,
-  demandDays: number
+  demandDays: number,
+  serviceFactor: number = 1.65
 ): SkuAnalysis[] {
   const analyses: SkuAnalysis[] = [];
 
@@ -75,7 +82,7 @@ export function analyzeSkus(
     const variance = dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length;
     const std_dev = Math.sqrt(variance);
 
-    const safety_stock = 1.65 * std_dev * Math.sqrt(sku.lead_time_days);
+    const safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
     const reorder_point = avg_daily_demand * sku.lead_time_days + safety_stock;
     const effective_stock = sku.stock_qty + sku.ordered_qty;
     const days_of_stock = avg_daily_demand > 0 ? effective_stock / avg_daily_demand : Infinity;

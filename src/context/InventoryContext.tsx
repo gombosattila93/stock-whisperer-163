@@ -156,9 +156,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (missingRequired.length > 0) {
-        // Open column mapper
+        // Open column mapper with raw data for date preview
         setPendingFile(file);
         setPendingHeaders(headers);
+        setPendingRawData(rawParsed);
         toast.info('Column names don\'t match — please map your columns');
         return;
       }

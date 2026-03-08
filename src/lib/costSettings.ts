@@ -114,4 +114,9 @@ export const DEFAULT_COST_SETTINGS: CostSettings = {
 
   shelfLifeEnabled: false,
   categoryShelfLifeDays: {},
+
+  budgetEnabled: false,
+  monthlyBudget: 10000,
+  supplierBudgets: {},
+  budgetPeriodDays: 30,
 };

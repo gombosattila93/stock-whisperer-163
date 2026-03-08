@@ -12,8 +12,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer, Target } from "lucide-react";
-import { CostSettings, DEFAULT_COST_SETTINGS, ServiceLevelKey } from "@/lib/costSettings";
+import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer, Target, Hourglass } from "lucide-react";
+import { CostSettings, DEFAULT_COST_SETTINGS, DEFAULT_SHELF_LIFE, ServiceLevelKey } from "@/lib/costSettings";
 import { useCallback } from "react";
 import {
   Select,

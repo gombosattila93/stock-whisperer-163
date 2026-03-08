@@ -175,9 +175,15 @@ export default function CostModel() {
     costSettings.minOrderValueEnabled,
     costSettings.paymentTermsEnabled,
     costSettings.ewmaEnabled,
+    costSettings.serviceLevelSettings.usePerClassServiceLevel,
   ].filter(Boolean).length;
 
   const hasLeadTimeStats = Object.keys(costSettings.supplierLeadTimeStats).length > 0;
+  const sls = costSettings.serviceLevelSettings;
+
+  const updateSL = useCallback((key: keyof typeof sls, value: unknown) => {
+    update('serviceLevelSettings', { ...sls, [key]: value });
+  }, [sls, update]);
 
   return (
     <div>

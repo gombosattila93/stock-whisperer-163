@@ -1,16 +1,17 @@
 import { RawRow } from './types';
-import type { SupplierOption } from './types';
+import type { SupplierOption, ProjectReservation } from './types';
 import { SkuStrategyOverrides } from './skuStrategyOverrides';
 import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 5; // Bumped for sku-supplier-options store
+const DB_VERSION = 6; // Bumped for project-reservations store
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';
 const COST_SETTINGS_STORE = 'cost-settings';
 const SKU_SUPPLIER_OPTIONS_STORE = 'sku-supplier-options';
+const RESERVATIONS_STORE = 'project-reservations';
 const DATA_KEY = 'rawRows';
 const OVERRIDES_KEY = 'strategyOverrides';
 const EOQ_SETTINGS_KEY = 'eoqSettings';
@@ -43,11 +44,16 @@ function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(SKU_SUPPLIER_OPTIONS_STORE)) {
         db.createObjectStore(SKU_SUPPLIER_OPTIONS_STORE);
       }
+      if (!db.objectStoreNames.contains(RESERVATIONS_STORE)) {
+        db.createObjectStore(RESERVATIONS_STORE);
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
+
+// ... keep existing code (saveRows through loadSkuSupplierOptions)
 
 export async function saveRows(rows: RawRow[]): Promise<void> {
   try {
@@ -269,5 +275,41 @@ export async function loadSkuSupplierOptions(): Promise<SkuSupplierOptionsMap> {
     });
   } catch {
     return {};
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Reservations
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RESERVATIONS_KEY = 'all';
+
+export async function saveReservations(reservations: ProjectReservation[]): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(RESERVATIONS_STORE, 'readwrite');
+      const store = tx.objectStore(RESERVATIONS_STORE);
+      store.put(reservations, RESERVATIONS_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save reservations to IndexedDB');
+  }
+}
+
+export async function loadReservations(): Promise<ProjectReservation[]> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(RESERVATIONS_STORE, 'readonly');
+      const store = tx.objectStore(RESERVATIONS_STORE);
+      const request = store.get(RESERVATIONS_KEY);
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return [];
   }
 }

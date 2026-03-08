@@ -81,6 +81,33 @@ export interface SkuAnalysis extends SkuData {
   // Shelf life
   shelfLifeDays: number;
   shelfLifeRisk: 'none' | 'warning' | 'critical';
+  // Reservations
+  reserved_qty: number;
+  available_qty: number;
+}
+
+export interface ProjectReservation {
+  id: string;
+  projectName: string;
+  projectId: string;
+  customer: string;
+  dueDate: string;
+  status: 'active' | 'fulfilled' | 'cancelled';
+  items: { sku: string; reservedQty: number }[];
+  createdAt: string;
+}
+
+export interface InventoryState {
+  rawData: RawRow[];
+  skuMap: Map<string, SkuData>;
+  analysis: SkuAnalysis[];
+  suppliers: string[];
+  categories: string[];
+  filterSupplier: string;
+  filterCategory: string;
+  dateRangeStart: Date;
+  dateRangeEnd: Date;
+  demandDays: number;
 }
 
 export interface InventoryState {

@@ -95,7 +95,7 @@
   }
 
   .row-critical td {
-    @apply bg-destructive/8;
+    background-color: hsl(var(--destructive) / 0.08);
   }
 
   .matrix-cell {

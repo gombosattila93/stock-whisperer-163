@@ -242,6 +242,25 @@ const FIELD_ALIASES: Record<string, string[]> = {
   lead_time_days: ["leadtimedays", "leadtime", "deliverytime", "deliveryleadtime", "lt", "replenishmenttime"],
   ordered_qty: ["orderedqty", "qtyordered", "onorder", "qtyonorder", "openorderqty", "poqty", "intransit"],
   expected_delivery_date: ["expecteddeliverydate", "eta", "expecteddate", "deliverydate", "arrivaldate", "duedate", "podate"],
+  // Multi-currency aliases
+  selling_price_huf: ["sellingpricehuf", "hufprice", "eladar", "arhuf", "sellingprice", "salepricehuf"],
+  purchase_currency: ["purchasecurrency", "currency", "ccy", "curr", "deviza"],
+  purchase_price_1: ["purchaseprice1", "purchaseprice", "buyprice", "cost", "supplierprice", "beszerzesiar"],
+  purchase_qty_1: ["purchaseqty1", "moq", "minqty", "minimumqty"],
+  purchase_price_2: ["purchaseprice2", "pricebreak2"],
+  purchase_qty_2: ["purchaseqty2", "qtybreak2"],
+  purchase_price_3: ["purchaseprice3", "pricebreak3"],
+  purchase_qty_3: ["purchaseqty3", "qtybreak3"],
+  purchase_price_4: ["purchaseprice4", "pricebreak4"],
+  purchase_qty_4: ["purchaseqty4", "qtybreak4"],
+  purchase_price_5: ["purchaseprice5", "pricebreak5"],
+  purchase_qty_5: ["purchaseqty5", "qtybreak5"],
+  purchase_price_6: ["purchaseprice6", "pricebreak6"],
+  purchase_qty_6: ["purchaseqty6", "qtybreak6"],
+  purchase_price_7: ["purchaseprice7", "pricebreak7"],
+  purchase_qty_7: ["purchaseqty7", "qtybreak7"],
+  purchase_price_8: ["purchaseprice8", "pricebreak8"],
+  purchase_qty_8: ["purchaseqty8", "qtybreak8"],
 };
 
 function autoMap(sourceColumns: string[]): ColumnMapping {

@@ -398,9 +398,16 @@ export default function ReorderList() {
                       </td>
                       <td className="text-xs text-muted-foreground max-w-[180px]">{s.reorder_trigger}</td>
                       <td>
-                        <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>
-                          {s.urgency}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>
+                            {s.urgency}
+                          </span>
+                          {costSettings.serviceLevelSettings?.usePerClassServiceLevel && (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] border border-border text-muted-foreground">
+                              {s.effectiveServiceLevel}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       {costSettings.priceBreaksEnabled && (
                         <td className="text-xs">

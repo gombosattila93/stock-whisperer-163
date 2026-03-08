@@ -135,11 +135,14 @@ export default function Overview() {
 
       <DashboardAlerts />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <KpiCard icon={Package} label="Total SKUs" value={totalSkus} />
         <KpiCard icon={AlertTriangle} label="Critical SKUs" value={criticalSkus} accent="bg-destructive" />
         <KpiCard icon={ShoppingCart} label="Reorder Needed" value={reorderNeeded} accent="bg-warning" />
         <KpiCard icon={PackageX} label="Overstock Items" value={overstockItems} accent="bg-muted" />
+        {showPerClassSL && (
+          <KpiCard icon={Target} label="Wtd Avg Service Level" value={`${weightedAvgSL.toFixed(1)}%`} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

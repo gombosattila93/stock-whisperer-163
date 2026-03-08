@@ -18,7 +18,7 @@ export function DashboardAlerts() {
     const result: Alert[] = [];
 
     // Critical: SKUs with < 7 days of stock
-    const criticalCount = filtered.filter(s => s.days_of_stock < 7 && s.avg_daily_demand > 0).length;
+    const criticalCount = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock < 7 && s.avg_daily_demand > 0).length;
     if (criticalCount > 0) {
       result.push({
         id: 'critical-stockout',

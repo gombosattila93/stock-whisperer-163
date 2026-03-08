@@ -108,6 +108,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
   const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
   const [stockOverrides, setStockOverrides] = useState<StockOverrides>({});
+  const [costSettings, setCostSettingsRaw] = useState<CostSettings>(DEFAULT_COST_SETTINGS);
 
   const workerRef = useRef<Worker | null>(null);
 

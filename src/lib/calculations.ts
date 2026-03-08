@@ -61,7 +61,8 @@ export function analyzeSkus(
   endDate: Date,
   demandDays: number,
   serviceFactor: number = 1.65,
-  thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS
+  thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS,
+  costSettings: CostSettings = DEFAULT_COST_SETTINGS,
 ): SkuAnalysis[] {
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;

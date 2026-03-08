@@ -134,7 +134,7 @@ export default function Overview() {
           data={filtered.map(s => ({
             sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
             abc_class: s.abc_class, xyz_class: s.xyz_class,
-            stock_qty: s.stock_qty, days_of_stock: Math.round(s.days_of_stock),
+            stock_qty: s.stock_qty, days_of_stock: s.days_of_stock === Infinity ? 'Infinity' : Math.round(s.days_of_stock),
           }))}
           filename="overview-export.csv"
         />

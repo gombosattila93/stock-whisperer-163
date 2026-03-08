@@ -8,6 +8,7 @@ import { DuplicateDetectionModal } from "@/components/DuplicateDetectionModal";
 import { ImportSummaryModal } from "@/components/ImportSummaryModal";
 import { FxBanner } from "@/components/FxBanner";
 import { FxSettingsPanel } from "@/components/FxSettingsPanel";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useInventory } from "@/context/InventoryContext";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, Info } from "lucide-react";

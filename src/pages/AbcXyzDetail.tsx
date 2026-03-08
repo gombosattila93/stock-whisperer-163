@@ -145,20 +145,20 @@ export default function AbcXyzDetail() {
                 <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                 <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
                 <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} tooltip="Revenue-based classification: A = top 80% revenue, B = next 15%, C = bottom 5%. Requires unit_price data." />
+                <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} tooltip="Demand variability: X = CV < 0.5 (stable, easy to forecast), Y = 0.5–1.0 (variable), Z = CV > 1.0 (erratic, hard to forecast)." />
                 <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Data Quality</th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
-                <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" />
-                <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" />
-                <SortableHeader column="avg_daily_demand" label="Avg Daily Demand" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" tooltip="Total revenue over the demand window = Σ(sold_qty × unit_price). Drives ABC classification." />
+                <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" tooltip="Coefficient of Variation = std deviation ÷ mean of monthly demand. Lower = more predictable. Drives XYZ classification." />
+                <SortableHeader column="avg_daily_demand" label="Avg Daily Demand" sort={sort} onSort={toggleSort} align="right" tooltip="Mean daily units sold over the demand window. Used for reorder point, safety stock, and days-of-stock calculations." />
                 <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
-                <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" tooltip="Stock qty ÷ avg daily demand. Shows how long stock will last. ∞ means zero demand." />
                 {costSettings.holdingCostEnabled && (
-                  <SortableHeader column="tco" label="TCO €/yr" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="tco" label="TCO €/yr" sort={sort} onSort={toggleSort} align="right" tooltip="Total Cost of Ownership per year: purchase cost + holding cost + ordering cost. Helps identify truly expensive items." />
                 )}
                 {costSettings.obsolescenceCostEnabled && (
-                  <SortableHeader column="obsolescenceCost" label="Obsolescence €" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="obsolescenceCost" label="Obsolescence €" sort={sort} onSort={toggleSort} align="right" tooltip="Estimated write-off risk based on stock age and demand velocity. Higher for slow-moving and dead stock." />
                 )}
               </tr>
             </thead>

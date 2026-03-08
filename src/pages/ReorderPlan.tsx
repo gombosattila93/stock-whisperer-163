@@ -430,15 +430,15 @@ export default function ReorderPlan() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <SortableHeader column="priority_score" label="Priority" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="priority_score" label="Priority" sort={sort} onSort={toggleSort} align="right" tooltip="Composite score = Urgency × ABC class × Trend. Higher = should be ordered first. Used by the budget optimizer." />
                   <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="days_of_stock" label="Days Stock" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} tooltip="Revenue importance: A (high), B (medium), C (low). A-class items get priority in budget allocation." />
+                  <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} tooltip="Critical = stock runs out before next delivery. Warning = tight buffer. Watch = approaching reorder point." />
+                  <SortableHeader column="days_of_stock" label="Days Stock" sort={sort} onSort={toggleSort} align="right" tooltip="Days until stockout at current demand rate." />
                   <SortableHeader column="suggested_order_qty" label="Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="order_value" label="Order Value" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="order_value" label="Order Value" sort={sort} onSort={toggleSort} align="right" tooltip="Suggested qty × unit price. Sum of these determines if you're over budget." />
                 </tr>
               </thead>
               <tbody>

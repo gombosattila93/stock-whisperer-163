@@ -440,13 +440,13 @@ export default function ReorderList() {
                     <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Sparkline</th>
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Direction</th>
-                    <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
-                    <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />
-                    <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />
+                    <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Current physical stock on hand. Click to edit inline — overrides persist per session." />
+                    <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Open purchase orders. Included in effective stock calculation. Mark past-due if delivery is overdue." />
+                    <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Supplier delivery lead time in days. Critical for safety stock and reorder calculations." />
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Strategy</th>
-                    <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" />
+                    <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Calculated order quantity based on the selected strategy (ROP, EOQ, Min-Max, or Periodic). Adjusted for MOQ and seasonality." />
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
-                    <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
+                    <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} tooltip="Critical = days of stock < lead time. Warning = within 1.5× lead time. Watch = approaching reorder point." />
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Est. PO Value</th>
                     {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Price Break</th>}
                     {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Min Order</th>}

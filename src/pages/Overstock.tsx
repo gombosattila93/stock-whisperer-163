@@ -209,13 +209,13 @@ export default function Overstock() {
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
                   {hasPricingData && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-center">Cur.</th>}
-                  <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="tied_up_capital" label="Tied-up Capital (€)" sort={sort} onSort={toggleSort} align="right" />
-                  {hasPricingData && <SortableHeader column="marginPct" label="Margin %" sort={sort} onSort={toggleSort} align="right" />}
-                  {showHolding && <SortableHeader column="holdingCost" label="Annual Holding €" sort={sort} onSort={toggleSort} align="right" />}
-                  {showStorage && <SortableHeader column="storageCost" label="Storage €/mo" sort={sort} onSort={toggleSort} align="right" />}
-                  {showShelfLife && <SortableHeader column="shelfLifeRisk" label="Shelf Life Risk" sort={sort} onSort={toggleSort} />}
+                  <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" tooltip="How many days current stock will last at avg consumption. Items here have >180 days — significantly overstocked." />
+                  <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Units above the 180-day ideal level. Excess = current stock − (avg daily demand × 180)." />
+                  <SortableHeader column="tied_up_capital" label="Tied-up Capital (€)" sort={sort} onSort={toggleSort} align="right" tooltip="Excess qty × purchase price in EUR. This capital is locked in slow-moving inventory." />
+                  {hasPricingData && <SortableHeader column="marginPct" label="Margin %" sort={sort} onSort={toggleSort} align="right" tooltip="Profit margin on this SKU. Low-margin overstock items are best candidates for liquidation." />}
+                  {showHolding && <SortableHeader column="holdingCost" label="Annual Holding €" sort={sort} onSort={toggleSort} align="right" tooltip="Yearly cost of storing this excess inventory (insurance, depreciation, opportunity cost). Set rate in Cost Model." />}
+                  {showStorage && <SortableHeader column="storageCost" label="Storage €/mo" sort={sort} onSort={toggleSort} align="right" tooltip="Monthly warehouse cost for excess units. Configure per-unit storage rate in Cost Model." />}
+                  {showShelfLife && <SortableHeader column="shelfLifeRisk" label="Shelf Life Risk" sort={sort} onSort={toggleSort} tooltip="Risk of expiry before stock is sold. Critical = expires before it can be sold at current demand." />}
                 </tr>
               </thead>
               <tbody>

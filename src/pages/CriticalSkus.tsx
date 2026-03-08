@@ -194,7 +194,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'trend',
-              header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} />,
+              header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} tooltip="Rising = recent demand > historical avg. Falling = opposite. Based on linear regression of daily sales." />,
               render: (s) => (
                 <div className="flex items-center gap-1.5">
                   <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />
@@ -206,7 +206,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'days_of_stock',
-              header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" tooltip="Current stock ÷ avg daily demand. Red if < 7 days. Shows how long stock will last at current consumption rate." />,
               render: (s) => (
                 <span className={`text-right font-semibold ${(s.days_of_stock ?? Infinity) < 7 ? 'text-destructive' : 'text-warning'}`}>
                   {s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
@@ -215,7 +215,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'reorder_point',
-              header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" tooltip="ROP = (avg daily demand × lead time) + safety stock. When effective stock falls below this, a reorder is triggered." />,
               render: (s) => <span className="text-right">{s.reorder_point !== null ? Math.round(s.reorder_point) : '—'}</span>,
             },
             {
@@ -253,7 +253,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'lead_time_days',
-              header: <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Supplier lead time in days. Click the cell to override. Shorter lead time = less safety stock needed." />,
               render: (s) => (
                 <EditableCell
                   value={s.lead_time_days}
@@ -296,7 +296,7 @@ export default function CriticalSkus() {
             },
             ...(costSettings.stockoutCostEnabled ? [{
               key: 'stockoutRisk',
-              header: <SortableHeader column="stockoutRisk" label="Stockout Risk €" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="stockoutRisk" label="Stockout Risk €" sort={sort} onSort={toggleSort} align="right" tooltip="Estimated revenue loss if this item goes out of stock during the lead time period. Based on avg daily demand × unit price × lead time." />,
               render: (s: typeof paginatedData[0]) => (
                 <span className="text-right text-destructive font-medium">
                   {s.stockoutRisk > 0 ? `€${s.stockoutRisk.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}

@@ -400,6 +400,27 @@ export default function ReorderList() {
                           {s.urgency}
                         </span>
                       </td>
+                      {costSettings.priceBreaksEnabled && (
+                        <td className="text-xs">
+                          {s.priceBreakQty > 0 ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                              ↑{s.priceBreakQty} (save €{s.priceBreakSaving.toFixed(0)})
+                            </span>
+                          ) : '—'}
+                        </td>
+                      )}
+                      {costSettings.minOrderValueEnabled && (() => {
+                        const orderValue = s.suggested_order_qty * s.unit_price;
+                        const minVal = costSettings.supplierMinOrderValues[s.supplier];
+                        const gap = minVal ? minVal - orderValue : 0;
+                        return (
+                          <td className="text-xs">
+                            {minVal && gap > 0 ? (
+                              <span className="text-destructive font-medium">−€{gap.toFixed(0)} below min</span>
+                            ) : '—'}
+                          </td>
+                        );
+                      })()}
                     </tr>
                   ))}
                 </tbody>

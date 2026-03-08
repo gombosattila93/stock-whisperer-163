@@ -326,6 +326,7 @@ export default function ReorderList() {
                       <td><HighlightText text={s.sku_name} /></td>
                       <td><HighlightText text={s.supplier} /></td>
                       <td><DemandSparkline sku={s} /></td>
+                      <td><TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} /></td>
                       <td className="text-right">
                         <EditableCell
                           value={s.stock_qty}

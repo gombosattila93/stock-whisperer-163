@@ -48,6 +48,7 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
           ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
           : '',
         sales: [sale],
+        supplierOptions: [],
       });
     }
   }

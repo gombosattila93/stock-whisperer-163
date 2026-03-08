@@ -488,6 +488,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       cancelAppend,
       costSettings,
       setCostSettings,
+      skuSupplierOptions,
+      setSkuSupplierOptions: setSkuSupplierOption,
     }}>
       {children}
     </InventoryContext.Provider>

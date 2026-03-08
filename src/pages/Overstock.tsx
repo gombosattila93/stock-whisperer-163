@@ -5,8 +5,25 @@ import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMemo } from "react";
 import { PackageX } from "lucide-react";
+
+function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[9px] px-1.5 py-0 ${currency === 'USD' ? 'border-blue-500/40 text-blue-600 dark:text-blue-400' : 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400'}`}
+    >
+      {currency}
+    </Badge>
+  );
+}
 
 export default function Overstock() {
   const { filtered, hasData, costSettings } = useInventory();
@@ -23,7 +40,9 @@ export default function Overstock() {
       .map(s => {
         const idealStock = s.avg_daily_demand * 180;
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
-        const tied_up_capital = excess_qty * s.unit_price;
+        // Use EUR purchase price if available, fall back to unit_price
+        const pricePerUnit = s.priceData?.effectivePurchasePriceEur ?? s.unit_price;
+        const tied_up_capital = excess_qty * pricePerUnit;
         return { ...s, excess_qty: Math.round(excess_qty), tied_up_capital };
       })
       .sort((a, b) => {
@@ -40,13 +59,15 @@ export default function Overstock() {
     [filtered]
   );
 
+  const hasPricingData = overstock.some(s => s.priceData?.hasMarginData);
+
   const { sorted, sort, toggleSort } = useSortableTable(overstock, { column: "tied_up_capital", direction: "desc" });
   const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
 
   if (!hasData) return <EmptyState />;
 
   const totalTiedUp = overstock.reduce((s, o) => s + o.tied_up_capital, 0);
-  const deadStockValue = deadStock.reduce((s, d) => s + d.stock_qty * d.unit_price, 0);
+  const deadStockValue = deadStock.reduce((s, d) => s + (d.priceData?.effectivePurchasePriceEur ?? d.unit_price) * d.stock_qty, 0);
   const showHolding = costSettings.holdingCostEnabled;
   const showStorage = costSettings.storageCostEnabled;
   const showShelfLife = costSettings.shelfLifeEnabled;
@@ -55,6 +76,10 @@ export default function Overstock() {
     sku: s.sku, name: s.sku_name, supplier: s.supplier,
     days_of_stock: s.days_of_stock === Infinity ? 'N/A' : Math.round(s.days_of_stock),
     excess_qty: s.excess_qty, tied_up_capital: s.tied_up_capital.toFixed(2),
+    ...(hasPricingData ? {
+      purchase_currency: s.priceData?.purchaseCurrency ?? '',
+      margin_pct: s.priceData?.marginPct?.toFixed(1) ?? '',
+    } : {}),
     ...(showHolding ? { annual_holding_cost: s.holdingCost.toFixed(2) } : {}),
     ...(showStorage ? { monthly_storage_cost: s.storageCost.toFixed(2) } : {}),
     ...(showShelfLife ? { shelf_life_days: s.shelfLifeDays, shelf_life_risk: s.shelfLifeRisk } : {}),
@@ -94,20 +119,29 @@ export default function Overstock() {
                   <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">SKU</th>
                   <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Name</th>
                   <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Supplier</th>
+                  {hasPricingData && <th className="px-3 py-2 bg-muted/50 text-center text-muted-foreground uppercase tracking-wider font-semibold">Cur.</th>}
                   <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Stock</th>
-                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value (€)</th>
                 </tr>
               </thead>
               <tbody>
-                {deadStock.map(s => (
-                  <tr key={s.sku}>
-                    <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
-                    <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
-                    <td className="px-3 py-1.5">{s.supplier}</td>
-                    <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
-                    <td className="px-3 py-1.5 text-right">€{(s.stock_qty * s.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
+                {deadStock.map(s => {
+                  const pricePerUnit = s.priceData?.effectivePurchasePriceEur ?? s.unit_price;
+                  return (
+                    <tr key={s.sku}>
+                      <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
+                      <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
+                      <td className="px-3 py-1.5">{s.supplier}</td>
+                      {hasPricingData && (
+                        <td className="px-3 py-1.5 text-center">
+                          {s.priceData?.hasPurchasePrice ? <CurrencyBadge currency={s.priceData.purchaseCurrency} /> : '—'}
+                        </td>
+                      )}
+                      <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
+                      <td className="px-3 py-1.5 text-right">€{(s.stock_qty * pricePerUnit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -132,19 +166,22 @@ export default function Overstock() {
                   <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Name</th>
                   <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Supplier</th>
                   <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Stock</th>
-                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value (€)</th>
                 </tr>
               </thead>
               <tbody>
-                {stockOnlySkus.map(s => (
-                  <tr key={s.sku}>
-                    <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
-                    <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
-                    <td className="px-3 py-1.5">{s.supplier}</td>
-                    <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
-                    <td className="px-3 py-1.5 text-right">€{(s.stock_qty * s.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
+                {stockOnlySkus.map(s => {
+                  const pricePerUnit = s.priceData?.effectivePurchasePriceEur ?? s.unit_price;
+                  return (
+                    <tr key={s.sku}>
+                      <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
+                      <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
+                      <td className="px-3 py-1.5">{s.supplier}</td>
+                      <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
+                      <td className="px-3 py-1.5 text-right">€{(s.stock_qty * pricePerUnit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -164,9 +201,11 @@ export default function Overstock() {
                   <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                  {hasPricingData && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-center">Cur.</th>}
                   <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="tied_up_capital" label="Tied-up Capital" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="tied_up_capital" label="Tied-up Capital (€)" sort={sort} onSort={toggleSort} align="right" />
+                  {hasPricingData && <SortableHeader column="marginPct" label="Margin %" sort={sort} onSort={toggleSort} align="right" />}
                   {showHolding && <SortableHeader column="holdingCost" label="Annual Holding €" sort={sort} onSort={toggleSort} align="right" />}
                   {showStorage && <SortableHeader column="storageCost" label="Storage €/mo" sort={sort} onSort={toggleSort} align="right" />}
                   {showShelfLife && <SortableHeader column="shelfLifeRisk" label="Shelf Life Risk" sort={sort} onSort={toggleSort} />}
@@ -178,6 +217,11 @@ export default function Overstock() {
                     <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
                     <td><HighlightText text={s.sku_name} /></td>
                     <td><HighlightText text={s.supplier} /></td>
+                    {hasPricingData && (
+                      <td className="text-center">
+                        {s.priceData?.hasPurchasePrice ? <CurrencyBadge currency={s.priceData.purchaseCurrency} /> : '—'}
+                      </td>
+                    )}
                     <td className="text-right">
                       {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
                     </td>
@@ -185,6 +229,24 @@ export default function Overstock() {
                     <td className="text-right font-semibold">
                       €{s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
+                    {hasPricingData && (
+                      <td className="text-right">
+                        {s.priceData?.marginPct !== null && s.priceData?.marginPct !== undefined ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className={s.priceData.marginPct < 0 ? 'text-destructive font-semibold' : s.priceData.marginPct < 15 ? 'text-warning-foreground' : ''}>
+                                  {s.priceData.marginPct.toFixed(1)}%
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">€{s.priceData.marginEur?.toFixed(2) ?? '—'}/unit margin</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </td>
+                    )}
                     {showHolding && (
                       <td className="text-right text-sm">€{s.holdingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     )}

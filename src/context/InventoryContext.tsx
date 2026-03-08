@@ -767,6 +767,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       confirmExtremeInclude,
       confirmExtremeExclude,
       indexedDBAvailable,
+      fxRates,
+      setFxRates,
     }}>
       {children}
     </InventoryContext.Provider>

@@ -29,8 +29,44 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } from "lucide-react";
+import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, Clock } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+
+function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string, field: string, value: number) => void }) {
+  const [value, setValue] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num >= 1 && num <= 365) {
+      onSave(sku, 'lead_time_days', num);
+      setSaved(true);
+    }
+  };
+
+  if (saved) {
+    return <span className="text-xs text-primary font-medium">✓ Saved — will appear in reorder list on next refresh</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="number"
+        min={1}
+        max={365}
+        placeholder="e.g. 14"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+        className="h-7 w-20 text-xs"
+      />
+      <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleSave} disabled={!value}>
+        Save
+      </Button>
+    </div>
+  );
+}
 
 export default function ReorderList() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
@@ -81,6 +117,7 @@ export default function ReorderList() {
   }, []);
 
   const calculable = filtered.filter(s => s.reorder_point !== null && s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
+  const needsLeadTime = filtered.filter(s => s.capability.hasDemandHistory && s.capability.hasStockData && !s.capability.hasLeadTime);
   const excludedCount = filtered.length - calculable.length;
 
   const reorder = useMemo(() =>
@@ -254,6 +291,44 @@ export default function ReorderList() {
           <span className="text-xs text-muted-foreground">
             {excludedCount} SKUs excluded — missing stock, lead time, or demand data. See ABC-XYZ Detail for full list.
           </span>
+        </div>
+      )}
+
+      {needsLeadTime.length > 0 && (
+        <div className="rounded-lg border border-border bg-card mb-4">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Set lead time to enable reorder</span>
+            <span className="text-xs text-muted-foreground ml-1">({needsLeadTime.length} SKUs)</span>
+          </div>
+          <div className="overflow-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">SKU</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Name</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Stock</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Avg Demand/day</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Lead Time (days)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {needsLeadTime.map(s => (
+                  <tr key={s.sku}>
+                    <td className="font-mono font-medium text-sm">{s.sku}</td>
+                    <td className="text-sm">{s.sku_name}</td>
+                    <td className="text-sm">{s.supplier}</td>
+                    <td className="text-right text-sm">{s.stock_qty.toLocaleString()}</td>
+                    <td className="text-right text-sm">{s.avg_daily_demand.toFixed(1)}</td>
+                    <td>
+                      <LeadTimeQuickInput sku={s.sku} onSave={setStockOverride} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

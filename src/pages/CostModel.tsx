@@ -5,13 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info } from "lucide-react";
+import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer } from "lucide-react";
 import { CostSettings, DEFAULT_COST_SETTINGS } from "@/lib/costSettings";
 import { useCallback } from "react";
 
@@ -166,7 +167,10 @@ export default function CostModel() {
     costSettings.obsolescenceCostEnabled,
     costSettings.minOrderValueEnabled,
     costSettings.paymentTermsEnabled,
+    costSettings.ewmaEnabled,
   ].filter(Boolean).length;
+
+  const hasLeadTimeStats = Object.keys(costSettings.supplierLeadTimeStats).length > 0;
 
   return (
     <div>
@@ -177,7 +181,7 @@ export default function CostModel() {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary" className="text-xs">
-            {enabledCount}/8 modules active
+            {enabledCount}/9 modules active
           </Badge>
           <Button
             variant="outline"
@@ -359,6 +363,114 @@ export default function CostModel() {
             label="Payment terms per supplier"
             suffix="days"
           />
+        </div>
+
+        {/* EWMA Demand */}
+        <div className="bg-card border rounded-lg p-5 space-y-4">
+          <SectionHeader
+            icon={TrendingUp}
+            title="EWMA Demand Smoothing"
+            enabled={costSettings.ewmaEnabled}
+            onToggle={(v) => update('ewmaEnabled', v)}
+            tip="Exponential Weighted Moving Average gives more weight to recent demand, better capturing trends. Recommended for variable-demand items."
+          />
+          <div className={`space-y-3 ${!costSettings.ewmaEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Smoothing factor (α)</Label>
+              <span className="text-xs font-mono font-medium">{costSettings.ewmaAlpha.toFixed(2)}</span>
+            </div>
+            <Slider
+              min={0.1}
+              max={0.5}
+              step={0.05}
+              value={[costSettings.ewmaAlpha]}
+              onValueChange={([v]) => update('ewmaAlpha', v)}
+              disabled={!costSettings.ewmaEnabled}
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>0.1 — slow (stable items)</span>
+              <span>0.5 — fast (volatile items)</span>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                    <HelpCircle className="h-3 w-3" />
+                    Higher α = more weight on recent demand. Use 0.2–0.3 for stable items, 0.4–0.5 for fast-changing.
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[300px]">
+                  <p className="text-xs">EWMA formula: S_t = α × x_t + (1-α) × S_(t-1). This replaces the simple average in reorder point and safety stock calculations when enabled.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+
+        {/* Lead Time Variability */}
+        <div className="bg-card border rounded-lg p-5 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Timer className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">Lead Time Variability</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[300px]">
+                  <p className="text-xs">When provided, safety stock uses the full formula: Z × √(LT × σ_d² + d² × σ_LT²), accounting for both demand AND lead time variability.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          {suppliers.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Load data to configure per-supplier lead time statistics.</p>
+          ) : (
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Observed lead time stats per supplier</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {suppliers.map(s => {
+                  const stats = costSettings.supplierLeadTimeStats[s] ?? { avgLeadTimeActual: 0, stdDevLeadTime: 0 };
+                  return (
+                    <div key={s} className="flex items-center gap-2">
+                      <span className="text-xs w-28 truncate" title={s}>{s}</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={stats.avgLeadTimeActual || ''}
+                        placeholder="Avg LT"
+                        onChange={(e) => {
+                          const val = Number(e.target.value) || 0;
+                          const next = { ...costSettings.supplierLeadTimeStats };
+                          next[s] = { ...stats, avgLeadTimeActual: val };
+                          if (!val && !stats.stdDevLeadTime) delete next[s];
+                          update('supplierLeadTimeStats', next);
+                        }}
+                        className="h-7 w-20 text-xs"
+                      />
+                      <span className="text-[10px] text-muted-foreground">days</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={stats.stdDevLeadTime || ''}
+                        placeholder="σ LT"
+                        onChange={(e) => {
+                          const val = Number(e.target.value) || 0;
+                          const next = { ...costSettings.supplierLeadTimeStats };
+                          next[s] = { ...stats, stdDevLeadTime: val };
+                          if (!val && !stats.avgLeadTimeActual) delete next[s];
+                          update('supplierLeadTimeStats', next);
+                        }}
+                        className="h-7 w-20 text-xs"
+                      />
+                      <span className="text-[10px] text-muted-foreground">σ days</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

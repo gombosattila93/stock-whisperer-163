@@ -59,6 +59,46 @@ describe("parseRows", () => {
   });
 });
 
+describe("parseRows — negative sold_qty clamping", () => {
+  it("clamps negative sold_qty to 0", () => {
+    const rows = [makeRow({ sold_qty: -5 })];
+    const map = parseRows(rows);
+    const sale = map.get("SKU-001")!.sales[0];
+    expect(sale.sold_qty).toBe(0);
+  });
+
+  it("preserves positive sold_qty unchanged", () => {
+    const rows = [makeRow({ sold_qty: 10 })];
+    const map = parseRows(rows);
+    expect(map.get("SKU-001")!.sales[0].sold_qty).toBe(10);
+  });
+
+  it("preserves zero sold_qty", () => {
+    const rows = [makeRow({ sold_qty: 0 })];
+    const map = parseRows(rows);
+    expect(map.get("SKU-001")!.sales[0].sold_qty).toBe(0);
+  });
+
+  it("clamps multiple negative rows across same SKU", () => {
+    const rows = [
+      makeRow({ date: "2026-01-01", sold_qty: -10 }),
+      makeRow({ date: "2026-01-02", sold_qty: -3 }),
+      makeRow({ date: "2026-01-03", sold_qty: 5 }),
+    ];
+    const map = parseRows(rows);
+    const sales = map.get("SKU-001")!.sales;
+    expect(sales[0].sold_qty).toBe(0);
+    expect(sales[1].sold_qty).toBe(0);
+    expect(sales[2].sold_qty).toBe(5);
+  });
+
+  it("treats NaN sold_qty as 0", () => {
+    const rows = [makeRow({ sold_qty: NaN })];
+    const map = parseRows(rows);
+    expect(map.get("SKU-001")!.sales[0].sold_qty).toBe(0);
+  });
+});
+
 // Helper: build a SkuData entry with a single sale
 function makeSku(sku: string, unitPrice: number, soldQty: number): SkuData {
   return {

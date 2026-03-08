@@ -6,6 +6,7 @@ import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { VirtualizedTable } from "@/components/VirtualizedTable";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import { EditableCell } from "@/components/EditableCell";
 import { TrendBadge } from "@/components/TrendBadge";
 import { Badge } from "@/components/ui/badge";

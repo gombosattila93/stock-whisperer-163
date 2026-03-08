@@ -43,6 +43,23 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     };
 
     const existing = map.get(row.sku);
+
+    // Parse multi-currency fields from row
+    const rawSellingHuf = parseFloat(String(row.selling_price_huf ?? ''));
+    const sellingPriceHuf = (!isNaN(rawSellingHuf) && rawSellingHuf > 0) ? rawSellingHuf : undefined;
+    const rawPurchaseCurrency = String(row.purchase_currency ?? '').toUpperCase().trim();
+    const purchaseCurrency: 'USD' | 'EUR' = rawPurchaseCurrency === 'USD' ? 'USD' : 'EUR';
+
+    // Parse price breaks from wide-format columns
+    const purchasePrices: Array<{ qty: number; price: number }> = [];
+    for (let i = 1; i <= 8; i++) {
+      const p = parseFloat(String((row as Record<string, unknown>)[`purchase_price_${i}`] ?? ''));
+      const q = parseFloat(String((row as Record<string, unknown>)[`purchase_qty_${i}`] ?? ''));
+      if (!isNaN(p) && p > 0) {
+        purchasePrices.push({ qty: (!isNaN(q) && q > 0) ? q : (i === 1 ? 1 : 0), price: p });
+      }
+    }
+
     if (existing) {
       const parsedStock = Number(row.stock_qty);
       existing.stock_qty = (isFinite(parsedStock) && parsedStock >= 0) ? parsedStock : existing.stock_qty;
@@ -53,6 +70,10 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
         : existing.expected_delivery_date;
       existing.unit_price = unitPrice || existing.unit_price;
+      // Update multi-currency fields (latest row wins)
+      if (sellingPriceHuf !== undefined) existing.selling_price_huf = sellingPriceHuf;
+      existing.purchase_currency = purchaseCurrency;
+      if (purchasePrices.length > 0) existing.purchase_prices = purchasePrices;
       existing.sales.push(sale);
     } else {
       map.set(row.sku, {
@@ -69,6 +90,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
           : '',
         sales: [sale],
         supplierOptions: [],
+        selling_price_huf: sellingPriceHuf ?? null,
+        purchase_currency: purchaseCurrency,
+        purchase_prices: purchasePrices.length > 0 ? purchasePrices : undefined,
       });
     }
   }

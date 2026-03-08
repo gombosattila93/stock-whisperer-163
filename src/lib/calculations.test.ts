@@ -139,3 +139,128 @@ describe("ABC classification", () => {
     result.forEach((r) => expect(r.abc_class).toBe("A"));
   });
 });
+
+// Helper: build SkuData with multiple daily sales for XYZ/safety stock testing
+function makeSkuWithSales(
+  sku: string,
+  dailySales: number[],
+  opts: { leadTime?: number; stockQty?: number; orderedQty?: number } = {}
+): SkuData {
+  const { leadTime = 7, stockQty = 100, orderedQty = 0 } = opts;
+  return {
+    sku,
+    sku_name: sku,
+    supplier: "TestCo",
+    category: "Parts",
+    unit_price: 1,
+    stock_qty: stockQty,
+    lead_time_days: leadTime,
+    ordered_qty: orderedQty,
+    expected_delivery_date: "2026-02-01",
+    sales: dailySales.map((qty, i) => ({
+      sku,
+      date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+      sold_qty: qty,
+      partner_id: "P001",
+    })),
+  };
+}
+
+function runAnalysis(skus: SkuData[], demandDays?: number) {
+  const days = demandDays ?? 31;
+  const map = new Map(skus.map((s) => [s.sku, s]));
+  return analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), days);
+}
+
+describe("XYZ classification", () => {
+  it("classifies steady demand as X (cv < 0.5)", () => {
+    // All days sell 10 → std_dev ≈ 0, cv ≈ 0
+    const sales = Array(31).fill(10);
+    const result = runAnalysis([makeSkuWithSales("S1", sales)]);
+    expect(result[0].xyz_class).toBe("X");
+    expect(result[0].cv).toBeCloseTo(0, 5);
+  });
+
+  it("classifies moderate variability as Y (0.5 ≤ cv ≤ 1.0)", () => {
+    // Alternate 0 and 20 over 31 days → mean ≈ 10, std ≈ 10 → cv ≈ 1.0
+    // Use values that give cv between 0.5 and 1.0
+    // e.g. alternate 5 and 15: mean=10, std=5, cv=0.5
+    const sales = Array.from({ length: 31 }, (_, i) => (i % 2 === 0 ? 5 : 15));
+    const result = runAnalysis([makeSkuWithSales("S1", sales)]);
+    expect(result[0].xyz_class).toBe("Y");
+    expect(result[0].cv).toBeGreaterThanOrEqual(0.5);
+    expect(result[0].cv).toBeLessThanOrEqual(1.0);
+  });
+
+  it("classifies highly variable demand as Z (cv > 1.0)", () => {
+    // Most days 0, one big spike → high cv
+    const sales = Array(31).fill(0);
+    sales[0] = 100;
+    const result = runAnalysis([makeSkuWithSales("S1", sales)]);
+    expect(result[0].xyz_class).toBe("Z");
+    expect(result[0].cv).toBeGreaterThan(1.0);
+  });
+
+  it("classifies zero demand as X (cv = 0)", () => {
+    const sales = Array(31).fill(0);
+    const result = runAnalysis([makeSkuWithSales("S1", sales)]);
+    expect(result[0].xyz_class).toBe("X");
+    expect(result[0].cv).toBe(0);
+  });
+});
+
+describe("safety stock and reorder point", () => {
+  it("calculates safety stock as 1.65 × std_dev × sqrt(lead_time)", () => {
+    // Constant demand of 10/day → std_dev = 0 → safety_stock = 0
+    const sales = Array(31).fill(10);
+    const result = runAnalysis([makeSkuWithSales("S1", sales, { leadTime: 9 })]);
+    expect(result[0].safety_stock).toBeCloseTo(0, 5);
+  });
+
+  it("calculates non-zero safety stock with variable demand", () => {
+    // Alternate 0 and 20: mean=~10, non-zero std_dev
+    const sales = Array.from({ length: 31 }, (_, i) => (i % 2 === 0 ? 0 : 20));
+    const leadTime = 4;
+    const result = runAnalysis([makeSkuWithSales("S1", sales, { leadTime })]);
+
+    // Manually compute expected values
+    const mean = sales.reduce((a, b) => a + b, 0) / 31;
+    const variance = sales.reduce((s, v) => s + (v - mean) ** 2, 0) / 31;
+    const std_dev = Math.sqrt(variance);
+    const expectedSafety = 1.65 * std_dev * Math.sqrt(leadTime);
+
+    expect(result[0].safety_stock).toBeCloseTo(expectedSafety, 2);
+  });
+
+  it("calculates reorder_point = avg_daily_demand × lead_time + safety_stock", () => {
+    const sales = Array(31).fill(10);
+    const leadTime = 5;
+    const result = runAnalysis([makeSkuWithSales("S1", sales, { leadTime })]);
+    const avgDemand = (10 * 31) / 31; // = 10
+    // std_dev ≈ 0, safety_stock ≈ 0
+    expect(result[0].reorder_point).toBeCloseTo(avgDemand * leadTime, 2);
+  });
+
+  it("calculates effective_stock as stock_qty + ordered_qty", () => {
+    const sales = Array(31).fill(5);
+    const result = runAnalysis([
+      makeSkuWithSales("S1", sales, { stockQty: 50, orderedQty: 30 }),
+    ]);
+    expect(result[0].effective_stock).toBe(80);
+  });
+
+  it("days_of_stock is Infinity when avg_daily_demand is 0", () => {
+    const sales = Array(31).fill(0);
+    const result = runAnalysis([makeSkuWithSales("S1", sales, { stockQty: 100 })]);
+    expect(result[0].days_of_stock).toBe(Infinity);
+  });
+
+  it("days_of_stock = effective_stock / avg_daily_demand", () => {
+    const sales = Array(31).fill(10);
+    const result = runAnalysis([
+      makeSkuWithSales("S1", sales, { stockQty: 50, orderedQty: 50 }),
+    ]);
+    // effective = 100, avg_daily = 10 → days = 10
+    expect(result[0].days_of_stock).toBeCloseTo(10, 2);
+  });
+});

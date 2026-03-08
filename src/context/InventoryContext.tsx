@@ -48,6 +48,10 @@ interface InventoryContextType {
   pendingHeaders: string[];
   pendingRawData: Record<string, string>[];
   setPendingFile: (f: File | null) => void;
+  // For duplicate detection on append
+  pendingAppend: { analysis: DuplicateAnalysis; fileName: string } | null;
+  confirmAppend: (resolutions: Map<string, ConflictResolution>) => void;
+  cancelAppend: () => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);

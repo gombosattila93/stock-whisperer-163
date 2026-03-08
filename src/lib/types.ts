@@ -46,6 +46,7 @@ export interface SkuAnalysis extends SkuData {
   std_dev: number;
   safety_stock: number;
   safetyStockFormula: 'simple' | 'full';
+  effectiveServiceLevel: string; // '90%' | '95%' | '99%'
   reorder_point: number;
   effective_stock: number;
   days_of_stock: number;

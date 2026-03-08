@@ -51,7 +51,8 @@ export default function ReorderPlan() {
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
   const [optimized, setOptimized] = useState(false);
   const [approvedSkus, setApprovedSkus] = useState<Set<string>>(new Set());
-
+  const [whatIfOpen, setWhatIfOpen] = useState(false);
+  const [whatIfBudget, setWhatIfBudget] = useState<number>(budget);
   useEffect(() => {
     loadSkuOverrides().then(setSkuOverrides);
     loadEoqSettings().then(setEoqSettings);

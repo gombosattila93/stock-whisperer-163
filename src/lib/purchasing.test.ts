@@ -582,11 +582,13 @@ describe('ABC boundary edge cases', () => {
     expect(r.find(x => x.sku === 'S2')!.abc_class).toBe('B');
   });
 
-  it('3 SKUs with 80/15/5 split: A, B, C', () => {
+  it('3 SKUs with clear A, B, C split', () => {
+    // Use price to control revenue: S1=€80k, S2=€12k, S3=€4k → total €96k
+    // S1 = 83.3% → A, S2 = 12.5% → B (cumulative before = 83.3%), S3 = C
     const rows = [
-      ...generateDailyRows('S1', 'S1', 'X', 'T', 90, 80 / 90, 1, 10, 14, 0),
-      ...generateDailyRows('S2', 'S2', 'X', 'T', 90, 15 / 90, 1, 10, 14, 0),
-      ...generateDailyRows('S3', 'S3', 'X', 'T', 90, 5 / 90, 1, 10, 14, 0),
+      ...generateDailyRows('S1', 'S1', 'X', 'T', 90, 10, 100, 10, 14, 0),  // 900×100 = 90k
+      ...generateDailyRows('S2', 'S2', 'X', 'T', 90, 10, 12, 10, 14, 0),   // 900×12 = 10.8k
+      ...generateDailyRows('S3', 'S3', 'X', 'T', 90, 10, 1, 10, 14, 0),    // 900×1 = 900
     ];
     const r = runAbc(rows);
     expect(r.find(x => x.sku === 'S1')!.abc_class).toBe('A');

@@ -59,9 +59,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         supplier: row.supplier?.trim() || 'Unknown',
         category: row.category?.trim() || 'Uncategorized',
         unit_price: unitPrice,
-        stock_qty: Number(row.stock_qty) || 0,
+        stock_qty: Math.max(0, isFinite(Number(row.stock_qty)) ? Number(row.stock_qty) : 0),
         lead_time_days: leadTime,
-        ordered_qty: Number(row.ordered_qty) || 0,
+        ordered_qty: Math.max(0, isFinite(Number(row.ordered_qty)) ? Number(row.ordered_qty) : 0),
         expected_delivery_date: row.expected_delivery_date
           ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
           : '',

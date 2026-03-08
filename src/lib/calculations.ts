@@ -1,5 +1,6 @@
 import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
+import { parseFlexibleDate } from './csvUtils';
 
 export const SERVICE_LEVELS: Record<string, number> = {
   '90%': 1.28,
@@ -15,8 +16,8 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     const existing = map.get(row.sku);
     const sale: SaleRecord = {
       sku: row.sku,
-      date: row.date,
-      sold_qty: Number(row.sold_qty) || 0,
+      date: parseFlexibleDate(row.date) ?? row.date,
+      sold_qty: Math.max(0, Number(row.sold_qty) || 0),
       partner_id: row.partner_id,
     };
 
@@ -27,7 +28,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
       existing.lead_time_days = !isNaN(parsedLead) ? parsedLead : existing.lead_time_days;
       const parsedOrdered = Number(row.ordered_qty);
       existing.ordered_qty = !isNaN(parsedOrdered) ? parsedOrdered : existing.ordered_qty;
-      existing.expected_delivery_date = row.expected_delivery_date || existing.expected_delivery_date;
+      existing.expected_delivery_date = row.expected_delivery_date
+        ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
+        : existing.expected_delivery_date;
       existing.unit_price = Number(row.unit_price) || existing.unit_price;
       existing.sales.push(sale);
     } else {
@@ -40,7 +43,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         stock_qty: Number(row.stock_qty) || 0,
         lead_time_days: Number(row.lead_time_days) || 0,
         ordered_qty: Number(row.ordered_qty) || 0,
-        expected_delivery_date: row.expected_delivery_date || '',
+        expected_delivery_date: row.expected_delivery_date
+          ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
+          : '',
         sales: [sale],
       });
     }

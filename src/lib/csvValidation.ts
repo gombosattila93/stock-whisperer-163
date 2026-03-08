@@ -72,9 +72,16 @@ export function validateCsvRows(rawData: Record<string, unknown>[]): CsvValidati
     warnings.push(`Ignoring unknown columns: ${headerCheck.extra.join(', ')}`);
   }
 
+  let negativeSoldQtyCount = 0;
+
   for (let i = 0; i < rawData.length; i++) {
     const result = csvRowSchema.safeParse(rawData[i]);
     if (result.success) {
+      // Track negative sold_qty
+      const soldVal = Number(result.data.sold_qty);
+      if (!isNaN(soldVal) && soldVal < 0) {
+        negativeSoldQtyCount++;
+      }
       validRows.push(result.data as unknown as RawRow);
     } else {
       for (const issue of result.error.issues) {
@@ -85,6 +92,12 @@ export function validateCsvRows(rawData: Record<string, unknown>[]): CsvValidati
         });
       }
     }
+  }
+
+  if (negativeSoldQtyCount > 0) {
+    warnings.push(
+      `${negativeSoldQtyCount} rows with negative sold_qty were treated as 0 (returns). Net them before import for accurate demand.`
+    );
   }
 
   if (errors.length > 0 && validRows.length > 0) {

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { RawRow, SkuAnalysis, XyzClass } from '@/lib/types';
 import { parseRows, analyzeSkus, SERVICE_LEVELS } from '@/lib/calculations';
-import { parseCsvFile, parseCsvString, parseCsvFileRaw } from '@/lib/csvUtils';
+import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
 import { saveRows, loadRows, clearRows } from '@/lib/persistence';
@@ -165,7 +165,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const validated = processAndValidate(parsed);
       if (validated.length > 0) {
         setRawRows(validated);
-        toast.success(`Loaded ${validated.length} rows from ${file.name}`);
+        const dateSamples = rawParsed.map(r => r['date'] || '').filter(Boolean);
+        const fmt = detectDateFormat(dateSamples);
+        toast.success(`Loaded ${validated.length} rows from ${file.name}`, {
+          description: `Date format detected: ${getDateFormatLabel(fmt)}`,
+        });
       }
     } catch (err) {
       toast.error('Failed to parse CSV file', {
@@ -191,7 +195,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const validated = processAndValidate(remapped as unknown as RawRow[]);
       if (validated.length > 0) {
         setRawRows(validated);
-        toast.success(`Loaded ${validated.length} rows with custom mapping`);
+        const dateSamples = rawParsed.map(r => {
+          const dateCol = mapping['date'];
+          return dateCol ? r[dateCol] || '' : '';
+        }).filter(Boolean);
+        const fmt = detectDateFormat(dateSamples);
+        toast.success(`Loaded ${validated.length} rows with custom mapping`, {
+          description: `Date format detected: ${getDateFormatLabel(fmt)}`,
+        });
       }
       setPendingFile(null);
       setPendingHeaders([]);

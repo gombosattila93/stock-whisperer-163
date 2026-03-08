@@ -103,6 +103,29 @@ export default function ReorderPlan() {
   const totalOrderValue = useMemo(() => reorderItems.reduce((s, i) => s + i.order_value, 0), [reorderItems]);
   const overBudget = budgetEnabled && totalOrderValue > budget;
 
+  // What-if simulation — runs greedy algorithm at whatIfBudget
+  const whatIfResult = useMemo(() => {
+    if (!whatIfOpen) return null;
+    let remaining = whatIfBudget;
+    const supplierSpent: Record<string, number> = {};
+    let approvedCount = 0;
+    let approvedValue = 0;
+    for (const item of reorderItems) {
+      const supplierCap = supplierBudgets[item.supplier];
+      const supplierCurrent = supplierSpent[item.supplier] || 0;
+      if (item.order_value <= remaining) {
+        if (supplierCap && (supplierCurrent + item.order_value) > supplierCap) continue;
+        approvedCount++;
+        approvedValue += item.order_value;
+        remaining -= item.order_value;
+        supplierSpent[item.supplier] = supplierCurrent + item.order_value;
+      }
+    }
+    const deferredCount = reorderItems.length - approvedCount;
+    const deferredValue = totalOrderValue - approvedValue;
+    return { approvedCount, approvedValue, deferredCount, deferredValue };
+  }, [whatIfOpen, whatIfBudget, reorderItems, totalOrderValue, supplierBudgets]);
+
   // Budget optimization — greedy by priority
   const optimizeWithinBudget = useCallback(() => {
     const approved = new Set<string>();

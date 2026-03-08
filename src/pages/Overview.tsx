@@ -4,9 +4,9 @@ import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { Package, AlertTriangle, ShoppingCart, PackageX } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
-import { loadSkuOverrides } from "@/lib/skuStrategyOverrides";
+import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 function KpiCard({ icon: Icon, label, value, accent }: {

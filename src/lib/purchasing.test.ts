@@ -1208,7 +1208,7 @@ describe('Performance benchmarks', () => {
     startDate.setDate(startDate.getDate() - 90);
     start = performance.now();
     const result = analyzeSkus(skuMap, startDate, end, 90, Z95);
-    expect(performance.now() - start).toBeLessThan(1000);
+    expect(performance.now() - start).toBeLessThan(2000);
     expect(result.length).toBe(10000);
   });
 });

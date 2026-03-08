@@ -43,10 +43,10 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     const existing = map.get(row.sku);
     if (existing) {
       const parsedStock = Number(row.stock_qty);
-      existing.stock_qty = !isNaN(parsedStock) ? parsedStock : existing.stock_qty;
+      existing.stock_qty = (isFinite(parsedStock) && parsedStock >= 0) ? parsedStock : existing.stock_qty;
       existing.lead_time_days = leadTime;
       const parsedOrdered = Number(row.ordered_qty);
-      existing.ordered_qty = !isNaN(parsedOrdered) ? parsedOrdered : existing.ordered_qty;
+      existing.ordered_qty = (isFinite(parsedOrdered) && parsedOrdered >= 0) ? parsedOrdered : existing.ordered_qty;
       existing.expected_delivery_date = row.expected_delivery_date
         ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
         : existing.expected_delivery_date;

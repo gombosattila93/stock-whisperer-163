@@ -17,9 +17,12 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
 
     if (existing) {
       // Update static fields with most recent
-      existing.stock_qty = Number(row.stock_qty) || existing.stock_qty;
-      existing.lead_time_days = Number(row.lead_time_days) || existing.lead_time_days;
-      existing.ordered_qty = Number(row.ordered_qty) || existing.ordered_qty;
+      const parsedStock = Number(row.stock_qty);
+      existing.stock_qty = !isNaN(parsedStock) ? parsedStock : existing.stock_qty;
+      const parsedLead = Number(row.lead_time_days);
+      existing.lead_time_days = !isNaN(parsedLead) ? parsedLead : existing.lead_time_days;
+      const parsedOrdered = Number(row.ordered_qty);
+      existing.ordered_qty = !isNaN(parsedOrdered) ? parsedOrdered : existing.ordered_qty;
       existing.expected_delivery_date = row.expected_delivery_date || existing.expected_delivery_date;
       existing.unit_price = Number(row.unit_price) || existing.unit_price;
       existing.sales.push(sale);

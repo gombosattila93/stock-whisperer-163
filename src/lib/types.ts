@@ -41,8 +41,11 @@ export type TrendDirection = 'rising' | 'falling' | 'stable';
 
 export interface SkuAnalysis extends SkuData {
   avg_daily_demand: number;
+  avg_daily_demand_ewma: number;
+  demandMethod: 'simple' | 'ewma';
   std_dev: number;
   safety_stock: number;
+  safetyStockFormula: 'simple' | 'full';
   reorder_point: number;
   effective_stock: number;
   days_of_stock: number;

@@ -67,4 +67,9 @@ export const DEFAULT_COST_SETTINGS: CostSettings = {
 
   paymentTermsEnabled: false,
   supplierPaymentTermsDays: {},
+
+  ewmaEnabled: false,
+  ewmaAlpha: 0.3,
+
+  supplierLeadTimeStats: {},
 };

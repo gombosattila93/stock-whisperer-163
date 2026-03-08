@@ -236,8 +236,11 @@ export function analyzeSkus(
     analyses.push({
       ...sku,
       avg_daily_demand,
+      avg_daily_demand_ewma,
+      demandMethod,
       std_dev,
       safety_stock,
+      safetyStockFormula,
       reorder_point,
       effective_stock,
       days_of_stock,

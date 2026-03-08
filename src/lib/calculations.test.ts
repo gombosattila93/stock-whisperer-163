@@ -175,10 +175,10 @@ describe("ABC classification", () => {
     expect(bySku["S3"]).toBe("C");
   });
 
-  it("all SKUs with zero revenue default to A (pctBefore is 0)", () => {
+  it("all SKUs with zero revenue get N/A (no price data)", () => {
     const skus = [makeSku("S1", 0, 0), makeSku("S2", 0, 0)];
     const result = runAbc(skus);
-    result.forEach((r) => expect(r.abc_class).toBe("A"));
+    result.forEach((r) => expect(r.abc_class).toBe("N/A"));
   });
 });
 

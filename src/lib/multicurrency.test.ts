@@ -1,6 +1,8 @@
 import { describe, test, expect } from 'vitest';
 import { purchaseToEur, hufToEur, eurToHuf, createManualRates, isRateDeviant, isRateStale, FALLBACK_RATES, FxRateConfig } from './fxRates';
 import { parsePriceBreaks, getEffectivePurchasePrice, buildPriceData } from './priceUtils';
+import { parseRows, analyzeSkus } from './calculations';
+import type { RawRow } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. FX Rate Conversions

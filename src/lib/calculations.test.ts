@@ -387,19 +387,21 @@ describe("Edge cases: zero demand", () => {
     expect(sku.days_of_stock).toBe(Infinity);
   });
 
-  it("days_of_stock should be 0 when both demand and stock are 0", () => {
+  it("days_of_stock should be null when both demand and stock are 0", () => {
     const rows = [makeRow({ sold_qty: 0, stock_qty: 0, ordered_qty: 0 })];
     const map = parseRows(rows);
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(sku.days_of_stock).toBe(0);
+    // No demand history (sold_qty=0) and no stock → null
+    expect(sku.days_of_stock).toBeNull();
   });
 
-  it("safety_stock should be 0 when there is no variability", () => {
+  it("safety_stock should be null when there is no demand history", () => {
     const map = parseRows(zeroSalesRows);
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(sku.safety_stock).toBe(0);
+    // No demand history → safety_stock is null (capability-based)
+    expect(sku.safety_stock).toBeNull();
   });
 
   it("suggested order qty should be 0 when demand is 0", () => {

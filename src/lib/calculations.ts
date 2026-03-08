@@ -55,6 +55,17 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
   return map;
 }
 
+/** Compute EWMA from daily sales sorted ascending by date */
+export function ewmaDemand(dailySales: { date: string; qty: number }[], alpha: number): number {
+  if (dailySales.length === 0) return 0;
+  const sorted = [...dailySales].sort((a, b) => a.date.localeCompare(b.date));
+  let s = sorted[0].qty;
+  for (let i = 1; i < sorted.length; i++) {
+    s = alpha * sorted[i].qty + (1 - alpha) * s;
+  }
+  return s;
+}
+
 export function analyzeSkus(
   skuMap: Map<string, SkuData>,
   startDate: Date,
@@ -88,8 +99,30 @@ export function analyzeSkus(
     const variance = dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length;
     const std_dev = Math.sqrt(variance);
 
-    const safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
-    const reorder_point = avg_daily_demand * sku.lead_time_days + safety_stock;
+    // EWMA demand
+    const dailySalesForEwma = Array.from(dailyMap.entries()).map(([date, qty]) => ({ date, qty }));
+    const avg_daily_demand_ewma = ewmaDemand(dailySalesForEwma, costSettings.ewmaAlpha);
+    const demandMethod: 'simple' | 'ewma' = costSettings.ewmaEnabled ? 'ewma' : 'simple';
+    const effectiveDemand = costSettings.ewmaEnabled ? avg_daily_demand_ewma : avg_daily_demand;
+
+    // Safety stock with optional lead time variability
+    const supplierStats = costSettings.supplierLeadTimeStats[sku.supplier];
+    let safety_stock: number;
+    let safetyStockFormula: 'simple' | 'full' = 'simple';
+
+    if (supplierStats && supplierStats.stdDevLeadTime > 0) {
+      // Full formula: Z × √(LT × σ_d² + d² × σ_LT²)
+      const lt = supplierStats.avgLeadTimeActual || sku.lead_time_days;
+      const sigmaD = std_dev;
+      const sigmaLT = supplierStats.stdDevLeadTime;
+      safety_stock = serviceFactor * Math.sqrt(lt * sigmaD ** 2 + effectiveDemand ** 2 * sigmaLT ** 2);
+      safetyStockFormula = 'full';
+    } else {
+      safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
+    }
+
+    const effectiveLeadTime = supplierStats?.avgLeadTimeActual || sku.lead_time_days;
+    const reorder_point = effectiveDemand * effectiveLeadTime + safety_stock;
     const effective_stock = sku.stock_qty + sku.ordered_qty;
     const days_of_stock = avg_daily_demand > 0 ? effective_stock / avg_daily_demand : Infinity;
     const total_revenue = totalSold * sku.unit_price;

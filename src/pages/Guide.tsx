@@ -271,7 +271,7 @@ export default function Guide() {
             <p className="font-medium text-foreground">Tied-up Capital:</p>
             <p>Calculated as excess_qty × effective_purchase_price_eur. When multi-currency pricing data is available, this uses the actual purchase prices instead of selling prices.</p>
           </div>
-          <Tip>Dead stock items are the strongest candidates for liquidation, returns to supplier, or write-offs. Consider offering bundle deals or aggressive discounts for items that have been dead stock for >6 months.</Tip>
+          <Tip>{"Dead stock items are the strongest candidates for liquidation, returns to supplier, or write-offs. Consider offering bundle deals or aggressive discounts for items that have been dead stock for >6 months."}</Tip>
         </Section>
 
         {/* ABC-XYZ */}

@@ -253,24 +253,21 @@ describe('CSV injection and malicious content', () => {
     expect(map.has('SKU\\x00001')).toBe(true);
   });
 
-  test('CSV with BOM — transformHeader should handle BOM prefix', async () => {
+  test('CSV with BOM — transformHeader strips BOM and columns detected correctly', async () => {
     const csv = '\uFEFFsku,date,sold_qty,sku_name,supplier,category,partner_id,unit_price,stock_qty,lead_time_days,ordered_qty,expected_delivery_date\nSKU001,2026-01-01,5,Item,Sup,Cat,P1,10,50,14,0,';
     const rows = await parseCsvString(csv);
     expect(rows.length).toBe(1);
-    // Check if 'sku' column is found (BOM may prefix first header)
     const firstRow = rows[0];
-    // PapaParse transformHeader trims but may not strip BOM
-    // If BOM not stripped, key would be '\uFEFFsku' instead of 'sku'
-    const hasSkuKey = 'sku' in firstRow || '\uFEFFsku' in firstRow;
-    expect(hasSkuKey).toBe(true);
-    // If BOM is present, validateCsvHeaders should still find 'sku'
+    // BOM must be stripped — key should be 'sku', not '\uFEFFsku'
+    expect('sku' in firstRow).toBe(true);
+    expect('\uFEFF' + 'sku' in firstRow).toBe(false);
+    expect(firstRow.sku).toBe('SKU001');
+    // validateCsvHeaders must also pass
     const headers = Object.keys(firstRow);
+    expect(headers[0]).toBe('sku');
     const validation = validateCsvHeaders(headers);
-    // This test documents current behavior — may need BOM fix
-    if (!validation.valid) {
-      // BOM bug confirmed — first header is '\uFEFFsku' not 'sku'
-      expect(headers[0]).toContain('\uFEFF');
-    }
+    expect(validation.valid).toBe(true);
+    expect(validation.errors).toHaveLength(0);
   });
 
   test('Tab-separated data uploaded as CSV — PapaParse auto-detects', async () => {

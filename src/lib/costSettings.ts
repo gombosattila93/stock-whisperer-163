@@ -32,6 +32,13 @@ export interface CostSettings {
   // Payment terms
   paymentTermsEnabled: boolean;
   supplierPaymentTermsDays: Record<string, number>; // supplier -> days
+
+  // EWMA demand smoothing
+  ewmaEnabled: boolean;
+  ewmaAlpha: number; // 0.1 to 0.5, default 0.3
+
+  // Lead time variability per supplier
+  supplierLeadTimeStats: Record<string, { avgLeadTimeActual: number; stdDevLeadTime: number }>;
 }
 
 export const DEFAULT_COST_SETTINGS: CostSettings = {

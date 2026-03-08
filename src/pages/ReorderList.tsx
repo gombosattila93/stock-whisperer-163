@@ -412,6 +412,18 @@ export default function ReorderList() {
                       </td>
                       <td className="text-right font-semibold">
                         <div className="flex items-center justify-end gap-1.5">
+                          {s.moqApplied && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-accent text-accent-foreground font-medium cursor-help">MOQ</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Rounded up to MOQ: {s.moq} units</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {s.seasonalityFlag && (
                             <TooltipProvider>
                               <Tooltip>
@@ -419,7 +431,7 @@ export default function ReorderList() {
                                   <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500 shrink-0 cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-[250px]">
-                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty} → {s.suggested_order_qty}</p>
+                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

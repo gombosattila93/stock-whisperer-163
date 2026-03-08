@@ -65,7 +65,13 @@ function NumericField({ label, value, onChange, disabled, suffix, min = 0 }: {
           type="number"
           min={min}
           value={value}
-          onChange={(e) => onChange(Number(e.target.value) || 0)}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === '') { onChange(min); return; }
+            const num = Number(raw);
+            if (!Number.isFinite(num)) return;
+            onChange(Math.max(min, num));
+          }}
           disabled={disabled}
           className="h-8 w-24 text-xs"
         />

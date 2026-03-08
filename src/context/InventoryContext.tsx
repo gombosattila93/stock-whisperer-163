@@ -146,6 +146,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     saveCostSettings(s);
   }, []);
 
+  const setSkuSupplierOption = useCallback((sku: string, options: SupplierOption[]) => {
+    setSkuSupplierOptionsRaw(prev => {
+      const next = { ...prev, [sku]: options };
+      if (options.length === 0) delete next[sku];
+      saveSkuSupplierOptions(next);
+      return next;
+    });
+  }, []);
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {

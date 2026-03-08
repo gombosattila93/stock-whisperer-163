@@ -86,6 +86,7 @@ SKU001,Widget A,Supplier X,Electronics,2024-01-01,P001,10,25.50,100,7,50,2024-01
     let mockClick: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
+      vi.useFakeTimers();
       mockCreateObjectURL = vi.fn().mockReturnValue('blob:mock-url');
       mockRevokeObjectURL = vi.fn();
       mockClick = vi.fn();
@@ -98,6 +99,10 @@ SKU001,Widget A,Supplier X,Electronics,2024-01-01,P001,10,25.50,100,7,50,2024-01
         download: '',
         click: mockClick,
       } as any);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
     });
 
     it('should create a blob and trigger download', () => {

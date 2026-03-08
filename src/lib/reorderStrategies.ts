@@ -2,11 +2,21 @@ import { SkuAnalysis } from './types';
 
 export type ReorderStrategy = 'rop' | 'eoq' | 'minmax' | 'periodic';
 
+export interface EoqSettings {
+  orderingCost: number;
+  holdingPct: number;
+}
+
+export const DEFAULT_EOQ_SETTINGS: EoqSettings = {
+  orderingCost: 50,
+  holdingPct: 0.20,
+};
+
 export interface ReorderResult {
   strategy: ReorderStrategy;
   strategyLabel: string;
   suggested_order_qty: number;
-  reorder_trigger: string; // human-readable trigger description
+  reorder_trigger: string;
 }
 
 /**
@@ -26,19 +36,15 @@ export function ropStrategy(sku: SkuAnalysis): ReorderResult {
 
 /**
  * Economic Order Quantity (EOQ) — Wilson formula.
- * Assumes ordering cost = 50 and holding cost = 20% of unit price per year.
+ * Uses configurable ordering cost and holding cost percentage.
  */
-export function eoqStrategy(
-  sku: SkuAnalysis,
-  orderingCost: number = 50,
-  holdingPctPerYear: number = 0.20
-): ReorderResult {
+export function eoqStrategy(sku: SkuAnalysis, settings: EoqSettings = DEFAULT_EOQ_SETTINGS): ReorderResult {
   const annualDemand = sku.avg_daily_demand * 365;
-  const holdingCost = sku.unit_price * holdingPctPerYear;
+  const holdingCost = sku.unit_price * settings.holdingPct;
 
   let eoq = 0;
   if (annualDemand > 0 && holdingCost > 0) {
-    eoq = Math.sqrt((2 * annualDemand * orderingCost) / holdingCost);
+    eoq = Math.sqrt((2 * annualDemand * settings.orderingCost) / holdingCost);
   }
   const qty = Math.max(0, Math.ceil(eoq / 10) * 10);
 
@@ -90,9 +96,13 @@ export const STRATEGY_OPTIONS: { value: ReorderStrategy; label: string; descript
   { value: 'periodic', label: 'Periodic Review', description: 'Order up to target every N days — simpler to schedule' },
 ];
 
-export function computeReorder(sku: SkuAnalysis, strategy: ReorderStrategy): ReorderResult {
+export function computeReorder(
+  sku: SkuAnalysis,
+  strategy: ReorderStrategy,
+  eoqSettings: EoqSettings = DEFAULT_EOQ_SETTINGS
+): ReorderResult {
   switch (strategy) {
-    case 'eoq': return eoqStrategy(sku);
+    case 'eoq': return eoqStrategy(sku, eoqSettings);
     case 'minmax': return minMaxStrategy(sku);
     case 'periodic': return periodicStrategy(sku);
     default: return ropStrategy(sku);

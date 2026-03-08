@@ -1,7 +1,9 @@
-import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection, SkuCapability } from './types';
+import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection, SkuCapability, PriceData } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from './classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 import { parseFlexibleDate } from './dateUtils';
+import { FxRateConfig, FALLBACK_RATES } from './fxRates';
+import { buildPriceData } from './priceUtils';
 
 export const SERVICE_LEVELS: Record<string, number> = {
   '90%': 1.28,

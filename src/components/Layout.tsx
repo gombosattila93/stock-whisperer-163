@@ -5,9 +5,10 @@ import { DataActions } from "@/components/EmptyState";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ColumnMapper } from "@/components/ColumnMapper";
 import { useInventory } from "@/context/InventoryContext";
+import { Progress } from "@/components/ui/progress";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { pendingFile, pendingHeaders, pendingRawData, setPendingFile, loadFileWithMapping } = useInventory();
+  const { pendingFile, pendingHeaders, pendingRawData, setPendingFile, loadFileWithMapping, isCalculating, calculationProgress } = useInventory();
 
   return (
     <SidebarProvider>
@@ -19,6 +20,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <DataActions />
             <GlobalFilters />
           </header>
+          {isCalculating && (
+            <div className="shrink-0">
+              <Progress
+                value={calculationProgress}
+                className="h-1 rounded-none [&>div]:transition-all [&>div]:duration-300"
+              />
+            </div>
+          )}
           <main className="flex-1 p-6 overflow-auto">
             <ErrorBoundary fallbackTitle="Failed to render this page">
               {children}

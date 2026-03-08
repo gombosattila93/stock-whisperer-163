@@ -51,7 +51,21 @@ export interface CostSettings {
 
   // Per-ABC service levels
   serviceLevelSettings: ServiceLevelSettings;
+
+  // Shelf life / expiry per category
+  shelfLifeEnabled: boolean;
+  categoryShelfLifeDays: Record<string, number>;
 }
+
+export const DEFAULT_SHELF_LIFE: Record<string, number> = {
+  'Lead-acid batteries': 730,
+  'Lithium batteries': 1825,
+  'Electrolytic capacitors': 1825,
+  'Tantalum capacitors': 3650,
+  'Semiconductors/ICs': 3650,
+  'Passive components': 9999,
+  'Default': 9999,
+};
 
 export const DEFAULT_COST_SETTINGS: CostSettings = {
   holdingCostEnabled: false,
@@ -91,4 +105,7 @@ export const DEFAULT_COST_SETTINGS: CostSettings = {
     classB: '95%',
     classC: '90%',
   },
+
+  shelfLifeEnabled: false,
+  categoryShelfLifeDays: {},
 };

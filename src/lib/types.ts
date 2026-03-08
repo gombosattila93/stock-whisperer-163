@@ -78,6 +78,9 @@ export interface SkuAnalysis extends SkuData {
   tco: number;               // total cost of ownership €/year
   priceBreakQty: number;     // 0 if no break, else the break threshold qty
   priceBreakSaving: number;  // €  saved by rounding up to price break
+  // Shelf life
+  shelfLifeDays: number;
+  shelfLifeRisk: 'none' | 'warning' | 'critical';
 }
 
 export interface InventoryState {

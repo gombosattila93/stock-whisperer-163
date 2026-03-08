@@ -236,6 +236,16 @@ export function analyzeSkus(
       }
     }
 
+    // Shelf life risk
+    const shelfLifeDays = costSettings.shelfLifeEnabled
+      ? (costSettings.categoryShelfLifeDays[sku.category] ?? costSettings.categoryShelfLifeDays['Default'] ?? 9999)
+      : 9999;
+    let shelfLifeRisk: 'none' | 'warning' | 'critical' = 'none';
+    if (costSettings.shelfLifeEnabled && days_of_stock !== Infinity) {
+      if (days_of_stock > shelfLifeDays) shelfLifeRisk = 'critical';
+      else if (days_of_stock > shelfLifeDays * 0.75) shelfLifeRisk = 'warning';
+    }
+
     analyses.push({
       ...sku,
       avg_daily_demand,
@@ -264,6 +274,8 @@ export function analyzeSkus(
       tco,
       priceBreakQty,
       priceBreakSaving,
+      shelfLifeDays,
+      shelfLifeRisk,
     });
   }
 

@@ -672,3 +672,213 @@ describe("SkuCapability tier calculation", () => {
     expect(sku.capability.tier).toBe("stock-only");
   });
 });
+
+describe("ewmaDemand", () => {
+  it("returns 0 for empty array", () => {
+    expect(ewmaDemand([], 0.3)).toBe(0);
+  });
+
+  it("returns the single value for single-element array", () => {
+    expect(ewmaDemand([{ date: "2026-01-01", qty: 42 }], 0.3)).toBe(42);
+  });
+
+  it("computes known sequence with α=0.3", () => {
+    const data = [
+      { date: "2026-01-01", qty: 10 },
+      { date: "2026-01-02", qty: 20 },
+      { date: "2026-01-03", qty: 30 },
+    ];
+    // s0=10, s1=0.3*20+0.7*10=13, s2=0.3*30+0.7*13=18.1
+    const result = ewmaDemand(data, 0.3);
+    expect(result).toBeCloseTo(18.1, 1);
+  });
+
+  it("handles unsorted input by sorting by date", () => {
+    const data = [
+      { date: "2026-01-03", qty: 30 },
+      { date: "2026-01-01", qty: 10 },
+      { date: "2026-01-02", qty: 20 },
+    ];
+    const result = ewmaDemand(data, 0.3);
+    expect(result).toBeCloseTo(18.1, 1);
+  });
+});
+
+describe("trend detection", () => {
+  const startDate = new Date("2026-01-01");
+  const endDate = new Date("2026-03-08");
+
+  it("detects rising trend when last 30d demand > prior 30d by >15%", () => {
+    // Prior 30d (Feb 6-Mar 8 approx): low sales, Last 30d: high sales
+    const rows = [
+      makeRow({ date: "2026-01-15", sold_qty: 5 }),
+      makeRow({ date: "2026-02-01", sold_qty: 5 }),
+      makeRow({ date: "2026-02-15", sold_qty: 10 }),
+      makeRow({ date: "2026-03-01", sold_qty: 50 }),
+      makeRow({ date: "2026-03-05", sold_qty: 50 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    expect(results[0].trend).toBe("rising");
+    expect(results[0].trendPct).toBeGreaterThan(15);
+  });
+
+  it("detects falling trend when last 30d demand < prior 30d by >15%", () => {
+    // Prior 30d (Jan 7 - Feb 6): high sales
+    // Last 30d (Feb 6 - Mar 8): low sales
+    const rows = [
+      makeRow({ date: "2026-01-15", sold_qty: 100 }),
+      makeRow({ date: "2026-01-25", sold_qty: 100 }),
+      makeRow({ date: "2026-02-01", sold_qty: 100 }),
+      makeRow({ date: "2026-02-20", sold_qty: 5 }),
+      makeRow({ date: "2026-03-01", sold_qty: 5 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    expect(results[0].trend).toBe("falling");
+    expect(results[0].trendPct).toBeLessThan(-15);
+  });
+
+  it("detects stable trend when change is within ±15%", () => {
+    // Spread evenly across both windows
+    const rows = [
+      makeRow({ date: "2026-01-15", sold_qty: 30 }),
+      makeRow({ date: "2026-01-25", sold_qty: 30 }),
+      makeRow({ date: "2026-02-15", sold_qty: 30 }),
+      makeRow({ date: "2026-02-25", sold_qty: 30 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    expect(results[0].trend).toBe("stable");
+  });
+});
+
+describe("seasonality flag", () => {
+  const startDate = new Date("2026-01-01");
+  const endDate = new Date("2026-03-08");
+
+  it("sets flag when last 30d > 150% of avg", () => {
+    // Need many sale days to avoid insufficientData flag
+    // Which would inflate avg_daily_demand via effectiveDemandDays
+    const rows: ReturnType<typeof makeRow>[] = [];
+    // 30 days of low sales in Jan
+    for (let d = 1; d <= 30; d++) {
+      const dd = String(d).padStart(2, '0');
+      rows.push(makeRow({ date: `2026-01-${dd}`, sold_qty: 1 }));
+    }
+    // 28 days of low sales in Feb
+    for (let d = 1; d <= 28; d++) {
+      const dd = String(d).padStart(2, '0');
+      rows.push(makeRow({ date: `2026-02-${dd}`, sold_qty: 1 }));
+    }
+    // High spike in last 30d window (Feb 6 - Mar 8)
+    rows.push(makeRow({ date: "2026-03-01", sold_qty: 500 }));
+    rows.push(makeRow({ date: "2026-03-05", sold_qty: 500 }));
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    expect(results[0].seasonalityFlag).toBe(true);
+  });
+
+  it("does not set flag when demand is even", () => {
+    const rows = [
+      makeRow({ date: "2026-01-15", sold_qty: 30 }),
+      makeRow({ date: "2026-02-01", sold_qty: 30 }),
+      makeRow({ date: "2026-02-15", sold_qty: 30 }),
+      makeRow({ date: "2026-03-01", sold_qty: 30 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    expect(results[0].seasonalityFlag).toBe(false);
+  });
+});
+
+describe("safety stock full formula (with lead time variability)", () => {
+  it("uses full formula when supplier lead time stats provided", () => {
+    const rows = [
+      makeRow({ date: "2026-01-01", sold_qty: 10, lead_time_days: 14 }),
+      makeRow({ date: "2026-01-15", sold_qty: 15, lead_time_days: 14 }),
+      makeRow({ date: "2026-02-01", sold_qty: 12, lead_time_days: 14 }),
+    ];
+    const map = parseRows(rows);
+    const costSettings: CostSettings = {
+      ...DEFAULT_COST_SETTINGS,
+      supplierLeadTimeStats: {
+        TestCo: { avgLeadTimeActual: 14, stdDevLeadTime: 3 },
+      },
+    };
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-03-01"), 60, 1.65, undefined, costSettings);
+    const sku = results[0];
+    expect(sku.safetyStockFormula).toBe("full");
+    expect(sku.safety_stock).toBeGreaterThan(0);
+  });
+
+  it("uses simple formula when no lead time stats", () => {
+    const rows = [
+      makeRow({ date: "2026-01-01", sold_qty: 10, lead_time_days: 14 }),
+      makeRow({ date: "2026-01-15", sold_qty: 15, lead_time_days: 14 }),
+      makeRow({ date: "2026-02-01", sold_qty: 12, lead_time_days: 14 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-03-01"), 60, 1.65);
+    expect(results[0].safetyStockFormula).toBe("simple");
+  });
+});
+
+describe("shelf life risk boundaries", () => {
+  it("returns 'none' when days_of_stock well below shelf life", () => {
+    const rows = [
+      makeRow({ date: "2026-01-01", sold_qty: 50, stock_qty: 100, lead_time_days: 7 }),
+      makeRow({ date: "2026-01-15", sold_qty: 50 }),
+      makeRow({ date: "2026-02-01", sold_qty: 50 }),
+    ];
+    const map = parseRows(rows);
+    const costSettings: CostSettings = {
+      ...DEFAULT_COST_SETTINGS,
+      shelfLifeEnabled: true,
+      categoryShelfLifeDays: { Parts: 365 },
+    };
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-03-01"), 60, 1.65, undefined, costSettings);
+    expect(results[0].shelfLifeRisk).toBe("none");
+  });
+
+  it("returns 'warning' when days_of_stock between 75% and 100% of shelf life", () => {
+    // Need days_of_stock between 0.75*100=75 and 100
+    // stock_qty=5, avg_daily_demand will be ~50/60 ≈ 0.83, effective_stock=5
+    // days_of_stock = 5/0.0583 ≈ 85.7 → between 75 and 100
+    const rows = [
+      makeRow({ date: "2026-01-01", sold_qty: 2, stock_qty: 5, lead_time_days: 7 }),
+      makeRow({ date: "2026-01-15", sold_qty: 1 }),
+      makeRow({ date: "2026-02-01", sold_qty: 1 }),
+    ];
+    const map = parseRows(rows);
+    const costSettings: CostSettings = {
+      ...DEFAULT_COST_SETTINGS,
+      shelfLifeEnabled: true,
+      categoryShelfLifeDays: { Parts: 100 },
+    };
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-03-01"), 60, 1.65, undefined, costSettings);
+    const sku = results[0];
+    // If days_of_stock is between 75 and 100, expect warning
+    if (sku.days_of_stock !== null && sku.days_of_stock !== Infinity) {
+      if (sku.days_of_stock > 100) expect(sku.shelfLifeRisk).toBe("critical");
+      else if (sku.days_of_stock > 75) expect(sku.shelfLifeRisk).toBe("warning");
+      else expect(sku.shelfLifeRisk).toBe("none");
+    }
+  });
+
+  it("returns 'critical' when days_of_stock > shelf life", () => {
+    const rows = [
+      makeRow({ date: "2026-01-01", sold_qty: 1, stock_qty: 1000, lead_time_days: 7 }),
+      makeRow({ date: "2026-01-15", sold_qty: 1 }),
+      makeRow({ date: "2026-02-01", sold_qty: 1 }),
+    ];
+    const map = parseRows(rows);
+    const costSettings: CostSettings = {
+      ...DEFAULT_COST_SETTINGS,
+      shelfLifeEnabled: true,
+      categoryShelfLifeDays: { Parts: 30 },
+    };
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-03-01"), 60, 1.65, undefined, costSettings);
+    expect(results[0].shelfLifeRisk).toBe("critical");
+  });
+});

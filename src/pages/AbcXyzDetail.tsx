@@ -17,7 +17,7 @@ import {
 import { AbcClass, XyzClass } from "@/lib/types";
 
 export default function AbcXyzDetail() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, costSettings } = useInventory();
   const [abcFilter, setAbcFilter] = useState<string>("");
   const [xyzFilter, setXyzFilter] = useState<string>("");
 
@@ -172,6 +172,20 @@ export default function AbcXyzDetail() {
                 </span>
               ),
             },
+            ...(costSettings.holdingCostEnabled ? [{
+              key: 'tco',
+              header: <SortableHeader column="tco" label="TCO €/yr" sort={sort} onSort={toggleSort} align="right" />,
+              render: (s: typeof paginatedData[0]) => (
+                <span className="text-right">€{s.tco.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              ),
+            }] : []),
+            ...(costSettings.obsolescenceCostEnabled ? [{
+              key: 'obsolescenceCost',
+              header: <SortableHeader column="obsolescenceCost" label="Obsolescence €" sort={sort} onSort={toggleSort} align="right" />,
+              render: (s: typeof paginatedData[0]) => (
+                <span className="text-right">{s.obsolescenceCost > 0 ? `€${s.obsolescenceCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}</span>
+              ),
+            }] : []),
           ]}
         />
         <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />

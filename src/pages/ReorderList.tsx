@@ -33,7 +33,7 @@ import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } 
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
-  const { filtered, hasData, stockOverrides, setStockOverride } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
@@ -311,6 +311,8 @@ export default function ReorderList() {
                     <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" />
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
                     <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
+                    {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Price Break</th>}
+                    {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Min Order</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -400,6 +402,27 @@ export default function ReorderList() {
                           {s.urgency}
                         </span>
                       </td>
+                      {costSettings.priceBreaksEnabled && (
+                        <td className="text-xs">
+                          {s.priceBreakQty > 0 ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                              ↑{s.priceBreakQty} (save €{s.priceBreakSaving.toFixed(0)})
+                            </span>
+                          ) : '—'}
+                        </td>
+                      )}
+                      {costSettings.minOrderValueEnabled && (() => {
+                        const orderValue = s.suggested_order_qty * s.unit_price;
+                        const minVal = costSettings.supplierMinOrderValues[s.supplier];
+                        const gap = minVal ? minVal - orderValue : 0;
+                        return (
+                          <td className="text-xs">
+                            {minVal && gap > 0 ? (
+                              <span className="text-destructive font-medium">−€{gap.toFixed(0)} below min</span>
+                            ) : '—'}
+                          </td>
+                        );
+                      })()}
                     </tr>
                   ))}
                 </tbody>

@@ -54,6 +54,15 @@ export interface SkuAnalysis extends SkuData {
   trendPct: number;
   seasonalityFlag: boolean;
   seasonalityPct: number;
+  // Cost fields (populated when cost settings are enabled)
+  holdingCost: number;       // annual holding cost €
+  storageCost: number;       // monthly storage cost €
+  stockoutRisk: number;      // estimated stockout cost €
+  obsolescenceCost: number;  // annual obsolescence cost €
+  totalCarryingCost: number; // sum of all carrying costs €/year
+  tco: number;               // total cost of ownership €/year
+  priceBreakQty: number;     // 0 if no break, else the break threshold qty
+  priceBreakSaving: number;  // €  saved by rounding up to price break
 }
 
 export interface InventoryState {

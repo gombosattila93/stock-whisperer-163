@@ -1,5 +1,6 @@
 import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from './classificationTypes';
+import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 import { parseFlexibleDate } from './dateUtils';
 
 export const SERVICE_LEVELS: Record<string, number> = {
@@ -60,7 +61,8 @@ export function analyzeSkus(
   endDate: Date,
   demandDays: number,
   serviceFactor: number = 1.65,
-  thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS
+  thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS,
+  costSettings: CostSettings = DEFAULT_COST_SETTINGS,
 ): SkuAnalysis[] {
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;
@@ -141,6 +143,63 @@ export function analyzeSkus(
       : 0;
     const seasonalityFlag = avg_daily_demand > 0 && avgLast30 > avg_daily_demand * 1.5;
 
+    // ─── Cost calculations ─────────────────────────────────────
+    let holdingCost = 0;
+    let storageCost = 0;
+    let stockoutRisk = 0;
+    let obsolescenceCost = 0;
+
+    if (costSettings.holdingCostEnabled) {
+      holdingCost = sku.stock_qty * sku.unit_price * (costSettings.annualInterestRate / 100);
+    }
+
+    if (costSettings.storageCostEnabled && costSettings.unitsPerPallet > 0) {
+      const pallets = sku.stock_qty / costSettings.unitsPerPallet;
+      storageCost = pallets * costSettings.storageCostPerPalletPerMonth;
+    }
+
+    if (costSettings.stockoutCostEnabled && days_of_stock < sku.lead_time_days) {
+      // Estimated lost sales during stockout period × margin
+      const shortfallDays = Math.max(0, sku.lead_time_days - days_of_stock);
+      const lostSales = shortfallDays * avg_daily_demand * sku.unit_price;
+      stockoutRisk = lostSales * (costSettings.defaultMarginPct / 100);
+    }
+
+    if (costSettings.obsolescenceCostEnabled) {
+      const rate = costSettings.categoryObsolescenceRates[sku.category] ?? 0;
+      obsolescenceCost = sku.stock_qty * sku.unit_price * (rate / 100);
+    }
+
+    const totalCarryingCost = holdingCost + (storageCost * 12) + obsolescenceCost;
+    const annualOrderingCost = avg_daily_demand > 0
+      ? ((avg_daily_demand * 365) / Math.max(1, effective_stock)) *
+        (costSettings.orderingCostEnabled
+          ? (costSettings.supplierOrderingCosts[sku.supplier] ?? costSettings.defaultOrderingCost)
+          : 50)
+      : 0;
+    const tco = totalCarryingCost + annualOrderingCost;
+
+    // Price break detection
+    let priceBreakQty = 0;
+    let priceBreakSaving = 0;
+    if (costSettings.priceBreaksEnabled) {
+      const breaks = costSettings.priceBreaks[sku.sku];
+      if (breaks && breaks.length > 0) {
+        const baseQty = reorder_point * 2 - effective_stock;
+        const sortedBreaks = [...breaks].sort((a, b) => a.minQty - b.minQty);
+        for (const brk of sortedBreaks) {
+          if (baseQty > 0 && baseQty < brk.minQty && brk.minQty <= baseQty * 1.15) {
+            const currentCost = baseQty * sku.unit_price;
+            const breakCost = brk.minQty * brk.unitPrice;
+            if (breakCost < currentCost) {
+              priceBreakQty = brk.minQty;
+              priceBreakSaving = currentCost - breakCost;
+            }
+          }
+        }
+      }
+    }
+
     analyses.push({
       ...sku,
       avg_daily_demand,
@@ -157,6 +216,14 @@ export function analyzeSkus(
       trendPct,
       seasonalityFlag,
       seasonalityPct,
+      holdingCost,
+      storageCost,
+      stockoutRisk,
+      obsolescenceCost,
+      totalCarryingCost,
+      tco,
+      priceBreakQty,
+      priceBreakSaving,
     });
   }
 

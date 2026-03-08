@@ -4,8 +4,9 @@ import { SERVICE_LEVELS } from '@/lib/calculations';
 import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
-import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides } from '@/lib/persistence';
+import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides, saveCostSettings, loadCostSettings } from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
+import { CostSettings, DEFAULT_COST_SETTINGS } from '@/lib/costSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';
 import { analyzeDuplicates, DuplicateAnalysis, partialFingerprint } from '@/lib/duplicateDetection';
 import type { ConflictResolution } from '@/components/DuplicateDetectionModal';
@@ -52,6 +53,9 @@ interface InventoryContextType {
   pendingAppend: { analysis: DuplicateAnalysis; fileName: string } | null;
   confirmAppend: (resolutions: Map<string, ConflictResolution>) => void;
   cancelAppend: () => void;
+  // Cost settings
+  costSettings: CostSettings;
+  setCostSettings: (s: CostSettings) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
@@ -104,6 +108,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
   const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
   const [stockOverrides, setStockOverrides] = useState<StockOverrides>({});
+  const [costSettings, setCostSettingsRaw] = useState<CostSettings>(DEFAULT_COST_SETTINGS);
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -127,6 +132,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const stockOverrideCount = useMemo(() => Object.keys(stockOverrides).length, [stockOverrides]);
 
+  const setCostSettings = useCallback((s: CostSettings) => {
+    setCostSettingsRaw(s);
+    saveCostSettings(s);
+  }, []);
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {
@@ -135,7 +145,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides()]).then(([rows, overrides]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings()]).then(([rows, overrides, costs]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
@@ -143,6 +153,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (overrides && Object.keys(overrides).length > 0) {
         setStockOverrides(overrides);
       }
+      setCostSettingsRaw(costs);
       setPersistenceLoaded(true);
     });
   }, []);
@@ -198,10 +209,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const rowsWithOverrides = applyStockOverrides(rawRows, stockOverrides);
     const message: WorkerRequest = {
       type: 'ANALYZE',
-      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds },
+      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
@@ -454,6 +465,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       pendingAppend: pendingAppend ? { analysis: pendingAppend.analysis, fileName: pendingAppend.fileName } : null,
       confirmAppend,
       cancelAppend,
+      costSettings,
+      setCostSettings,
     }}>
       {children}
     </InventoryContext.Provider>

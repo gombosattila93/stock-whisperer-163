@@ -1,12 +1,14 @@
 import { RawRow } from './types';
 import { SkuStrategyOverrides } from './skuStrategyOverrides';
 import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
+import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 3; // Bumped for stock-overrides store
+const DB_VERSION = 4; // Bumped for cost-settings store
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';
+const COST_SETTINGS_STORE = 'cost-settings';
 const DATA_KEY = 'rawRows';
 const OVERRIDES_KEY = 'strategyOverrides';
 const EOQ_SETTINGS_KEY = 'eoqSettings';
@@ -32,6 +34,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STOCK_OVERRIDES_STORE)) {
         db.createObjectStore(STOCK_OVERRIDES_STORE);
+      }
+      if (!db.objectStoreNames.contains(COST_SETTINGS_STORE)) {
+        db.createObjectStore(COST_SETTINGS_STORE);
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -185,5 +190,41 @@ export async function loadStockOverrides(): Promise<StockOverrides> {
     });
   } catch {
     return {};
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cost Settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COST_SETTINGS_KEY = 'settings';
+
+export async function saveCostSettings(settings: CostSettings): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(COST_SETTINGS_STORE, 'readwrite');
+      const store = tx.objectStore(COST_SETTINGS_STORE);
+      store.put(settings, COST_SETTINGS_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save cost settings to IndexedDB');
+  }
+}
+
+export async function loadCostSettings(): Promise<CostSettings> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(COST_SETTINGS_STORE, 'readonly');
+      const store = tx.objectStore(COST_SETTINGS_STORE);
+      const request = store.get(COST_SETTINGS_KEY);
+      request.onsuccess = () => resolve(request.result || DEFAULT_COST_SETTINGS);
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return DEFAULT_COST_SETTINGS;
   }
 }

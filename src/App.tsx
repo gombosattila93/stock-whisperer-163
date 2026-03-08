@@ -25,7 +25,8 @@ const App = () => (
         <InventoryProvider>
           <Layout>
             <Routes>
-              <Route path="/" element={<Overview />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/overview" element={<Overview />} />
               <Route path="/critical" element={<CriticalSkus />} />
               <Route path="/reorder" element={<ReorderList />} />
               <Route path="/overstock" element={<Overstock />} />

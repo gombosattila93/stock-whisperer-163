@@ -133,9 +133,9 @@ describe("ABC classification", () => {
     expect(bySku["S3"]).toBe("C");
   });
 
-  it("all SKUs with zero revenue are C", () => {
+  it("all SKUs with zero revenue default to A (pctBefore is 0)", () => {
     const skus = [makeSku("S1", 0, 0), makeSku("S2", 0, 0)];
     const result = runAbc(skus);
-    result.forEach((r) => expect(r.abc_class).toBe("C"));
+    result.forEach((r) => expect(r.abc_class).toBe("A"));
   });
 });

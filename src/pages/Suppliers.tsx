@@ -72,7 +72,7 @@ export default function Suppliers() {
   const expandedSkus = useMemo(() => {
     if (!expandedSupplier) return [];
     return filtered
-      .filter(s => s.supplier === expandedSupplier && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .filter(s => s.supplier === expandedSupplier && s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => ({
         sku: s.sku,
         sku_name: s.sku_name,
@@ -81,8 +81,8 @@ export default function Suppliers() {
         ordered_qty: s.ordered_qty,
         days_of_stock: s.days_of_stock,
         unit_price: s.unit_price,
-        suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
-        order_value: getSuggestedOrderQty(s.reorder_point, s.effective_stock) * s.unit_price,
+        suggested_order_qty: getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock),
+        order_value: getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock) * s.unit_price,
         overdueDelivery: s.overdueDelivery,
         expected_delivery_date: s.expected_delivery_date,
       }));

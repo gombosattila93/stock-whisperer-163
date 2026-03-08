@@ -4,6 +4,10 @@ import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { Package, AlertTriangle, ShoppingCart, PackageX } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
+import { loadSkuOverrides } from "@/lib/skuStrategyOverrides";
+import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
+import { useMemo } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 function KpiCard({ icon: Icon, label, value, accent }: {
   icon: React.ElementType;
@@ -40,8 +44,36 @@ const cellColors: Record<string, string> = {
   CZ: 'bg-destructive/10 text-destructive',
 };
 
+const STRATEGY_COLORS: Record<ReorderStrategy, string> = {
+  rop: 'hsl(217, 91%, 60%)',
+  eoq: 'hsl(142, 71%, 45%)',
+  minmax: 'hsl(38, 92%, 50%)',
+  periodic: 'hsl(280, 67%, 55%)',
+};
+
+const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
+  STRATEGY_OPTIONS.map(o => [o.value, o.label])
+) as Record<ReorderStrategy, string>;
+
 export default function Overview() {
   const { filtered, hasData } = useInventory();
+
+  const strategyDistribution = useMemo(() => {
+    if (filtered.length === 0) return [];
+    const overrides = loadSkuOverrides();
+    const counts: Record<ReorderStrategy, number> = { rop: 0, eoq: 0, minmax: 0, periodic: 0 };
+    for (const s of filtered) {
+      const strategy = overrides[s.sku] || 'rop';
+      counts[strategy]++;
+    }
+    return Object.entries(counts)
+      .filter(([, count]) => count > 0)
+      .map(([key, count]) => ({
+        name: STRATEGY_LABEL_MAP[key as ReorderStrategy],
+        value: count,
+        color: STRATEGY_COLORS[key as ReorderStrategy],
+      }));
+  }, [filtered]);
 
   if (!hasData) return <EmptyState />;
 
@@ -86,34 +118,81 @@ export default function Overview() {
         <KpiCard icon={PackageX} label="Overstock Items" value={overstockItems} accent="bg-muted" />
       </div>
 
-      <div className="bg-card border rounded-lg p-6">
-        <h2 className="font-semibold mb-4">ABC-XYZ Classification Matrix</h2>
-        <div className="overflow-auto">
-          <div className="grid grid-cols-4 gap-2 min-w-[400px]">
-            <div />
-            {xyzLabels.map(xyz => (
-              <div key={xyz} className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider py-2">
-                {xyz} {xyz === 'X' ? '(Stable)' : xyz === 'Y' ? '(Variable)' : '(Erratic)'}
-              </div>
-            ))}
-            {abcLabels.map(abc => (
-              <>
-                <div key={`label-${abc}`} className="flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {abc} {abc === 'A' ? '(High Rev)' : abc === 'B' ? '(Mid Rev)' : '(Low Rev)'}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 bg-card border rounded-lg p-6">
+          <h2 className="font-semibold mb-4">ABC-XYZ Classification Matrix</h2>
+          <div className="overflow-auto">
+            <div className="grid grid-cols-4 gap-2 min-w-[400px]">
+              <div />
+              {xyzLabels.map(xyz => (
+                <div key={xyz} className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider py-2">
+                  {xyz} {xyz === 'X' ? '(Stable)' : xyz === 'Y' ? '(Variable)' : '(Erratic)'}
                 </div>
-                {xyzLabels.map(xyz => {
-                  const key = `${abc}${xyz}`;
-                  const count = matrixCounts[key] || 0;
-                  return (
-                    <div key={key} className={`matrix-cell ${cellColors[key]}`}>
-                      <span className="text-2xl font-bold">{count}</span>
-                      <span className="text-xs opacity-70">SKUs</span>
-                    </div>
-                  );
-                })}
-              </>
-            ))}
+              ))}
+              {abcLabels.map(abc => (
+                <>
+                  <div key={`label-${abc}`} className="flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {abc} {abc === 'A' ? '(High Rev)' : abc === 'B' ? '(Mid Rev)' : '(Low Rev)'}
+                  </div>
+                  {xyzLabels.map(xyz => {
+                    const key = `${abc}${xyz}`;
+                    const count = matrixCounts[key] || 0;
+                    return (
+                      <div key={key} className={`matrix-cell ${cellColors[key]}`}>
+                        <span className="text-2xl font-bold">{count}</span>
+                        <span className="text-xs opacity-70">SKUs</span>
+                      </div>
+                    );
+                  })}
+                </>
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="font-semibold mb-4">Reorder Strategy Mix</h2>
+          {strategyDistribution.length === 0 ? (
+            <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
+              No SKU data
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={strategyDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {strategyDistribution.map((entry, index) => (
+                    <Cell key={index} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number, name: string) => [`${value} SKUs`, name]}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value: string) => (
+                    <span className="text-xs text-foreground">{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>

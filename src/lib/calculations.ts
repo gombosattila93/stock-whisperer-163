@@ -125,10 +125,11 @@ export function analyzeSkus(
       safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
     }
 
-    const effectiveLeadTime = supplierStats?.avgLeadTimeActual || sku.lead_time_days;
+    const effectiveLeadTime = Math.max(0, supplierStats?.avgLeadTimeActual || sku.lead_time_days);
     const reorder_point = effectiveDemand * effectiveLeadTime + safety_stock;
     const effective_stock = sku.stock_qty + sku.ordered_qty;
-    const days_of_stock = avg_daily_demand > 0 ? effective_stock / avg_daily_demand : Infinity;
+    // Use effectiveDemand (which respects EWMA) for days_of_stock
+    const days_of_stock = effectiveDemand > 0 ? effective_stock / effectiveDemand : (effective_stock > 0 ? Infinity : 0);
     const total_revenue = totalSold * sku.unit_price;
     const cv = mean > 0 ? std_dev / mean : 0;
 

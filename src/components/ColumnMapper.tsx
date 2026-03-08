@@ -151,8 +151,22 @@ function autoMap(sourceColumns: string[]): ColumnMapping {
   return mapping;
 }
 
-export function ColumnMapper({ open, onOpenChange, sourceColumns, onConfirm }: ColumnMapperProps) {
+export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onConfirm }: ColumnMapperProps) {
   const [mapping, setMapping] = useState<ColumnMapping>(() => autoMap(sourceColumns));
+
+  // Detect date format from the mapped date column
+  const dateFormatInfo = useMemo(() => {
+    const dateCol = mapping['date'];
+    if (!dateCol || !rawData?.length) return null;
+    const samples = rawData.map(r => r[dateCol] || '').filter(Boolean);
+    if (samples.length === 0) return null;
+    const fmt = detectDateFormat(samples);
+    return {
+      format: fmt,
+      label: getDateFormatLabel(fmt),
+      sampleValues: samples.slice(0, 3),
+    };
+  }, [mapping, rawData]);
 
   const unmappedRequired = TARGET_FIELDS.filter((f) => f.required && !mapping[f.key]);
   const mappedCount = Object.values(mapping).filter(Boolean).length;

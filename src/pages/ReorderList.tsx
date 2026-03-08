@@ -134,7 +134,7 @@ export default function ReorderList() {
           pbOpportunitySaving,
         };
       }),
-    [filtered, globalStrategy, skuOverrides, eoqSettings, skuSupplierOptions]
+    [calculable, globalStrategy, skuOverrides, eoqSettings, skuSupplierOptions]
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);

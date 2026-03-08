@@ -528,6 +528,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setCostSettings,
       skuSupplierOptions,
       setSkuSupplierOptions: setSkuSupplierOption,
+      reservations,
+      addReservation,
+      updateReservation,
+      reservedQtyMap,
     }}>
       {children}
     </InventoryContext.Provider>

@@ -1,5 +1,6 @@
 import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from './classificationTypes';
+import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 import { parseFlexibleDate } from './dateUtils';
 
 export const SERVICE_LEVELS: Record<string, number> = {

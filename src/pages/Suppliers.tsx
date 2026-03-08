@@ -30,13 +30,13 @@ export default function Suppliers() {
     const map = new Map<string, SupplierRow>();
     for (const s of filtered) {
       const existing = map.get(s.supplier);
-      const isCritical = s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0;
-      const needsReorder = s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0;
-      const excessQty = s.days_of_stock > 180 && s.avg_daily_demand > 0
+      const isCritical = s.days_of_stock !== null && s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0;
+      const needsReorder = s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0;
+      const excessQty = s.days_of_stock !== null && s.days_of_stock > 180 && s.avg_daily_demand > 0
         ? s.effective_stock - s.avg_daily_demand * 180
         : 0;
       const tiedUp = excessQty > 0 ? excessQty * s.unit_price : 0;
-      const orderQty = needsReorder ? getSuggestedOrderQty(s.reorder_point, s.effective_stock) : 0;
+      const orderQty = needsReorder ? getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock) : 0;
       const orderVal = orderQty * s.unit_price;
 
       if (existing) {

@@ -263,7 +263,7 @@ export default function Guide() {
           <div className="space-y-1">
             <p className="font-medium text-foreground">Two Categories:</p>
             <div className="space-y-0.5 text-xs">
-              <KeyValue label="Overstock">Items with >180 days of coverage but some demand exists</KeyValue>
+              <KeyValue label="Overstock">{"Items with >180 days of coverage but some demand exists"}</KeyValue>
               <KeyValue label="Dead Stock">Items with zero sales in the entire dataset period — no demand signal</KeyValue>
             </div>
           </div>

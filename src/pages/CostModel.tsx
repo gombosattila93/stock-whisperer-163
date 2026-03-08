@@ -176,6 +176,7 @@ export default function CostModel() {
     costSettings.paymentTermsEnabled,
     costSettings.ewmaEnabled,
     costSettings.serviceLevelSettings.usePerClassServiceLevel,
+    costSettings.shelfLifeEnabled,
   ].filter(Boolean).length;
 
   const hasLeadTimeStats = Object.keys(costSettings.supplierLeadTimeStats).length > 0;

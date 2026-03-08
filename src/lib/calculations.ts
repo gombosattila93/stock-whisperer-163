@@ -59,12 +59,13 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
 /** Compute EWMA from daily sales sorted ascending by date */
 export function ewmaDemand(dailySales: { date: string; qty: number }[], alpha: number): number {
   if (dailySales.length === 0) return 0;
+  const safeAlpha = Math.min(1, Math.max(0.01, alpha || 0.3));
   const sorted = [...dailySales].sort((a, b) => a.date.localeCompare(b.date));
   let s = sorted[0].qty;
   for (let i = 1; i < sorted.length; i++) {
-    s = alpha * sorted[i].qty + (1 - alpha) * s;
+    s = safeAlpha * sorted[i].qty + (1 - safeAlpha) * s;
   }
-  return s;
+  return Math.max(0, s);
 }
 
 export function analyzeSkus(
@@ -89,7 +90,8 @@ export function analyzeSkus(
     });
 
     const totalSold = filteredSales.reduce((sum, s) => sum + s.sold_qty, 0);
-    const avg_daily_demand = totalSold / demandDays;
+    const safeDemandDays = Math.max(1, demandDays);
+    const avg_daily_demand = totalSold / safeDemandDays;
 
     const dailyMap = new Map<string, number>();
     filteredSales.forEach(s => {
@@ -98,8 +100,8 @@ export function analyzeSkus(
     const dailyValues = Array.from(dailyMap.values());
     while (dailyValues.length < demandDays) dailyValues.push(0);
 
-    const mean = dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length;
-    const variance = dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length;
+    const mean = dailyValues.length > 0 ? dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length : 0;
+    const variance = dailyValues.length > 0 ? dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length : 0;
     const std_dev = Math.sqrt(variance);
 
     // EWMA demand
@@ -124,10 +126,11 @@ export function analyzeSkus(
       safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
     }
 
-    const effectiveLeadTime = supplierStats?.avgLeadTimeActual || sku.lead_time_days;
+    const effectiveLeadTime = Math.max(0, supplierStats?.avgLeadTimeActual || sku.lead_time_days);
     const reorder_point = effectiveDemand * effectiveLeadTime + safety_stock;
     const effective_stock = sku.stock_qty + sku.ordered_qty;
-    const days_of_stock = avg_daily_demand > 0 ? effective_stock / avg_daily_demand : Infinity;
+    // Use effectiveDemand (which respects EWMA) for days_of_stock
+    const days_of_stock = effectiveDemand > 0 ? effective_stock / effectiveDemand : (effective_stock > 0 ? Infinity : 0);
     const total_revenue = totalSold * sku.unit_price;
     const cv = mean > 0 ? std_dev / mean : 0;
 
@@ -337,6 +340,7 @@ export function getSuggestedOrderQty(reorder_point: number, effective_stock: num
 }
 
 export function getUrgency(days_of_stock: number, lead_time_days: number): string {
+  if (!Number.isFinite(days_of_stock)) return 'Watch';
   if (days_of_stock < 7) return 'Critical';
   if (days_of_stock < lead_time_days) return 'Warning';
   return 'Watch';

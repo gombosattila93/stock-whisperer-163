@@ -77,7 +77,7 @@ export default function ReorderPlan() {
         const moq = primaryOpt?.moq || 1;
         const effectiveMoq = Math.max(1, moq);
         const raw = result.suggested_order_qty;
-        const qty = Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq);
+        const qty = raw > 0 ? Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq) : 0;
         const urgency = getUrgency(s.days_of_stock, s.lead_time_days);
         const score = priorityScore(urgency, s.abc_class, s.trend);
         return {
@@ -319,7 +319,7 @@ export default function ReorderPlan() {
               value={[whatIfBudget]}
               onValueChange={([v]) => setWhatIfBudget(v)}
               min={0}
-              max={Math.max(totalOrderValue * 1.5, budget * 2, 1000)}
+              max={Math.max(totalOrderValue * 1.5, budget * 2, 1000) || 1000}
               step={100}
               className="w-full"
             />
@@ -376,9 +376,9 @@ export default function ReorderPlan() {
             {Object.entries(supplierSpend)
               .sort((a, b) => b[1] - a[1])
               .map(([supplier, spent]) => {
-                const cap = supplierBudgets[supplier] || budget;
-                const pct = Math.min(100, (spent / cap) * 100);
-                const concentrationRisk = spent > budget * 0.4;
+                const cap = supplierBudgets[supplier] || budget || 1;
+                const pct = Math.min(100, cap > 0 ? (spent / cap) * 100 : 0);
+                const concentrationRisk = budget > 0 && spent > budget * 0.4;
                 return (
                   <div key={supplier} className="space-y-1.5">
                     <div className="flex items-center justify-between">

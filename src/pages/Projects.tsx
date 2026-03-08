@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, CheckCircle, XCircle, Search } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import type { ProjectReservation } from "@/lib/types";
 
 export default function Projects() {
@@ -53,6 +54,20 @@ export default function Projects() {
 
   const handleCreate = useCallback(() => {
     if (!projectName.trim() || items.length === 0) return;
+    // Filter out items with invalid qty or stale SKUs
+    const validItems = items.filter(i => i.reservedQty > 0 && analysis.some(a => a.sku === i.sku));
+    if (validItems.length === 0) {
+      toast.error('No valid line items — ensure SKUs exist and quantities are > 0');
+      return;
+    }
+    // Warn about over-reservation
+    const overReserved = validItems.filter(i => {
+      const skuData = analysis.find(a => a.sku === i.sku);
+      return skuData && (skuData.available_qty - i.reservedQty) < 0;
+    });
+    if (overReserved.length > 0) {
+      toast.warning(`${overReserved.length} SKU(s) will have negative available stock after reservation`);
+    }
     const reservation: ProjectReservation = {
       id: crypto.randomUUID(),
       projectName: projectName.trim(),
@@ -60,13 +75,13 @@ export default function Projects() {
       customer: customer.trim(),
       dueDate,
       status: 'active',
-      items,
+      items: validItems,
       createdAt: new Date().toISOString(),
     };
     addReservation(reservation);
     resetForm();
     setDialogOpen(false);
-  }, [projectName, customer, dueDate, items, addReservation, resetForm]);
+  }, [projectName, customer, dueDate, items, addReservation, resetForm, analysis]);
 
   const addLineItem = useCallback((sku: string) => {
     if (items.some(i => i.sku === sku)) return;

@@ -13,7 +13,7 @@ export default function Overstock() {
     filtered
       .filter(s => s.days_of_stock > 180)
       .map(s => {
-        const idealStock = s.avg_daily_demand * 90;
+        const idealStock = s.avg_daily_demand * 180;
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
         const tied_up_capital = excess_qty * s.unit_price;
         return { ...s, excess_qty: Math.round(excess_qty), tied_up_capital };

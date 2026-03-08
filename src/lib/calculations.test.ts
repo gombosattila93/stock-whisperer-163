@@ -425,7 +425,8 @@ describe("Edge cases: negative / zero stock", () => {
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
     expect(sku.effective_stock).toBe(0);
-    expect(sku.days_of_stock).toBe(0);
+    // No demand history (sold_qty=5 > 0 so hasDemandHistory=true), effective_stock=0, demand > 0 → 0
+    expect(sku.days_of_stock).toBeCloseTo(0, 2);
   });
 });
 

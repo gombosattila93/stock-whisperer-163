@@ -117,14 +117,30 @@ const TARGET_FIELDS: FieldDef[] = [
   },
 ];
 
+/** Common aliases for each target field to improve auto-mapping accuracy */
+const FIELD_ALIASES: Record<string, string[]> = {
+  sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],
+  sku_name: ["skuname", "productname", "itemname", "description", "itemdescription", "productdescription", "title", "materialname", "articlename"],
+  supplier: ["supplier", "vendor", "vendorname", "suppliername", "manufacturer", "source"],
+  category: ["category", "productcategory", "itemcategory", "group", "productgroup", "type", "producttype", "class", "family"],
+  date: ["date", "saledate", "transactiondate", "orderdate", "invoicedate", "salesdate", "txndate", "transdate"],
+  partner_id: ["partnerid", "customerid", "clientid", "buyerid", "accountid", "custid", "customer", "client"],
+  sold_qty: ["soldqty", "quantitysold", "qtysold", "salesqty", "quantity", "qty", "units", "unitssold"],
+  unit_price: ["unitprice", "price", "sellingprice", "saleprice", "listprice", "costprice", "amount"],
+  stock_qty: ["stockqty", "currentstock", "onhand", "qtyonhand", "inventoryqty", "stocklevel", "availableqty", "balance"],
+  lead_time_days: ["leadtimedays", "leadtime", "deliverytime", "deliveryleadtime", "lt", "replenishmenttime"],
+  ordered_qty: ["orderedqty", "qtyordered", "onorder", "qtyonorder", "openorderqty", "poqty", "intransit"],
+  expected_delivery_date: ["expecteddeliverydate", "eta", "expecteddate", "deliverydate", "arrivaldate", "duedate", "podate"],
+};
+
 function autoMap(sourceColumns: string[]): ColumnMapping {
   const mapping: ColumnMapping = {};
   const lowerSource = sourceColumns.map((c) => c.toLowerCase().replace(/[\s_-]+/g, ""));
 
   for (const field of TARGET_FIELDS) {
-    const fieldNorm = field.key.replace(/_/g, "");
+    const aliases = FIELD_ALIASES[field.key] || [field.key.replace(/_/g, "")];
     const idx = lowerSource.findIndex(
-      (s) => s === fieldNorm || s.includes(fieldNorm) || fieldNorm.includes(s)
+      (s) => aliases.some((alias) => s === alias || s.includes(alias) || alias.includes(s))
     );
     if (idx !== -1) {
       mapping[field.key] = sourceColumns[idx];

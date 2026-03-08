@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 const TIER_BADGE: Record<SkuCapability['tier'], { label: string; className: string }> = {
   full: { label: 'Complete', className: 'bg-primary/10 text-primary border-primary/30' },

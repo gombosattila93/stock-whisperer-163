@@ -11,6 +11,57 @@ export interface RawRow {
   lead_time_days: number;
   ordered_qty: number;
   expected_delivery_date: string;
+  // Multi-currency optional fields
+  selling_price_huf?: string;
+  purchase_currency?: string;
+  purchase_price_1?: string;
+  purchase_qty_1?: string;
+  purchase_price_2?: string;
+  purchase_qty_2?: string;
+  purchase_price_3?: string;
+  purchase_qty_3?: string;
+  purchase_price_4?: string;
+  purchase_qty_4?: string;
+  purchase_price_5?: string;
+  purchase_qty_5?: string;
+  purchase_price_6?: string;
+  purchase_qty_6?: string;
+  purchase_price_7?: string;
+  purchase_qty_7?: string;
+  purchase_price_8?: string;
+  purchase_qty_8?: string;
+}
+
+// ─── Multi-currency types ──────────────────────────────────────────────────
+
+export interface PriceBreak {
+  minQty: number;
+  price: number;       // in purchase_currency
+  priceEur: number;    // converted to EUR
+}
+
+export interface PriceData {
+  // Selling
+  sellingPriceHuf: number | null;
+  sellingPriceEur: number | null;
+  sellingPriceEstimated: boolean;
+  // Purchasing
+  purchaseCurrency: 'USD' | 'EUR';
+  priceBreaks: PriceBreak[];
+  basePurchasePriceEur: number | null;
+  bestPurchasePriceEur: number | null;
+  effectivePurchasePriceEur: number | null;
+  // Margin
+  marginEur: number | null;
+  marginPct: number | null;
+  marginAtBestBreakEur: number | null;
+  marginAtBestBreakPct: number | null;
+  // Flags
+  hasPurchasePrice: boolean;
+  hasSellingPrice: boolean;
+  hasMarginData: boolean;
+  nextPriceBreakQty: number | null;
+  nextPriceBreakSaving: number | null;
 }
 
 export interface SaleRecord {

@@ -61,9 +61,10 @@ interface SortableHeaderProps {
   sort: SortState;
   onSort: (column: string) => void;
   align?: "left" | "right";
+  tooltip?: string;
 }
 
-export function SortableHeader({ column, label, sort, onSort, align = "left" }: SortableHeaderProps) {
+export function SortableHeader({ column, label, sort, onSort, align = "left", tooltip }: SortableHeaderProps) {
   const isActive = sort.column === column;
 
   return (
@@ -75,6 +76,18 @@ export function SortableHeader({ column, label, sort, onSort, align = "left" }: 
     >
       <span className={`inline-flex items-center gap-1 ${align === "right" ? "justify-end" : ""}`}>
         {label}
+        {tooltip && (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 opacity-40 hover:opacity-80 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()} />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed font-normal normal-case tracking-normal">
+                <p>{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {isActive && sort.direction === "asc" && <ArrowUp className="h-3 w-3 text-primary" />}
         {isActive && sort.direction === "desc" && <ArrowDown className="h-3 w-3 text-primary" />}
         {!isActive && <ArrowUpDown className="h-3 w-3 opacity-30" />}

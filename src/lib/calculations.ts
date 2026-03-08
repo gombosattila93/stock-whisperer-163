@@ -89,7 +89,8 @@ export function analyzeSkus(
     });
 
     const totalSold = filteredSales.reduce((sum, s) => sum + s.sold_qty, 0);
-    const avg_daily_demand = totalSold / demandDays;
+    const safeDemandDays = Math.max(1, demandDays);
+    const avg_daily_demand = totalSold / safeDemandDays;
 
     const dailyMap = new Map<string, number>();
     filteredSales.forEach(s => {

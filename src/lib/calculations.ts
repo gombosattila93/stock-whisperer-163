@@ -1,5 +1,6 @@
 import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
+import { parseFlexibleDate } from './csvUtils';
 
 export const SERVICE_LEVELS: Record<string, number> = {
   '90%': 1.28,

@@ -267,7 +267,7 @@ describe('CSV injection and malicious content', () => {
     expect(headers[0]).toBe('sku');
     const validation = validateCsvHeaders(headers);
     expect(validation.valid).toBe(true);
-    expect(validation.errors).toHaveLength(0);
+    expect(validation.missing).toHaveLength(0);
   });
 
   test('Tab-separated data uploaded as CSV — PapaParse auto-detects', async () => {

@@ -283,12 +283,13 @@ describe("safety stock and reorder point", () => {
     expect(result[0].reorder_point).toBeCloseTo(avgDemand * leadTime, 2);
   });
 
-  it("calculates effective_stock as stock_qty + ordered_qty", () => {
+  it("calculates effective_stock as stock_qty (ordered excluded due to past due date)", () => {
     const sales = Array(31).fill(5);
     const result = runAnalysis([
       makeSkuWithSales("S1", sales, { stockQty: 50, orderedQty: 30 }),
     ]);
-    expect(result[0].effective_stock).toBe(80);
+    // expected_delivery_date defaults to past → pastDueOrders=true → ordered excluded
+    expect(result[0].effective_stock).toBe(50);
   });
 
   it("days_of_stock is Infinity when avg_daily_demand is 0", () => {

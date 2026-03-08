@@ -9,9 +9,16 @@ import { VirtualizedTable } from "@/components/VirtualizedTable";
 import { EditableCell } from "@/components/EditableCell";
 import { TrendBadge } from "@/components/TrendBadge";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useMemo } from "react";
 
 export default function CriticalSkus() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)

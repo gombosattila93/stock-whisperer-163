@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRows, analyzeSkus } from "./calculations";
+import { parseRows, analyzeSkus, getSuggestedOrderQty, getUrgency } from "./calculations";
 import { RawRow, SkuData } from "./types";
 
 const makeRow = (overrides: Partial<RawRow> = {}): RawRow => ({
@@ -262,5 +262,65 @@ describe("safety stock and reorder point", () => {
     ]);
     // effective = 100, avg_daily = 10 → days = 10
     expect(result[0].days_of_stock).toBeCloseTo(10, 2);
+  });
+});
+
+describe("getSuggestedOrderQty", () => {
+  it("returns rounded-up order qty when stock is below reorder point", () => {
+    // Formula: (reorder_point * 2 - effective_stock), rounded up to nearest 10
+    // (100 * 2 - 50) = 150 → 150
+    expect(getSuggestedOrderQty(100, 50)).toBe(150);
+  });
+
+  it("rounds up to nearest 10", () => {
+    // (50 * 2 - 75) = 25 → ceil(25/10)*10 = 30
+    expect(getSuggestedOrderQty(50, 75)).toBe(30);
+  });
+
+  it("returns 0 when effective_stock exceeds 2× reorder_point", () => {
+    // (30 * 2 - 100) = -40 → 0
+    expect(getSuggestedOrderQty(30, 100)).toBe(0);
+  });
+
+  it("returns 0 when effective_stock equals 2× reorder_point", () => {
+    // (50 * 2 - 100) = 0 → 0
+    expect(getSuggestedOrderQty(50, 100)).toBe(0);
+  });
+
+  it("handles zero reorder_point", () => {
+    // (0 * 2 - 50) = -50 → 0
+    expect(getSuggestedOrderQty(0, 50)).toBe(0);
+  });
+
+  it("handles zero effective_stock", () => {
+    // (100 * 2 - 0) = 200 → 200
+    expect(getSuggestedOrderQty(100, 0)).toBe(200);
+  });
+});
+
+describe("getUrgency", () => {
+  it("returns 'Critical' when days_of_stock < 7", () => {
+    expect(getUrgency(0, 10)).toBe("Critical");
+    expect(getUrgency(3, 10)).toBe("Critical");
+    expect(getUrgency(6.9, 10)).toBe("Critical");
+  });
+
+  it("returns 'Warning' when days_of_stock >= 7 but < lead_time", () => {
+    expect(getUrgency(7, 14)).toBe("Warning");
+    expect(getUrgency(10, 14)).toBe("Warning");
+    expect(getUrgency(13.9, 14)).toBe("Warning");
+  });
+
+  it("returns 'Watch' when days_of_stock >= lead_time", () => {
+    expect(getUrgency(14, 14)).toBe("Watch");
+    expect(getUrgency(30, 14)).toBe("Watch");
+  });
+
+  it("returns 'Critical' when days_of_stock < 7 even if lead_time is small", () => {
+    expect(getUrgency(5, 3)).toBe("Critical");
+  });
+
+  it("returns 'Watch' for Infinity days_of_stock", () => {
+    expect(getUrgency(Infinity, 14)).toBe("Watch");
   });
 });

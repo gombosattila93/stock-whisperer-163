@@ -45,7 +45,7 @@ export function parseCsvFile(file: File): Promise<RawRow[]> {
     Papa.parse<RawRow>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
       complete: (results) => resolve(results.data),
       error: (err: Error) => reject(err),
     });

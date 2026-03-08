@@ -54,8 +54,20 @@ export function DashboardAlerts() {
       }
     }
 
+    // Shelf life critical
+    if (costSettings.shelfLifeEnabled) {
+      const shelfCriticalCount = filtered.filter(s => s.shelfLifeRisk === 'critical').length;
+      if (shelfCriticalCount > 0) {
+        result.push({
+          id: 'shelf-life-critical',
+          severity: 'critical',
+          message: `${shelfCriticalCount} SKU${shelfCriticalCount > 1 ? 's' : ''} exceed shelf life threshold — risk of write-off`,
+        });
+      }
+    }
+
     return result;
-  }, [filtered, hasData]);
+  }, [filtered, hasData, costSettings]);
 
   const visibleAlerts = alerts.filter(a => !dismissed.has(a.id));
 

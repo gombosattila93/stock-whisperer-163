@@ -523,6 +523,81 @@ export default function CostModel() {
             })}
           </div>
         </div>
+
+        {/* Shelf Life / Expiry */}
+        <div className="bg-card border rounded-lg p-5 space-y-4">
+          <SectionHeader
+            icon={Hourglass}
+            title="Shelf Life / Expiry Tracking"
+            enabled={costSettings.shelfLifeEnabled}
+            onToggle={(v) => update('shelfLifeEnabled', v)}
+            tip="Track shelf life per category. Items with days_of_stock exceeding shelf life are flagged as expiry risk. Critical = exceeds shelf life, Warning = >75% of shelf life."
+          />
+          <div className={`space-y-3 ${!costSettings.shelfLifeEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            {Object.keys(costSettings.categoryShelfLifeDays).length === 0 && costSettings.shelfLifeEnabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => update('categoryShelfLifeDays', { ...DEFAULT_SHELF_LIFE })}
+                className="text-xs"
+              >
+                Load default shelf life presets
+              </Button>
+            )}
+            <div className="grid grid-cols-1 gap-2">
+              {Object.entries(costSettings.categoryShelfLifeDays).map(([cat, days]) => (
+                <div key={cat} className="flex items-center gap-2">
+                  <span className="text-xs w-40 truncate" title={cat}>{cat}</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={days}
+                    onChange={(e) => {
+                      const next = { ...costSettings.categoryShelfLifeDays };
+                      next[cat] = Number(e.target.value) || 9999;
+                      update('categoryShelfLifeDays', next);
+                    }}
+                    disabled={!costSettings.shelfLifeEnabled}
+                    className="h-7 w-24 text-xs"
+                  />
+                  <span className="text-[10px] text-muted-foreground">days</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = { ...costSettings.categoryShelfLifeDays };
+                      delete next[cat];
+                      update('categoryShelfLifeDays', next);
+                    }}
+                    disabled={!costSettings.shelfLifeEnabled}
+                  >
+                    ×
+                  </Button>
+                </div>
+              ))}
+            </div>
+            {costSettings.shelfLifeEnabled && (
+              <div className="flex items-center gap-2">
+                <Input
+                  id="new-shelf-cat"
+                  placeholder="Category name"
+                  className="h-7 w-40 text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = (e.target as HTMLInputElement).value.trim();
+                      if (val && !(val in costSettings.categoryShelfLifeDays)) {
+                        update('categoryShelfLifeDays', { ...costSettings.categoryShelfLifeDays, [val]: 9999 });
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }
+                  }}
+                />
+                <span className="text-[10px] text-muted-foreground">Press Enter to add</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

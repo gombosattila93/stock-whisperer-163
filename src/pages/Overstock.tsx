@@ -4,6 +4,7 @@ import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
+import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
 
 export default function Overstock() {
@@ -17,6 +18,12 @@ export default function Overstock() {
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
         const tied_up_capital = excess_qty * s.unit_price;
         return { ...s, excess_qty: Math.round(excess_qty), tied_up_capital };
+      })
+      // Sort critical shelf life items to top
+      .sort((a, b) => {
+        if (a.shelfLifeRisk === 'critical' && b.shelfLifeRisk !== 'critical') return -1;
+        if (b.shelfLifeRisk === 'critical' && a.shelfLifeRisk !== 'critical') return 1;
+        return b.tied_up_capital - a.tied_up_capital;
       }),
     [filtered]
   );
@@ -29,6 +36,7 @@ export default function Overstock() {
   const totalTiedUp = overstock.reduce((s, o) => s + o.tied_up_capital, 0);
   const showHolding = costSettings.holdingCostEnabled;
   const showStorage = costSettings.storageCostEnabled;
+  const showShelfLife = costSettings.shelfLifeEnabled;
 
   const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier,
@@ -36,6 +44,7 @@ export default function Overstock() {
     excess_qty: s.excess_qty, tied_up_capital: s.tied_up_capital.toFixed(2),
     ...(showHolding ? { annual_holding_cost: s.holdingCost.toFixed(2) } : {}),
     ...(showStorage ? { monthly_storage_cost: s.storageCost.toFixed(2) } : {}),
+    ...(showShelfLife ? { shelf_life_days: s.shelfLifeDays, shelf_life_risk: s.shelfLifeRisk } : {}),
   }));
 
   return (
@@ -69,6 +78,7 @@ export default function Overstock() {
                   <SortableHeader column="tied_up_capital" label="Tied-up Capital" sort={sort} onSort={toggleSort} align="right" />
                   {showHolding && <SortableHeader column="holdingCost" label="Annual Holding €" sort={sort} onSort={toggleSort} align="right" />}
                   {showStorage && <SortableHeader column="storageCost" label="Storage €/mo" sort={sort} onSort={toggleSort} align="right" />}
+                  {showShelfLife && <SortableHeader column="shelfLifeRisk" label="Shelf Life Risk" sort={sort} onSort={toggleSort} />}
                 </tr>
               </thead>
               <tbody>
@@ -89,6 +99,17 @@ export default function Overstock() {
                     )}
                     {showStorage && (
                       <td className="text-right text-sm">€{s.storageCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    )}
+                    {showShelfLife && (
+                      <td>
+                        {s.shelfLifeRisk === 'critical' ? (
+                          <Badge variant="destructive" className="text-[10px]">Critical — {s.shelfLifeDays}d</Badge>
+                        ) : s.shelfLifeRisk === 'warning' ? (
+                          <Badge variant="secondary" className="text-[10px] bg-warning/15 text-warning-foreground border-warning/30">Warning — {s.shelfLifeDays}d</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">OK</span>
+                        )}
+                      </td>
                     )}
                   </tr>
                 ))}

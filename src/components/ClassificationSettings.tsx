@@ -20,6 +20,7 @@ import { HelpCircle, RotateCcw } from "lucide-react";
 
 export type { ClassificationThresholds } from '@/lib/classificationTypes';
 export { DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
+import { DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import type { ClassificationThresholds } from '@/lib/classificationTypes';
 
 interface ClassificationSettingsProps {

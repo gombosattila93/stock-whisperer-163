@@ -357,27 +357,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (!pendingAppend) return;
     const { analysis: dupAnalysis, fileName } = pendingAppend;
 
-    const rowsToAdd: RawRow[] = [...dupAnalysis.genuineNew];
-
-    for (const conflict of dupAnalysis.conflicts) {
-      const resolution = resolutions.get(conflict.partialKey) || 'use_new';
-      if (resolution === 'keep_old') {
-        // Don't add the incoming row; existing stays
-      } else if (resolution === 'use_new') {
-        // Replace existing row with incoming
-        const pk = conflict.partialKey;
-        setRawRows(prev =>
-          prev.map(r => partialFingerprint(r) === pk ? conflict.incoming : r)
-        );
-      } else {
-        // keep_both — add incoming alongside existing
-        rowsToAdd.push(conflict.incoming);
-      }
-    }
-
-    // For "use_new" conflicts we already mutated via setRawRows.
-    // We need to handle the combination properly: do all replacements first, then append new rows.
-    // Refactor: collect replacements and appends separately
     const replaceMap = new Map<string, RawRow>();
     const extraRows: RawRow[] = [...dupAnalysis.genuineNew];
 

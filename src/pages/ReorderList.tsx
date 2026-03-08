@@ -2,12 +2,14 @@ import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getUrgency } from "@/lib/calculations";
-import { computeReorder, STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
-import { loadSkuOverrides, saveSkuOverrides, SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
+import { computeReorder, STRATEGY_OPTIONS, ReorderStrategy, EoqSettings, DEFAULT_EOQ_SETTINGS } from "@/lib/reorderStrategies";
+import { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
+import { loadSkuOverrides, saveSkuOverrides, loadEoqSettings, saveEoqSettings } from "@/lib/persistence";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
+import { EoqSettingsPanel } from "@/components/EoqSettingsPanel";
 import {
   Select,
   SelectContent,
@@ -25,13 +27,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RotateCcw, CheckSquare } from "lucide-react";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
   const { filtered, hasData } = useInventory();
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
-  const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>(loadSkuOverrides);
+  const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
+  const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
   const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
+
+  // Load persisted state from IndexedDB on mount
+  useEffect(() => {
+    loadSkuOverrides().then(setSkuOverrides);
+    loadEoqSettings().then(setEoqSettings);
+  }, []);
 
   const overrideCount = Object.keys(skuOverrides).length;
 
@@ -53,6 +62,11 @@ export default function ReorderList() {
     saveSkuOverrides({});
   }, []);
 
+  const handleEoqChange = useCallback((settings: EoqSettings) => {
+    setEoqSettings(settings);
+    saveEoqSettings(settings);
+  }, []);
+
   const toggleSelect = useCallback((sku: string) => {
     setSelectedSkus(prev => {
       const next = new Set(prev);
@@ -67,7 +81,7 @@ export default function ReorderList() {
       .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
-        const result = computeReorder(s, effectiveStrategy);
+        const result = computeReorder(s, effectiveStrategy, eoqSettings);
         return {
           ...s,
           suggested_order_qty: result.suggested_order_qty,
@@ -78,7 +92,7 @@ export default function ReorderList() {
           hasOverride: !!skuOverrides[s.sku],
         };
       }),
-    [filtered, globalStrategy, skuOverrides]
+    [filtered, globalStrategy, skuOverrides, eoqSettings]
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);
@@ -142,6 +156,7 @@ export default function ReorderList() {
 
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">
+          <EoqSettingsPanel settings={eoqSettings} onChange={handleEoqChange} />
           <Label className="text-xs text-muted-foreground whitespace-nowrap">Default Strategy</Label>
           <Select value={globalStrategy} onValueChange={(v) => setGlobalStrategy(v as ReorderStrategy)}>
             <SelectTrigger className="w-[220px] h-8 text-xs">

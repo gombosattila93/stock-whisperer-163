@@ -4,9 +4,9 @@ import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { Package, AlertTriangle, ShoppingCart, PackageX } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
-import { loadSkuOverrides } from "@/lib/skuStrategyOverrides";
+import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 function KpiCard({ icon: Icon, label, value, accent }: {
@@ -58,13 +58,18 @@ const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
 export default function Overview() {
   const { filtered, hasData } = useInventory();
 
+  const [overridesLoaded, setOverridesLoaded] = useState<Record<string, ReorderStrategy>>({});
+
+  useEffect(() => {
+    loadSkuOverrides().then(setOverridesLoaded);
+  }, [filtered]);
+
   const strategyDistribution = useMemo(() => {
     if (filtered.length === 0) return [];
-    const overrides = loadSkuOverrides();
     const counts: Record<ReorderStrategy, number> = { rop: 0, eoq: 0, minmax: 0, periodic: 0 };
     for (const s of filtered) {
-      const strategy = overrides[s.sku] || 'rop';
-      counts[strategy]++;
+      const strategy = overridesLoaded[s.sku] || 'rop';
+      counts[strategy as ReorderStrategy]++;
     }
     return Object.entries(counts)
       .filter(([, count]) => count > 0)
@@ -73,7 +78,7 @@ export default function Overview() {
         value: count,
         color: STRATEGY_COLORS[key as ReorderStrategy],
       }));
-  }, [filtered]);
+  }, [filtered, overridesLoaded]);
 
   if (!hasData) return <EmptyState />;
 

@@ -40,10 +40,12 @@ export function parseCsvFileRaw(file: File): Promise<Record<string, string>[]> {
 
 export function exportToCsv(data: Record<string, unknown>[], filename: string) {
   const csv = Papa.unparse(data);
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  // Add UTF-8 BOM for Excel compatibility
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(link.href);
+  // Delay revokeObjectURL to ensure download starts
+  setTimeout(() => URL.revokeObjectURL(link.href), 100);
 }

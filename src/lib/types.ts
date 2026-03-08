@@ -93,6 +93,10 @@ export interface SkuData {
   expected_delivery_date: string;
   sales: SaleRecord[];
   supplierOptions: SupplierOption[];
+  // Multi-currency raw fields (from latest CSV row)
+  selling_price_huf?: number | null;
+  purchase_currency?: 'USD' | 'EUR';
+  purchase_prices?: Array<{ qty: number; price: number }>;
 }
 
 export type AbcClass = 'A' | 'B' | 'C' | 'N/A';

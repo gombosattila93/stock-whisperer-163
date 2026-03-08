@@ -17,7 +17,7 @@ import {
 import { AbcClass, XyzClass } from "@/lib/types";
 
 export default function AbcXyzDetail() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, costSettings } = useInventory();
   const [abcFilter, setAbcFilter] = useState<string>("");
   const [xyzFilter, setXyzFilter] = useState<string>("");
 

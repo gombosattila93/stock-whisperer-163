@@ -5,7 +5,7 @@ import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDat
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
 import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides } from '@/lib/persistence';
-import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
+import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { ColumnMapping } from '@/components/ColumnMapper';
 import { toast } from 'sonner';
 import type { WorkerRequest, WorkerResponse } from '@/workers/inventoryWorker';

@@ -1,6 +1,6 @@
 import { parseRows, analyzeSkus } from '@/lib/calculations';
 import type { RawRow, SkuAnalysis } from '@/lib/types';
-import type { ClassificationThresholds } from '@/components/ClassificationSettings';
+import type { ClassificationThresholds } from '@/lib/classificationTypes';
 
 export interface WorkerRequest {
   type: 'ANALYZE';

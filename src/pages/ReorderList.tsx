@@ -69,7 +69,7 @@ function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string
 }
 
 export default function ReorderList() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap, fxRates } = useInventory();
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});

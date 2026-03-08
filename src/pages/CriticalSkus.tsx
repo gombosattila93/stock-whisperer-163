@@ -72,9 +72,14 @@ export default function CriticalSkus() {
                 render: (s) => <HighlightText text={s.category} />,
               },
               {
-                key: 'trend',
+                key: 'sparkline',
                 header: <span className={thClass}>Trend</span>,
                 render: (s) => <DemandSparkline sku={s} />,
+              },
+              {
+                key: 'trend',
+                header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} />,
+                render: (s) => <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />,
               },
               {
                 key: 'days_of_stock',

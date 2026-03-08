@@ -7,6 +7,8 @@ import { sampleCsv } from '@/lib/sampleData';
 import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides } from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { ColumnMapping } from '@/components/ColumnMapper';
+import { analyzeDuplicates, DuplicateAnalysis, partialFingerprint } from '@/lib/duplicateDetection';
+import type { ConflictResolution } from '@/components/DuplicateDetectionModal';
 import { toast } from 'sonner';
 import type { WorkerRequest, WorkerResponse } from '@/workers/inventoryWorker';
 
@@ -46,6 +48,10 @@ interface InventoryContextType {
   pendingHeaders: string[];
   pendingRawData: Record<string, string>[];
   setPendingFile: (f: File | null) => void;
+  // For duplicate detection on append
+  pendingAppend: { analysis: DuplicateAnalysis; fileName: string } | null;
+  confirmAppend: (resolutions: Map<string, ConflictResolution>) => void;
+  cancelAppend: () => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
@@ -309,20 +315,82 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [processAndValidate]);
 
+  // Pending append state for duplicate detection
+  const [pendingAppend, setPendingAppend] = useState<{
+    analysis: DuplicateAnalysis;
+    fileName: string;
+    validated: RawRow[];
+  } | null>(null);
+
   const appendFile = useCallback(async (file: File) => {
     try {
       const parsed = await parseCsvFile(file);
       const validated = processAndValidate(parsed);
-      if (validated.length > 0) {
-        setRawRows(prev => [...prev, ...validated]);
+      if (validated.length === 0) return;
+
+      if (rawRows.length === 0) {
+        // No existing data — skip duplicate detection
+        setRawRows(validated);
         toast.success(`Appended ${validated.length} rows from ${file.name}`);
+        return;
       }
+
+      const dupAnalysis = analyzeDuplicates(rawRows, validated);
+
+      // Fast path: no duplicates or conflicts at all
+      if (dupAnalysis.exactDuplicates.length === 0 && dupAnalysis.conflicts.length === 0) {
+        setRawRows(prev => [...prev, ...dupAnalysis.genuineNew]);
+        toast.success(`Appended ${dupAnalysis.genuineNew.length} rows from ${file.name}`);
+        return;
+      }
+
+      // Show confirmation modal
+      setPendingAppend({ analysis: dupAnalysis, fileName: file.name, validated });
     } catch (err) {
       toast.error('Failed to parse CSV file', {
         description: err instanceof Error ? err.message : 'Unknown error',
       });
     }
-  }, [processAndValidate]);
+  }, [processAndValidate, rawRows]);
+
+  const confirmAppend = useCallback((resolutions: Map<string, ConflictResolution>) => {
+    if (!pendingAppend) return;
+    const { analysis: dupAnalysis, fileName } = pendingAppend;
+
+    const replaceMap = new Map<string, RawRow>();
+    const extraRows: RawRow[] = [...dupAnalysis.genuineNew];
+
+    for (const conflict of dupAnalysis.conflicts) {
+      const resolution = resolutions.get(conflict.partialKey) || 'use_new';
+      if (resolution === 'use_new') {
+        replaceMap.set(conflict.partialKey, conflict.incoming);
+      } else if (resolution === 'keep_both') {
+        extraRows.push(conflict.incoming);
+      }
+      // 'keep_old' → do nothing
+    }
+
+    setRawRows(prev => {
+      let updated = prev;
+      if (replaceMap.size > 0) {
+        updated = updated.map(r => {
+          const pk = partialFingerprint(r);
+          return replaceMap.get(pk) ?? r;
+        });
+      }
+      return [...updated, ...extraRows];
+    });
+
+    const added = extraRows.length + replaceMap.size;
+    toast.success(`Merged ${added} rows from ${fileName}`, {
+      description: `${dupAnalysis.exactDuplicates.length} duplicates skipped${dupAnalysis.conflicts.length > 0 ? `, ${dupAnalysis.conflicts.length} conflicts resolved` : ''}`,
+    });
+    setPendingAppend(null);
+  }, [pendingAppend]);
+
+  const cancelAppend = useCallback(() => {
+    setPendingAppend(null);
+  }, []);
 
   const loadSample = useCallback(async () => {
     const rows = await parseCsvString(sampleCsv);
@@ -383,6 +451,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       pendingHeaders,
       pendingRawData,
       setPendingFile,
+      pendingAppend: pendingAppend ? { analysis: pendingAppend.analysis, fileName: pendingAppend.fileName } : null,
+      confirmAppend,
+      cancelAppend,
     }}>
       {children}
     </InventoryContext.Provider>

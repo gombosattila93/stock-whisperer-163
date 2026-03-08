@@ -4,11 +4,16 @@ import { GlobalFilters } from "@/components/GlobalFilters";
 import { DataActions } from "@/components/EmptyState";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ColumnMapper } from "@/components/ColumnMapper";
+import { DuplicateDetectionModal } from "@/components/DuplicateDetectionModal";
 import { useInventory } from "@/context/InventoryContext";
 import { Progress } from "@/components/ui/progress";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { pendingFile, pendingHeaders, pendingRawData, setPendingFile, loadFileWithMapping, isCalculating, calculationProgress } = useInventory();
+  const {
+    pendingFile, pendingHeaders, pendingRawData, setPendingFile, loadFileWithMapping,
+    isCalculating, calculationProgress,
+    pendingAppend, confirmAppend, cancelAppend,
+  } = useInventory();
 
   return (
     <SidebarProvider>
@@ -45,6 +50,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           onConfirm={(mapping) => {
             if (pendingFile) loadFileWithMapping(pendingFile, mapping);
           }}
+        />
+      )}
+
+      {pendingAppend && (
+        <DuplicateDetectionModal
+          open={!!pendingAppend}
+          onOpenChange={(open) => { if (!open) cancelAppend(); }}
+          analysis={pendingAppend.analysis}
+          fileName={pendingAppend.fileName}
+          onConfirm={confirmAppend}
         />
       )}
     </SidebarProvider>

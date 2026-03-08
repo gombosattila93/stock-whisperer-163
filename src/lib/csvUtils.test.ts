@@ -115,6 +115,8 @@ SKU001,Widget A,Supplier X,Electronics,2024-01-01,P001,10,25.50,100,7,50,2024-01
 
       expect(mockCreateObjectURL).toHaveBeenCalledWith(expect.any(Blob));
       expect(mockClick).toHaveBeenCalled();
+
+      vi.advanceTimersByTime(100);
       expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
     });
 

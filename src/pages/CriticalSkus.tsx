@@ -22,9 +22,13 @@ export default function CriticalSkus() {
 
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
 
-  const critical = filtered
-    .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
-    .sort((a, b) => a.days_of_stock - b.days_of_stock);
+  // Only show SKUs where critical is calculable
+  const calculable = filtered.filter(s => s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
+  const excludedCount = filtered.length - calculable.length;
+
+  const critical = calculable
+    .filter(s => s.days_of_stock !== null && s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
+    .sort((a, b) => (a.days_of_stock ?? 0) - (b.days_of_stock ?? 0));
 
   // Compute alt supplier suggestions
   const altSupplierMap = useMemo(() => {

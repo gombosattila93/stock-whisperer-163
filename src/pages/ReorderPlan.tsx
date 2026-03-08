@@ -376,9 +376,9 @@ export default function ReorderPlan() {
             {Object.entries(supplierSpend)
               .sort((a, b) => b[1] - a[1])
               .map(([supplier, spent]) => {
-                const cap = supplierBudgets[supplier] || budget;
-                const pct = Math.min(100, (spent / cap) * 100);
-                const concentrationRisk = spent > budget * 0.4;
+                const cap = supplierBudgets[supplier] || budget || 1;
+                const pct = Math.min(100, cap > 0 ? (spent / cap) * 100 : 0);
+                const concentrationRisk = budget > 0 && spent > budget * 0.4;
                 return (
                   <div key={supplier} className="space-y-1.5">
                     <div className="flex items-center justify-between">

@@ -11,6 +11,7 @@ import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { EoqSettingsPanel } from "@/components/EoqSettingsPanel";
 import { EditableCell } from "@/components/EditableCell";
+import { TrendBadge } from "@/components/TrendBadge";
 import { exportToCsv } from "@/lib/csvUtils";
 import {
   Select,

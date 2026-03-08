@@ -552,6 +552,30 @@ export default function ReorderList() {
                           )}
                         </div>
                       </td>
+                      {/* Est. PO Value + price break hint */}
+                      <td className="text-right text-xs">
+                        {(() => {
+                          const pd = s.priceData;
+                          const effPrice = pd?.effectivePurchasePriceEur ?? null;
+                          if (!effPrice) return <span className="text-muted-foreground">—</span>;
+                          const poEur = s.suggested_order_qty * effPrice;
+                          const isUsd = pd?.purchaseCurrency === 'USD';
+                          const poUsd = isUsd && pd?.priceBreaks[0] ? s.suggested_order_qty * pd.priceBreaks[0].price : null;
+                          return (
+                            <div>
+                              <span className="font-semibold">€{poEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                              {isUsd && poUsd && (
+                                <div className="text-[10px] text-muted-foreground">≈ ${poUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                              )}
+                              {pd && pd.nextPriceBreakQty !== null && pd.nextPriceBreakQty > 0 && pd.nextPriceBreakSaving !== null && pd.nextPriceBreakSaving > 0 && (
+                                <div className="text-[10px] text-warning-foreground mt-0.5">
+                                  +{pd.nextPriceBreakQty} db → €{(pd.nextPriceBreakSaving / s.suggested_order_qty).toFixed(2)}/db megtakarítás
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
                       {costSettings.priceBreaksEnabled && (
                         <td className="text-xs">
                           {s.priceBreakQty > 0 ? (

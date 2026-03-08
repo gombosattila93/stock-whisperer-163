@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
+import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import {
   Select,
   SelectContent,
@@ -10,21 +11,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AbcClass, XyzClass } from "@/lib/types";
+import { useMemo } from "react";
 
 export default function AbcXyzDetail() {
   const { filtered, hasData } = useInventory();
   const [abcFilter, setAbcFilter] = useState<string>("");
   const [xyzFilter, setXyzFilter] = useState<string>("");
 
+  const data = useMemo(() =>
+    filtered.filter(s => {
+      if (abcFilter && s.abc_class !== abcFilter) return false;
+      if (xyzFilter && s.xyz_class !== xyzFilter) return false;
+      return true;
+    }),
+    [filtered, abcFilter, xyzFilter]
+  );
+
+  const { sorted, sort, toggleSort } = useSortableTable(data);
+
   if (!hasData) return <EmptyState />;
 
-  const data = filtered.filter(s => {
-    if (abcFilter && s.abc_class !== abcFilter) return false;
-    if (xyzFilter && s.xyz_class !== xyzFilter) return false;
-    return true;
-  });
-
-  const exportData = data.map(s => ({
+  const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
     abc_class: s.abc_class, xyz_class: s.xyz_class,
     total_revenue: s.total_revenue.toFixed(2), cv: s.cv.toFixed(3),
@@ -71,28 +78,28 @@ export default function AbcXyzDetail() {
             </SelectContent>
           </Select>
         </div>
-        <span className="text-xs text-muted-foreground ml-auto">{data.length} SKUs</span>
+        <span className="text-xs text-muted-foreground ml-auto">{sorted.length} SKUs</span>
       </div>
 
       <div className="bg-card border rounded-lg overflow-auto">
         <table className="data-table">
           <thead>
             <tr>
-              <th>SKU</th>
-              <th>Name</th>
-              <th>Supplier</th>
-              <th>Category</th>
-              <th>ABC</th>
-              <th>XYZ</th>
-              <th className="text-right">Revenue</th>
-              <th className="text-right">CV</th>
-              <th className="text-right">Avg Daily Demand</th>
-              <th className="text-right">Stock Qty</th>
-              <th className="text-right">Days of Stock</th>
+              <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+              <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+              <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+              <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
+              <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
+              <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} />
+              <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" />
+              <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" />
+              <SortableHeader column="avg_daily_demand" label="Avg Daily Demand" sort={sort} onSort={toggleSort} align="right" />
+              <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
+              <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
             </tr>
           </thead>
           <tbody>
-            {data.map(s => (
+            {sorted.map(s => (
               <tr key={s.sku}>
                 <td className="font-mono font-medium">{s.sku}</td>
                 <td>{s.sku_name}</td>

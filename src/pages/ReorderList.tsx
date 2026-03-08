@@ -2,25 +2,28 @@ import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getSuggestedOrderQty, getUrgency } from "@/lib/calculations";
+import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
+import { useMemo } from "react";
 
 export default function ReorderList() {
   const { filtered, hasData } = useInventory();
 
+  const reorder = useMemo(() =>
+    filtered
+      .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .map(s => ({
+        ...s,
+        suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
+        urgency: getUrgency(s.days_of_stock, s.lead_time_days),
+      })),
+    [filtered]
+  );
+
+  const { sorted, sort, toggleSort } = useSortableTable(reorder);
+
   if (!hasData) return <EmptyState />;
 
-  const reorder = filtered
-    .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
-    .map(s => ({
-      ...s,
-      suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
-      urgency: getUrgency(s.days_of_stock, s.lead_time_days),
-    }))
-    .sort((a, b) => {
-      const urgencyOrder: Record<string, number> = { Critical: 0, Warning: 1, Watch: 2 };
-      return (urgencyOrder[a.urgency] ?? 3) - (urgencyOrder[b.urgency] ?? 3);
-    });
-
-  const exportData = reorder.map(s => ({
+  const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier,
     suggested_order_qty: s.suggested_order_qty, urgency: s.urgency,
   }));
@@ -41,7 +44,7 @@ export default function ReorderList() {
         <ExportButton data={exportData} filename="reorder-list.csv" />
       </div>
 
-      {reorder.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
           No items need reordering with current filters.
         </div>
@@ -50,15 +53,15 @@ export default function ReorderList() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>SKU</th>
-                <th>Name</th>
-                <th>Supplier</th>
-                <th className="text-right">Suggested Order Qty</th>
-                <th>Urgency</th>
+                <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="suggested_order_qty" label="Suggested Order Qty" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
               </tr>
             </thead>
             <tbody>
-              {reorder.map(s => (
+              {sorted.map(s => (
                 <tr key={s.sku}>
                   <td className="font-mono font-medium">{s.sku}</td>
                   <td>{s.sku_name}</td>

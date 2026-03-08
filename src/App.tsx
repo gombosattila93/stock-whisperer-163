@@ -15,6 +15,7 @@ import Suppliers from "./pages/Suppliers";
 import CostModel from "./pages/CostModel";
 import Projects from "./pages/Projects";
 import ReorderPlan from "./pages/ReorderPlan";
+import Guide from "./pages/Guide";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -195,7 +195,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const validated = processAndValidate(remapped as unknown as RawRow[]);
       if (validated.length > 0) {
         setRawRows(validated);
-        toast.success(`Loaded ${validated.length} rows with custom mapping`);
+        const dateSamples = rawParsed.map(r => {
+          const dateCol = mapping['date'];
+          return dateCol ? r[dateCol] || '' : '';
+        }).filter(Boolean);
+        const fmt = detectDateFormat(dateSamples);
+        toast.success(`Loaded ${validated.length} rows with custom mapping`, {
+          description: `Date format detected: ${getDateFormatLabel(fmt)}`,
+        });
       }
       setPendingFile(null);
       setPendingHeaders([]);

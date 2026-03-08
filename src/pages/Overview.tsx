@@ -113,12 +113,7 @@ export default function Overview() {
     : 95;
   const showPerClassSL = costSettings.serviceLevelSettings?.usePerClassServiceLevel;
 
-  // Reserved stock value
-  const hasReservations = Object.keys(reservedQtyMap).length > 0;
-  const reservedStockValue = useMemo(() =>
-    filtered.reduce((sum, s) => sum + s.reserved_qty * s.unit_price, 0),
-    [filtered]
-  );
+  // Matrix counts
   const matrixCounts: Record<string, number> = {};
   for (const abc of abcLabels) {
     for (const xyz of xyzLabels) {

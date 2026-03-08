@@ -13,7 +13,7 @@ export default function Overstock() {
     filtered
       .filter(s => s.days_of_stock > 180)
       .map(s => {
-        const idealStock = s.avg_daily_demand * 90;
+        const idealStock = s.avg_daily_demand * 180;
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
         const tied_up_capital = excess_qty * s.unit_price;
         return { ...s, excess_qty: Math.round(excess_qty), tied_up_capital };
@@ -41,7 +41,7 @@ export default function Overstock() {
           <h1 className="page-title">Overstock Analysis</h1>
           <p className="page-subtitle">
             Items with &gt;180 days of stock — Total tied-up capital:{' '}
-            <span className="font-semibold text-foreground">${totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="font-semibold text-foreground">€{totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
         <ExportButton data={exportData} filename="overstock.csv" />
@@ -76,7 +76,7 @@ export default function Overstock() {
                     </td>
                     <td className="text-right">{s.excess_qty.toLocaleString()}</td>
                     <td className="text-right font-semibold">
-                      ${s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      €{s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 ))}

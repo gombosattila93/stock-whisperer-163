@@ -49,7 +49,7 @@ export function DashboardAlerts() {
         result.push({
           id: 'overstock-capital',
           severity: 'warning',
-          message: `$${tiedUp.toLocaleString(undefined, { maximumFractionDigits: 0 })} tied up in ${overstockItems.length} overstocked SKUs`,
+          message: `€${tiedUp.toLocaleString(undefined, { maximumFractionDigits: 0 })} tied up in ${overstockItems.length} overstocked SKUs`,
         });
       }
     }

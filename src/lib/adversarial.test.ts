@@ -165,23 +165,19 @@ describe('Numeric extremes and IEEE 754 traps', () => {
   });
 
   test('stock_qty = -Infinity is treated as 0', () => {
-    // Number(-Infinity) || 0 = 0 because -Infinity is falsy? No, -Infinity is truthy
-    // Actually: Number(-Infinity) = -Infinity, || 0 won't trigger since -Infinity is truthy
-    // But for first row: Number(row.stock_qty) || 0 — -Infinity is truthy → kept as -Infinity
     const row = makeRow({ stock_qty: -Infinity });
     const map = parseRows([row]);
     const sku = map.get('TEST-001')!;
-    // Current behavior: -Infinity stored as-is for first row (Number(-Infinity) || 0 = -Infinity)
-    // For update path: !isNaN(-Infinity) = true → accepted
-    // This IS a bug — effective_stock becomes -Infinity
+    // After fix: -Infinity clamped to 0 via isFinite check
+    expect(sku.stock_qty).toBe(0);
+    expect(isFinite(sku.stock_qty)).toBe(true);
     const results = quickAnalyze([row]);
     const r = results[0];
-    // At minimum, verify no crash
     expect(results.length).toBe(1);
-    // days_of_stock and other derived values should be finite or null
-    // If stock is -Infinity, effective_stock = -Infinity, days_of_stock = -Infinity / demand
-    // getUrgency handles non-finite: returns 'Watch'
-    expect(getUrgency(r.days_of_stock, r.lead_time_days)).toBe('Watch');
+    // stock=0 with demand>0 → small days_of_stock → Critical
+    expect(r.effective_stock).toBe(0);
+    expect(isFinite(r.effective_stock)).toBe(true);
+    expect(getUrgency(r.days_of_stock, r.lead_time_days)).toBe('Critical');
   });
 
   test('CV calculation when mean = Number.EPSILON treats as zero', () => {

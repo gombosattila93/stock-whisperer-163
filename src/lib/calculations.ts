@@ -180,7 +180,7 @@ export function analyzeSkus(
     const overdueDelivery = pastDueOrders;
 
     // Lead time clamping flags
-    const leadTimeClamped = sku.lead_time_days <= 0 || sku.lead_time_days > 365;
+    const leadTimeClamped_flag = sku.lead_time_days > 365;
 
     // ─── Conditional calculations based on capability ───
 

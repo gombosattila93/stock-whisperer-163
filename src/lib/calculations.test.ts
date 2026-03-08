@@ -47,7 +47,7 @@ describe("parseRows", () => {
     const sku = map.get("SKU-001")!;
     expect(sku.stock_qty).toBe(0);
     expect(sku.ordered_qty).toBe(0);
-    expect(sku.lead_time_days).toBe(1); // clamped from 0→1
+    expect(sku.lead_time_days).toBe(0); // 0 = missing
   });
 
   it("keeps previous value when field is NaN", () => {

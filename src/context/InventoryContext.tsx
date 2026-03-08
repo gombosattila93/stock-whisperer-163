@@ -285,7 +285,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);

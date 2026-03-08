@@ -283,6 +283,39 @@ export default function Overview() {
         )}
       </div>
 
+      {/* Financial KPI cards */}
+      {financialKpis?.hasAnyFinancialData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <KpiCard
+            icon={Coins}
+            label="Készlet beszerz. értéke"
+            value={`€${financialKpis.purchaseValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            subLabel={financialKpis.skusWithoutPurchase > 0 ? `${financialKpis.skusWithoutPurchase} SKU ár nélkül` : undefined}
+          />
+          <KpiCard
+            icon={Euro}
+            label="Készlet eladási értéke"
+            value={`${financialKpis.sellingValueHuf.toLocaleString(undefined, { maximumFractionDigits: 0 })} Ft`}
+            subLabel={`≈ €${financialKpis.sellingValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          />
+          <KpiCard
+            icon={Percent}
+            label="Átlag árrés"
+            value={financialKpis.avgMarginPct !== null ? `${financialKpis.avgMarginPct.toFixed(1)}%` : '—'}
+            accent={financialKpis.avgMarginPct !== null && financialKpis.avgMarginPct < 15 ? 'bg-destructive' : undefined}
+            subLabel={financialKpis.skusWithoutMargin > 0 ? `${financialKpis.skusWithoutMargin} SKU margin-adat nélkül` : undefined}
+          />
+          {financialKpis.skusUsd > 0 && (
+            <KpiCard
+              icon={DollarSign}
+              label="USD kitettség"
+              value={`€${financialKpis.usdExposureEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+              subLabel={`≈ $${financialKpis.usdExposureUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} · ${financialKpis.skusUsd} SKU`}
+            />
+          )}
+        </div>
+      )}
+
       {/* Data Quality Card */}
       {dataQuality && dataQuality.completePct < 100 && (
         <div className="bg-card border rounded-lg p-5 mb-6">

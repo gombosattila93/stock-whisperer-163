@@ -274,7 +274,7 @@ export default function ReorderPlan() {
       </div>
 
       {/* Budget optimization button */}
-      {budgetEnabled && (
+      {budgetEnabled && (<>
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           {!optimized ? (
             <Button onClick={optimizeWithinBudget} className="gap-1.5">

@@ -10,6 +10,8 @@ import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { EoqSettingsPanel } from "@/components/EoqSettingsPanel";
+import { EditableCell } from "@/components/EditableCell";
+import { exportToCsv } from "@/lib/csvUtils";
 import {
   Select,
   SelectContent,
@@ -26,11 +28,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw, CheckSquare } from "lucide-react";
+import { RotateCcw, CheckSquare, Download } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride } = useInventory();
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
@@ -129,6 +131,41 @@ export default function ReorderList() {
     setSelectedSkus(new Set());
   }, [selectedSkus]);
 
+  // ─── Supplier summary ─────────────────────────────────────────────────
+  const supplierSummary = useMemo(() => {
+    const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValue: number; urgencies: string[] }>();
+    for (const s of sorted) {
+      const existing = map.get(s.supplier);
+      const orderValue = s.suggested_order_qty * s.unit_price;
+      if (existing) {
+        existing.skuCount += 1;
+        existing.totalQty += s.suggested_order_qty;
+        existing.totalValue += orderValue;
+        existing.urgencies.push(s.urgency);
+      } else {
+        map.set(s.supplier, {
+          supplier: s.supplier,
+          skuCount: 1,
+          totalQty: s.suggested_order_qty,
+          totalValue: orderValue,
+          urgencies: [s.urgency],
+        });
+      }
+    }
+    return Array.from(map.values()).map(row => {
+      const urgencyScore: Record<string, number> = { Critical: 3, Warning: 2, Watch: 1 };
+      const avgScore = row.urgencies.reduce((s, u) => s + (urgencyScore[u] || 0), 0) / row.urgencies.length;
+      const avgUrgency = avgScore >= 2.5 ? 'Critical' : avgScore >= 1.5 ? 'Warning' : 'Watch';
+      return { ...row, avgUrgency };
+    });
+  }, [sorted]);
+
+  const grandTotal = useMemo(() => ({
+    skuCount: supplierSummary.reduce((s, r) => s + r.skuCount, 0),
+    totalQty: supplierSummary.reduce((s, r) => s + r.totalQty, 0),
+    totalValue: supplierSummary.reduce((s, r) => s + r.totalValue, 0),
+  }), [supplierSummary]);
+
   if (!hasData) return <EmptyState />;
 
   const exportData = sorted.map(s => ({
@@ -142,6 +179,24 @@ export default function ReorderList() {
     Critical: 'urgency-critical',
     Warning: 'urgency-warning',
     Watch: 'urgency-watch',
+  };
+
+  const exportSupplierSummary = () => {
+    const data = supplierSummary.map(r => ({
+      supplier: r.supplier,
+      skus_to_order: r.skuCount,
+      total_order_qty: r.totalQty,
+      total_order_value_eur: r.totalValue.toFixed(2),
+      avg_urgency: r.avgUrgency,
+    }));
+    data.push({
+      supplier: 'GRAND TOTAL',
+      skus_to_order: grandTotal.skuCount,
+      total_order_qty: grandTotal.totalQty,
+      total_order_value_eur: grandTotal.totalValue.toFixed(2),
+      avg_urgency: '',
+    });
+    exportToCsv(data, 'reorder-supplier-summary.csv');
   };
 
   return (
@@ -226,78 +281,160 @@ export default function ReorderList() {
           No items need reordering with current filters.
         </div>
       ) : (
-        <div className="bg-card border rounded-lg overflow-hidden">
-          <div className="overflow-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th className="px-3 py-3 bg-muted/50 w-10">
-                    <Checkbox
-                      checked={allPageSelected}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Select all on page"
-                    />
-                  </th>
-                  <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
-                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Strategy</th>
-                  <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
-                  <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map(s => (
-                  <tr key={s.sku} className={selectedSkus.has(s.sku) ? 'bg-primary/5' : ''}>
-                    <td className="px-3">
+        <>
+          <div className="bg-card border rounded-lg overflow-hidden">
+            <div className="overflow-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-3 bg-muted/50 w-10">
                       <Checkbox
-                        checked={selectedSkus.has(s.sku)}
-                        onCheckedChange={() => toggleSelect(s.sku)}
-                        aria-label={`Select ${s.sku}`}
+                        checked={allPageSelected}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Select all on page"
                       />
-                    </td>
-                    <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
-                    <td><HighlightText text={s.sku_name} /></td>
-                    <td><HighlightText text={s.supplier} /></td>
-                    <td><DemandSparkline sku={s} /></td>
-                    <td>
-                      <Select
-                        value={skuOverrides[s.sku] || '__global__'}
-                        onValueChange={(v) => setSkuStrategy(s.sku, v as ReorderStrategy | '__global__')}
-                      >
-                        <SelectTrigger
-                          className={`h-7 text-[11px] w-[140px] ${s.hasOverride ? 'border-primary/50 bg-primary/5' : ''}`}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__global__">
-                            <span className="text-muted-foreground">Default</span>
-                          </SelectItem>
-                          {STRATEGY_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
-                    <td className="text-xs text-muted-foreground max-w-[180px]">{s.reorder_trigger}</td>
-                    <td>
-                      <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>
-                        {s.urgency}
-                      </span>
-                    </td>
+                    </th>
+                    <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+                    <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+                    <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
+                    <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
+                    <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />
+                    <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Strategy</th>
+                    <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
+                    <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedData.map(s => (
+                    <tr key={s.sku} className={selectedSkus.has(s.sku) ? 'bg-primary/5' : ''}>
+                      <td className="px-3">
+                        <Checkbox
+                          checked={selectedSkus.has(s.sku)}
+                          onCheckedChange={() => toggleSelect(s.sku)}
+                          aria-label={`Select ${s.sku}`}
+                        />
+                      </td>
+                      <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
+                      <td><HighlightText text={s.sku_name} /></td>
+                      <td><HighlightText text={s.supplier} /></td>
+                      <td><DemandSparkline sku={s} /></td>
+                      <td className="text-right">
+                        <EditableCell
+                          value={s.stock_qty}
+                          sku={s.sku}
+                          field="stock_qty"
+                          isOverridden={stockOverrides[s.sku]?.stock_qty !== undefined}
+                          onSave={setStockOverride}
+                        />
+                      </td>
+                      <td className="text-right">
+                        <EditableCell
+                          value={s.ordered_qty}
+                          sku={s.sku}
+                          field="ordered_qty"
+                          isOverridden={stockOverrides[s.sku]?.ordered_qty !== undefined}
+                          onSave={setStockOverride}
+                        />
+                      </td>
+                      <td className="text-right">
+                        <EditableCell
+                          value={s.lead_time_days}
+                          sku={s.sku}
+                          field="lead_time_days"
+                          isOverridden={stockOverrides[s.sku]?.lead_time_days !== undefined}
+                          onSave={setStockOverride}
+                        />
+                      </td>
+                      <td>
+                        <Select
+                          value={skuOverrides[s.sku] || '__global__'}
+                          onValueChange={(v) => setSkuStrategy(s.sku, v as ReorderStrategy | '__global__')}
+                        >
+                          <SelectTrigger
+                            className={`h-7 text-[11px] w-[140px] ${s.hasOverride ? 'border-primary/50 bg-primary/5' : ''}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__global__">
+                              <span className="text-muted-foreground">Default</span>
+                            </SelectItem>
+                            {STRATEGY_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
+                      <td className="text-xs text-muted-foreground max-w-[180px]">{s.reorder_trigger}</td>
+                      <td>
+                        <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>
+                          {s.urgency}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
           </div>
-          <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
-        </div>
+
+          {/* ─── Reorder Summary by Supplier ──────────────────────────── */}
+          {supplierSummary.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">Reorder Summary by Supplier</h2>
+                <Button variant="outline" size="sm" onClick={exportSupplierSummary}>
+                  <Download className="h-4 w-4 mr-1.5" />
+                  Export supplier summary
+                </Button>
+              </div>
+              <div className="bg-card border rounded-lg overflow-hidden">
+                <div className="overflow-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">SKUs to Order</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Qty</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Value (€)</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Avg Urgency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {supplierSummary.map(row => (
+                        <tr key={row.supplier}>
+                          <td className="font-medium">{row.supplier}</td>
+                          <td className="text-right">{row.skuCount}</td>
+                          <td className="text-right">{row.totalQty.toLocaleString()}</td>
+                          <td className="text-right">€{row.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>
+                            <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[row.avgUrgency]}`}>
+                              {row.avgUrgency}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-border font-bold bg-muted/30">
+                        <td>Grand Total</td>
+                        <td className="text-right">{grandTotal.skuCount}</td>
+                        <td className="text-right">{grandTotal.totalQty.toLocaleString()}</td>
+                        <td className="text-right">€{grandTotal.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

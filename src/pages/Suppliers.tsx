@@ -5,7 +5,9 @@ import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { getSuggestedOrderQty } from "@/lib/calculations";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ReorderEmailModal } from "@/components/ReorderEmailModal";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Mail } from "lucide-react";
 
 interface SupplierRow {
   supplier: string;
@@ -20,6 +22,7 @@ interface SupplierRow {
 export default function Suppliers() {
   const { filtered, hasData } = useInventory();
   const [expandedSupplier, setExpandedSupplier] = useState<string | null>(null);
+  const [emailSupplier, setEmailSupplier] = useState<string | null>(null);
 
   const supplierData = useMemo(() => {
     const map = new Map<string, SupplierRow>();
@@ -53,7 +56,6 @@ export default function Suppliers() {
         });
       }
     }
-    // Finalize avg lead time
     for (const row of map.values()) {
       row.avgLeadTime = Math.round(row.avgLeadTime / row.totalSkus);
     }
@@ -63,7 +65,6 @@ export default function Suppliers() {
   const { sorted, sort, toggleSort } = useSortableTable(supplierData);
   const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
 
-  // Expanded supplier's reorder-level SKUs
   const expandedSkus = useMemo(() => {
     if (!expandedSupplier) return [];
     return filtered
@@ -75,10 +76,24 @@ export default function Suppliers() {
         stock_qty: s.stock_qty,
         ordered_qty: s.ordered_qty,
         days_of_stock: s.days_of_stock,
+        unit_price: s.unit_price,
         suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
         order_value: getSuggestedOrderQty(s.reorder_point, s.effective_stock) * s.unit_price,
       }));
   }, [expandedSupplier, filtered]);
+
+  // SKUs for the email modal
+  const emailSkus = useMemo(() => {
+    if (!emailSupplier) return [];
+    return filtered
+      .filter(s => s.supplier === emailSupplier && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .map(s => ({
+        sku: s.sku,
+        sku_name: s.sku_name,
+        suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
+        unit_price: s.unit_price,
+      }));
+  }, [emailSupplier, filtered]);
 
   if (!hasData) return <EmptyState />;
 
@@ -155,9 +170,23 @@ export default function Suppliers() {
                       <tr key={`${row.supplier}-detail`}>
                         <td colSpan={8} className="p-0">
                           <div className="bg-muted/30 px-8 py-3">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                              Reorder List — {row.supplier}
-                            </p>
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Reorder List — {row.supplier}
+                              </p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1.5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEmailSupplier(row.supplier);
+                                }}
+                              >
+                                <Mail className="h-3.5 w-3.5" />
+                                Draft Email
+                              </Button>
+                            </div>
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="text-muted-foreground">
@@ -206,6 +235,15 @@ export default function Suppliers() {
           </div>
           <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
         </div>
+      )}
+
+      {emailSupplier && (
+        <ReorderEmailModal
+          open={!!emailSupplier}
+          onOpenChange={(open) => { if (!open) setEmailSupplier(null); }}
+          supplier={emailSupplier}
+          skus={emailSkus}
+        />
       )}
     </div>
   );

@@ -9,7 +9,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Search, Settings2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Search, Settings2, Pencil, RotateCcw } from "lucide-react";
 import { SERVICE_LEVELS } from "@/lib/calculations";
 import { FilterPresets } from "@/components/FilterPresets";
 import { ClassificationSettings } from "@/components/ClassificationSettings";
@@ -34,6 +40,8 @@ export function GlobalFilters() {
     analysis,
     thresholds,
     setThresholds,
+    stockOverrideCount,
+    clearStockOverrides,
   } = useInventory();
 
   const [showClassification, setShowClassification] = useState(false);
@@ -125,6 +133,26 @@ export function GlobalFilters() {
           <Settings2 className="h-3.5 w-3.5" />
           ABC/XYZ
         </Button>
+
+        {stockOverrideCount > 0 && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearStockOverrides}
+                  className="h-8 text-xs text-muted-foreground gap-1.5"
+                >
+                  <Pencil className="h-3 w-3 text-primary" />
+                  <RotateCcw className="h-3 w-3" />
+                  {stockOverrideCount} stock override{stockOverrideCount !== 1 ? 's' : ''}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Clear all manual stock overrides</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         <FilterPresets />
       </div>

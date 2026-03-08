@@ -105,4 +105,7 @@ export const DEFAULT_COST_SETTINGS: CostSettings = {
     classB: '95%',
     classC: '90%',
   },
+
+  shelfLifeEnabled: false,
+  categoryShelfLifeDays: {},
 };

@@ -366,7 +366,7 @@ export default function ReorderPlan() {
             </Button>
           </div>
         )}
-      )}
+      </>)}
 
       {/* Per-supplier budget tracking */}
       {budgetEnabled && Object.keys(supplierSpend).length > 0 && (

@@ -12,6 +12,7 @@ import ReorderList from "./pages/ReorderList";
 import Overstock from "./pages/Overstock";
 import AbcXyzDetail from "./pages/AbcXyzDetail";
 import Suppliers from "./pages/Suppliers";
+import CostModel from "./pages/CostModel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

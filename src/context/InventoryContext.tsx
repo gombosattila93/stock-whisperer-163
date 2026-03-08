@@ -10,8 +10,10 @@ import {
   saveCostSettings, loadCostSettings,
   SkuSupplierOptionsMap, saveSkuSupplierOptions, loadSkuSupplierOptions,
   saveReservations, loadReservations,
+  saveFxRates, loadFxRates,
   isIndexedDBAvailable, wasIndexedDBWarningShown, markIndexedDBWarningShown,
 } from '@/lib/persistence';
+import { FxRateConfig, FALLBACK_RATES } from '@/lib/fxRates';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from '@/lib/costSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';

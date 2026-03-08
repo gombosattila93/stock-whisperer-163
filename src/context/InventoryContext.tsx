@@ -53,6 +53,9 @@ interface InventoryContextType {
   pendingAppend: { analysis: DuplicateAnalysis; fileName: string } | null;
   confirmAppend: (resolutions: Map<string, ConflictResolution>) => void;
   cancelAppend: () => void;
+  // Cost settings
+  costSettings: CostSettings;
+  setCostSettings: (s: CostSettings) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);

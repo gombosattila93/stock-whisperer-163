@@ -204,10 +204,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const rowsWithOverrides = applyStockOverrides(rawRows, stockOverrides);
     const message: WorkerRequest = {
       type: 'ANALYZE',
-      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds },
+      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);

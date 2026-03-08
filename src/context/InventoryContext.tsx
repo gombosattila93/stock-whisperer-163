@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { RawRow, SkuAnalysis, XyzClass } from '@/lib/types';
+import { RawRow, SkuAnalysis, XyzClass, SupplierOption } from '@/lib/types';
 import { SERVICE_LEVELS } from '@/lib/calculations';
 import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
-import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides, saveCostSettings, loadCostSettings } from '@/lib/persistence';
+import {
+  saveRows, loadRows, clearRows,
+  StockOverrides, saveStockOverrides, loadStockOverrides,
+  saveCostSettings, loadCostSettings,
+  SkuSupplierOptionsMap, saveSkuSupplierOptions, loadSkuSupplierOptions,
+} from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from '@/lib/costSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';

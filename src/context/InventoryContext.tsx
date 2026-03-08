@@ -209,6 +209,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
       setPendingFile(null);
       setPendingHeaders([]);
+      setPendingRawData([]);
     } catch (err) {
       toast.error('Failed to process mapped CSV', {
         description: err instanceof Error ? err.message : 'Unknown error',

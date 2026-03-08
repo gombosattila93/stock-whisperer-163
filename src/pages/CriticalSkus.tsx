@@ -179,6 +179,28 @@ export default function CriticalSkus() {
                   </span>
                 ),
               }] : []),
+              {
+                key: 'altSupplier',
+                header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Alt Supplier</span>,
+                render: (s) => {
+                  const alt = altSupplierMap[s.sku];
+                  if (!alt) return <span className="text-muted-foreground">—</span>;
+                  return (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="text-[10px] cursor-help">
+                            Alt: {alt.supplier} — {alt.lead_time_days}d
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Alternative supplier with shorter lead time ({alt.lead_time_days}d vs {s.lead_time_days}d)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                },
+              },
             ]}
           />
           <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />

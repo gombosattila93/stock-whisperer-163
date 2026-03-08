@@ -496,8 +496,8 @@ export function getSuggestedOrderQty(reorder_point: number, effective_stock: num
   return Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq);
 }
 
-export function getUrgency(days_of_stock: number, lead_time_days: number): string {
-  if (!Number.isFinite(days_of_stock)) return 'Watch';
+export function getUrgency(days_of_stock: number | null, lead_time_days: number): string {
+  if (days_of_stock === null || !Number.isFinite(days_of_stock)) return 'Watch';
   if (days_of_stock < 7) return 'Critical';
   if (days_of_stock < lead_time_days) return 'Warning';
   return 'Watch';

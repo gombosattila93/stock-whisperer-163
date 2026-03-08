@@ -18,7 +18,9 @@ import {
 import { useMemo } from "react";
 
 export default function CriticalSkus() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
+
+  const hasReservations = Object.keys(reservedQtyMap).length > 0;
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
@@ -177,6 +179,25 @@ export default function CriticalSkus() {
                   <span className="text-right text-destructive font-medium">
                     {s.stockoutRisk > 0 ? `€${s.stockoutRisk.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
                   </span>
+                ),
+              }] : []),
+              ...(hasReservations ? [{
+                key: 'reserved_qty',
+                header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Reserved</span>,
+                render: (s: typeof paginatedData[0]) => (
+                  <div className="text-right">
+                    {s.reserved_qty > 0 ? (
+                      <div>
+                        <span className="font-medium">{s.reserved_qty}</span>
+                        <div className={`text-[10px] ${s.available_qty < 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                          avail: {s.available_qty}
+                        </div>
+                        {s.available_qty < 0 && (
+                          <Badge variant="destructive" className="text-[9px] mt-0.5">Deficit</Badge>
+                        )}
+                      </div>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </div>
                 ),
               }] : []),
               {

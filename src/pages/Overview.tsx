@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
-import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target } from "lucide-react";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
@@ -57,7 +57,7 @@ const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
 ) as Record<ReorderStrategy, string>;
 
 export default function Overview() {
-  const { filtered, hasData, costSettings } = useInventory();
+  const { filtered, hasData, costSettings, reservedQtyMap } = useInventory();
 
   const [overridesLoaded, setOverridesLoaded] = useState<Record<string, ReorderStrategy>>({});
 
@@ -80,6 +80,13 @@ export default function Overview() {
         color: STRATEGY_COLORS[key as ReorderStrategy],
       }));
   }, [filtered, overridesLoaded]);
+
+  // Reserved stock value
+  const hasReservations = Object.keys(reservedQtyMap).length > 0;
+  const reservedStockValue = useMemo(() =>
+    filtered.reduce((sum, s) => sum + s.reserved_qty * s.unit_price, 0),
+    [filtered]
+  );
 
   if (!hasData) return <EmptyState />;
 
@@ -142,6 +149,9 @@ export default function Overview() {
         <KpiCard icon={PackageX} label="Overstock Items" value={overstockItems} accent="bg-muted" />
         {showPerClassSL && (
           <KpiCard icon={Target} label="Wtd Avg Service Level" value={`${weightedAvgSL.toFixed(1)}%`} />
+        )}
+        {hasReservations && (
+          <KpiCard icon={Lock} label="Reserved Stock Value" value={`€${reservedStockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         )}
       </div>
 

@@ -7,6 +7,7 @@ import {
   Upload,
   Truck,
   Calculator,
+  ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -29,6 +30,7 @@ const navItems = [
   { title: "Reorder List", url: "/reorder", icon: ShoppingCart },
   { title: "Overstock", url: "/overstock", icon: PackageX },
   { title: "ABC-XYZ Detail", url: "/abc-xyz", icon: Grid3X3 },
+  { title: "Projects", url: "/projects", icon: ClipboardList },
   { title: "Suppliers", url: "/suppliers", icon: Truck },
   { title: "Cost Model", url: "/cost-model", icon: Calculator },
 ];

@@ -13,6 +13,7 @@ import Overstock from "./pages/Overstock";
 import AbcXyzDetail from "./pages/AbcXyzDetail";
 import Suppliers from "./pages/Suppliers";
 import CostModel from "./pages/CostModel";
+import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/reorder" element={<ReorderList />} />
               <Route path="/overstock" element={<Overstock />} />
               <Route path="/abc-xyz" element={<AbcXyzDetail />} />
+              <Route path="/projects" element={<Projects />} />
               <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/cost-model" element={<CostModel />} />
               <Route path="*" element={<NotFound />} />

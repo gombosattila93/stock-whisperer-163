@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { RawRow, SkuAnalysis, XyzClass, SupplierOption } from '@/lib/types';
+import { RawRow, SkuAnalysis, XyzClass, SupplierOption, ProjectReservation } from '@/lib/types';
 import { SERVICE_LEVELS } from '@/lib/calculations';
 import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
@@ -9,6 +9,7 @@ import {
   StockOverrides, saveStockOverrides, loadStockOverrides,
   saveCostSettings, loadCostSettings,
   SkuSupplierOptionsMap, saveSkuSupplierOptions, loadSkuSupplierOptions,
+  saveReservations, loadReservations,
 } from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from '@/lib/costSettings';
@@ -64,6 +65,11 @@ interface InventoryContextType {
   // Supplier options
   skuSupplierOptions: SkuSupplierOptionsMap;
   setSkuSupplierOptions: (sku: string, options: SupplierOption[]) => void;
+  // Reservations
+  reservations: ProjectReservation[];
+  addReservation: (r: ProjectReservation) => void;
+  updateReservation: (id: string, status: 'fulfilled' | 'cancelled') => void;
+  reservedQtyMap: Record<string, number>;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
@@ -118,6 +124,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [stockOverrides, setStockOverrides] = useState<StockOverrides>({});
   const [costSettings, setCostSettingsRaw] = useState<CostSettings>(DEFAULT_COST_SETTINGS);
   const [skuSupplierOptions, setSkuSupplierOptionsRaw] = useState<SkuSupplierOptionsMap>({});
+  const [reservations, setReservations] = useState<ProjectReservation[]>([]);
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -155,6 +162,34 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Reservations
+  const addReservation = useCallback((r: ProjectReservation) => {
+    setReservations(prev => {
+      const next = [...prev, r];
+      saveReservations(next);
+      return next;
+    });
+  }, []);
+
+  const updateReservation = useCallback((id: string, status: 'fulfilled' | 'cancelled') => {
+    setReservations(prev => {
+      const next = prev.map(r => r.id === id ? { ...r, status } : r);
+      saveReservations(next);
+      return next;
+    });
+  }, []);
+
+  const reservedQtyMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of reservations) {
+      if (r.status !== 'active') continue;
+      for (const item of r.items) {
+        map[item.sku] = (map[item.sku] || 0) + item.reservedQty;
+      }
+    }
+    return map;
+  }, [reservations]);
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {
@@ -163,7 +198,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions()]).then(([rows, overrides, costs, supplierOpts]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions(), loadReservations()]).then(([rows, overrides, costs, supplierOpts, resv]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
@@ -174,6 +209,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setCostSettingsRaw(costs);
       if (supplierOpts && Object.keys(supplierOpts).length > 0) {
         setSkuSupplierOptionsRaw(supplierOpts);
+      }
+      if (resv && resv.length > 0) {
+        setReservations(resv);
       }
       setPersistenceLoaded(true);
     });
@@ -207,7 +245,21 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (e.data.type === 'PROGRESS') {
         setCalculationProgress(e.data.payload.pct);
       } else if (e.data.type === 'RESULT') {
-        setAnalysis(e.data.payload);
+        // Apply reservation data to analysis
+        const results = e.data.payload.map(item => {
+          const reserved = reservedQtyMap[item.sku] || 0;
+          const available = item.stock_qty - reserved;
+          const newEffective = available + item.ordered_qty;
+          const newDaysOfStock = item.avg_daily_demand > 0 ? newEffective / item.avg_daily_demand : Infinity;
+          return {
+            ...item,
+            reserved_qty: reserved,
+            available_qty: available,
+            effective_stock: reserved > 0 ? newEffective : item.effective_stock,
+            days_of_stock: reserved > 0 ? newDaysOfStock : item.days_of_stock,
+          };
+        });
+        setAnalysis(results);
         setIsCalculating(false);
         setCalculationProgress(100);
         worker.terminate();
@@ -233,7 +285,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
@@ -490,6 +542,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setCostSettings,
       skuSupplierOptions,
       setSkuSupplierOptions: setSkuSupplierOption,
+      reservations,
+      addReservation,
+      updateReservation,
+      reservedQtyMap,
     }}>
       {children}
     </InventoryContext.Provider>

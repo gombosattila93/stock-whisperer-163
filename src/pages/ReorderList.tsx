@@ -33,7 +33,8 @@ import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } 
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
+  const hasReservations = Object.keys(reservedQtyMap).length > 0;
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
@@ -344,6 +345,7 @@ export default function ReorderList() {
                     <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
                     {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Price Break</th>}
                     {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Min Order</th>}
+                    {hasReservations && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Reserved</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -486,6 +488,18 @@ export default function ReorderList() {
                           </td>
                         );
                       })()}
+                      {hasReservations && (
+                        <td className="text-right text-xs">
+                          {s.reserved_qty > 0 ? (
+                            <div>
+                              <span className="font-medium">{s.reserved_qty}</span>
+                              <div className={`text-[10px] ${s.available_qty < 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                                avail: {s.available_qty}
+                              </div>
+                            </div>
+                          ) : '—'}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

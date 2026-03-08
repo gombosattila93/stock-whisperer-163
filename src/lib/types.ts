@@ -164,6 +164,8 @@ export interface SkuAnalysis extends SkuData {
   // ABC/XYZ info flags
   abcInfo?: string;               // special classification info
   xyzInfo?: string;               // special classification info
+  // ─── Multi-currency pricing ───
+  priceData: PriceData;
 }
 
 export interface ProjectReservation {

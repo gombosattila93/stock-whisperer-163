@@ -150,6 +150,9 @@ export default function Overview() {
         {showPerClassSL && (
           <KpiCard icon={Target} label="Wtd Avg Service Level" value={`${weightedAvgSL.toFixed(1)}%`} />
         )}
+        {hasReservations && (
+          <KpiCard icon={Lock} label="Reserved Stock Value" value={`€${reservedStockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

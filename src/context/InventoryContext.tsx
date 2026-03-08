@@ -165,7 +165,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const validated = processAndValidate(parsed);
       if (validated.length > 0) {
         setRawRows(validated);
-        toast.success(`Loaded ${validated.length} rows from ${file.name}`);
+        const dateSamples = rawParsed.map(r => r['date'] || '').filter(Boolean);
+        const fmt = detectDateFormat(dateSamples);
+        toast.success(`Loaded ${validated.length} rows from ${file.name}`, {
+          description: `Date format detected: ${getDateFormatLabel(fmt)}`,
+        });
       }
     } catch (err) {
       toast.error('Failed to parse CSV file', {

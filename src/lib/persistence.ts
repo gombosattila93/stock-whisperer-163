@@ -192,3 +192,39 @@ export async function loadStockOverrides(): Promise<StockOverrides> {
     return {};
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cost Settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COST_SETTINGS_KEY = 'settings';
+
+export async function saveCostSettings(settings: CostSettings): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(COST_SETTINGS_STORE, 'readwrite');
+      const store = tx.objectStore(COST_SETTINGS_STORE);
+      store.put(settings, COST_SETTINGS_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save cost settings to IndexedDB');
+  }
+}
+
+export async function loadCostSettings(): Promise<CostSettings> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(COST_SETTINGS_STORE, 'readonly');
+      const store = tx.objectStore(COST_SETTINGS_STORE);
+      const request = store.get(COST_SETTINGS_KEY);
+      request.onsuccess = () => resolve(request.result || DEFAULT_COST_SETTINGS);
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return DEFAULT_COST_SETTINGS;
+  }
+}

@@ -26,10 +26,10 @@ describe("parseRows", () => {
     expect(map.get("SKU-001")!.stock_qty).toBe(0);
   });
 
-  it("preserves zero lead_time_days", () => {
+  it("clamps zero lead_time_days to 1", () => {
     const rows = [makeRow({ lead_time_days: 0 })];
     const map = parseRows(rows);
-    expect(map.get("SKU-001")!.lead_time_days).toBe(0);
+    expect(map.get("SKU-001")!.lead_time_days).toBe(1); // clamped from 0→1
   });
 
   it("preserves zero ordered_qty", () => {

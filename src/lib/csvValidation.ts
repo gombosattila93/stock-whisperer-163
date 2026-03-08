@@ -37,7 +37,7 @@ const ALL_COLUMNS = [
 ] as const;
 
 export function validateCsvHeaders(headers: string[]): { valid: boolean; missing: string[]; extra: string[] } {
-  const normalized = headers.map(h => h.trim().toLowerCase());
+  const normalized = headers.map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
   const missing = REQUIRED_COLUMNS.filter(col => !normalized.includes(col));
   const extra = normalized.filter(h => !(ALL_COLUMNS as readonly string[]).includes(h));
   return {

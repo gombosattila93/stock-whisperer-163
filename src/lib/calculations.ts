@@ -434,7 +434,7 @@ export function analyzeSkus(
       let abc: AbcClass = 'C';
       if (pctBefore < abcACutoff) abc = 'A';
       else if (pctBefore < abcBCutoff) abc = 'B';
-      const target = analyses.find(a => a.sku === item.sku);
+      const target = revMap.get(item.sku);
       if (target) target.abc_class = abc;
     }
   }

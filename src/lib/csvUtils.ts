@@ -79,8 +79,21 @@ export function parseCsvFileRaw(file: File): Promise<Record<string, string>[]> {
   });
 }
 
+function sanitizeCsvCell(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  if (/^[=+\-@\t\r]/.test(value)) {
+    return `'${value}`;
+  }
+  return value;
+}
+
 export function exportToCsv(data: Record<string, unknown>[], filename: string) {
-  const csv = Papa.unparse(data);
+  const sanitized = data.map(row =>
+    Object.fromEntries(
+      Object.entries(row).map(([k, v]) => [k, sanitizeCsvCell(v)])
+    )
+  );
+  const csv = Papa.unparse(sanitized);
   // Add UTF-8 BOM for Excel compatibility
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');

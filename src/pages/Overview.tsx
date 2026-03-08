@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
-import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info } from "lucide-react";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3 } from "lucide-react";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";

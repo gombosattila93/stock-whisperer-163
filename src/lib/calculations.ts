@@ -11,28 +11,46 @@ export const SERVICE_LEVELS: Record<string, number> = {
 
 export function parseRows(rows: RawRow[]): Map<string, SkuData> {
   const map = new Map<string, SkuData>();
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const todayTs = today.getTime();
+
   const sorted = [...rows].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   for (const row of sorted) {
-    const existing = map.get(row.sku);
+    // 1b) Filter out future dates
+    const parsedDate = parseFlexibleDate(row.date) ?? row.date;
+    const dateTs = new Date(parsedDate).getTime();
+    if (dateTs > todayTs) continue; // skip future dates
+
+    // 1d) Negative unit_price → treat as 0
+    const rawPrice = Number(row.unit_price);
+    const unitPrice = (!isNaN(rawPrice) && rawPrice >= 0) ? rawPrice : 0;
+
+    // 1e/1f) Lead time clamping: 0→1, >365→365
+    let leadTime = Number(row.lead_time_days) || 0;
+    const leadTimeClamped = leadTime <= 0 || leadTime > 365;
+    if (leadTime <= 0) leadTime = 1;
+    if (leadTime > 365) leadTime = 365;
+
     const sale: SaleRecord = {
       sku: row.sku,
-      date: parseFlexibleDate(row.date) ?? row.date,
+      date: parsedDate,
       sold_qty: Math.max(0, Number(row.sold_qty) || 0),
       partner_id: row.partner_id,
     };
 
+    const existing = map.get(row.sku);
     if (existing) {
       const parsedStock = Number(row.stock_qty);
       existing.stock_qty = !isNaN(parsedStock) ? parsedStock : existing.stock_qty;
-      const parsedLead = Number(row.lead_time_days);
-      existing.lead_time_days = !isNaN(parsedLead) ? parsedLead : existing.lead_time_days;
+      existing.lead_time_days = leadTime;
       const parsedOrdered = Number(row.ordered_qty);
       existing.ordered_qty = !isNaN(parsedOrdered) ? parsedOrdered : existing.ordered_qty;
       existing.expected_delivery_date = row.expected_delivery_date
         ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
         : existing.expected_delivery_date;
-      existing.unit_price = Number(row.unit_price) || existing.unit_price;
+      existing.unit_price = unitPrice || existing.unit_price;
       existing.sales.push(sale);
     } else {
       map.set(row.sku, {
@@ -40,9 +58,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         sku_name: row.sku_name?.trim() || row.sku,
         supplier: row.supplier?.trim() || 'Unknown',
         category: row.category?.trim() || 'Uncategorized',
-        unit_price: Number(row.unit_price) || 0,
+        unit_price: unitPrice,
         stock_qty: Number(row.stock_qty) || 0,
-        lead_time_days: Number(row.lead_time_days) || 0,
+        lead_time_days: leadTime,
         ordered_qty: Number(row.ordered_qty) || 0,
         expected_delivery_date: row.expected_delivery_date
           ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
@@ -80,8 +98,10 @@ export function analyzeSkus(
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;
   const abcBCutoff = thresholds.abcB / 100;
-  // Determine global service level string from factor
   const globalServiceLevel = Object.entries(SERVICE_LEVELS).find(([, v]) => Math.abs(v - serviceFactor) < 0.01)?.[0] || '95%';
+
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
 
   for (const [, sku] of skuMap) {
     const filteredSales = sku.sales.filter(s => {
@@ -89,26 +109,63 @@ export function analyzeSkus(
       return d >= startDate && d <= endDate;
     });
 
-    const totalSold = filteredSales.reduce((sum, s) => sum + s.sold_qty, 0);
+    // 1g) No stock data detection
+    const noStockData = sku.stock_qty === 0 && sku.sales.every(s => true); // already defaulted to 0
+
+    // 2a) Insufficient data: count actual unique sales days
+    const uniqueSalesDays = new Set(filteredSales.map(s => s.date)).size;
     const safeDemandDays = Math.max(1, demandDays);
-    const avg_daily_demand = totalSold / safeDemandDays;
+    const insufficientData = uniqueSalesDays < safeDemandDays * 0.3;
+    // Use actual coverage for avg calculation if insufficient
+    const effectiveDemandDays = insufficientData && uniqueSalesDays > 0 ? Math.max(uniqueSalesDays, 1) : safeDemandDays;
+
+    const totalSold = filteredSales.reduce((sum, s) => sum + s.sold_qty, 0);
+    const avg_daily_demand = totalSold / effectiveDemandDays;
 
     const dailyMap = new Map<string, number>();
     filteredSales.forEach(s => {
       dailyMap.set(s.date, (dailyMap.get(s.date) || 0) + s.sold_qty);
     });
     const dailyValues = Array.from(dailyMap.values());
+    // Pad with zeros to fill the demand window
     while (dailyValues.length < demandDays) dailyValues.push(0);
 
     const mean = dailyValues.length > 0 ? dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length : 0;
     const variance = dailyValues.length > 0 ? dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length : 0;
-    const std_dev = Math.sqrt(variance);
+    let std_dev = Math.sqrt(variance);
 
-    // EWMA demand
+    // 2b) Single record: conservative estimate
+    const singleRecordEstimate = filteredSales.length === 1;
+    if (singleRecordEstimate && avg_daily_demand > 0) {
+      std_dev = avg_daily_demand * 0.5;
+    }
+
+    // 2d) EWMA with < 3 data points falls back to simple
     const dailySalesForEwma = Array.from(dailyMap.entries()).map(([date, qty]) => ({ date, qty }));
-    const avg_daily_demand_ewma = ewmaDemand(dailySalesForEwma, costSettings.ewmaAlpha);
-    const demandMethod: 'simple' | 'ewma' = costSettings.ewmaEnabled ? 'ewma' : 'simple';
-    const effectiveDemand = costSettings.ewmaEnabled ? avg_daily_demand_ewma : avg_daily_demand;
+    const ewmaFallback = costSettings.ewmaEnabled && dailySalesForEwma.length < 3;
+    const avg_daily_demand_ewma = ewmaFallback ? avg_daily_demand : ewmaDemand(dailySalesForEwma, costSettings.ewmaAlpha);
+    const demandMethod: 'simple' | 'ewma' = (costSettings.ewmaEnabled && !ewmaFallback) ? 'ewma' : 'simple';
+    const effectiveDemand = demandMethod === 'ewma' ? avg_daily_demand_ewma : avg_daily_demand;
+
+    // 2c) Dead stock: zero demand but has stock
+    const dead_stock = avg_daily_demand === 0 && sku.stock_qty > 0;
+
+    // 2e) Past due orders: exclude from effective_stock
+    let pastDueOrders = false;
+    let effectiveOrdered = sku.ordered_qty;
+    if (sku.expected_delivery_date) {
+      const deliveryDate = new Date(sku.expected_delivery_date);
+      if (deliveryDate.getTime() < today.getTime()) {
+        pastDueOrders = true;
+        effectiveOrdered = 0; // order likely already arrived
+      }
+    }
+
+    // 1h) Overdue delivery flag
+    const overdueDelivery = pastDueOrders;
+
+    // Lead time clamping flags
+    const leadTimeClamped = sku.lead_time_days <= 0 || sku.lead_time_days > 365;
 
     // Safety stock with optional lead time variability
     const supplierStats = costSettings.supplierLeadTimeStats[sku.supplier];
@@ -116,7 +173,6 @@ export function analyzeSkus(
     let safetyStockFormula: 'simple' | 'full' = 'simple';
 
     if (supplierStats && supplierStats.stdDevLeadTime > 0) {
-      // Full formula: Z × √(LT × σ_d² + d² × σ_LT²)
       const lt = supplierStats.avgLeadTimeActual || sku.lead_time_days;
       const sigmaD = std_dev;
       const sigmaLT = supplierStats.stdDevLeadTime;
@@ -126,10 +182,17 @@ export function analyzeSkus(
       safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
     }
 
+    // 2f) Safety stock cap: never exceed avg_daily_demand × lead_time_days
+    let safetyStockCapped = false;
+    const ssMax = effectiveDemand * sku.lead_time_days;
+    if (ssMax > 0 && safety_stock > ssMax) {
+      safety_stock = ssMax;
+      safetyStockCapped = true;
+    }
+
     const effectiveLeadTime = Math.max(0, supplierStats?.avgLeadTimeActual || sku.lead_time_days);
     const reorder_point = effectiveDemand * effectiveLeadTime + safety_stock;
-    const effective_stock = sku.stock_qty + sku.ordered_qty;
-    // Use effectiveDemand (which respects EWMA) for days_of_stock
+    const effective_stock = sku.stock_qty + effectiveOrdered;
     const days_of_stock = effectiveDemand > 0 ? effective_stock / effectiveDemand : (effective_stock > 0 ? Infinity : 0);
     const total_revenue = totalSold * sku.unit_price;
     const cv = mean > 0 ? std_dev / mean : 0;
@@ -140,11 +203,8 @@ export function analyzeSkus(
     const now = endDate.getTime();
     const ms30 = 30 * 86_400_000;
 
-    // Sum sold_qty in last 30 days and prior 30 days
     let soldLast30 = 0;
     let soldPrior30 = 0;
-    let daysLast30 = 0;
-    let daysPrior30 = 0;
 
     for (const s of filteredSales) {
       const t = new Date(s.date).getTime();
@@ -154,16 +214,8 @@ export function analyzeSkus(
         soldPrior30 += s.sold_qty;
       }
     }
-    // Count unique dates in each window for better daily averages
-    const last30Dates = new Set<string>();
-    const prior30Dates = new Set<string>();
-    for (const s of filteredSales) {
-      const t = new Date(s.date).getTime();
-      if (t >= now - ms30) last30Dates.add(s.date);
-      else if (t >= now - 2 * ms30) prior30Dates.add(s.date);
-    }
-    daysLast30 = 30; // normalise to 30 days
-    daysPrior30 = 30;
+    const daysLast30 = 30;
+    const daysPrior30 = 30;
 
     const avgLast30 = soldLast30 / daysLast30;
     const avgPrior30 = soldPrior30 / daysPrior30;
@@ -172,7 +224,7 @@ export function analyzeSkus(
     if (avgPrior30 > 0) {
       trendPct = ((avgLast30 - avgPrior30) / avgPrior30) * 100;
     } else if (avgLast30 > 0) {
-      trendPct = 100; // went from 0 to something
+      trendPct = 100;
     }
 
     const trend: TrendDirection = trendPct > 15 ? 'rising' : trendPct < -15 ? 'falling' : 'stable';
@@ -181,6 +233,12 @@ export function analyzeSkus(
       ? ((avgLast30 / avg_daily_demand) - 1) * 100
       : 0;
     const seasonalityFlag = avg_daily_demand > 0 && avgLast30 > avg_daily_demand * 1.5;
+
+    // ─── Shelf life vs lead time (2i) ────────────────────────────
+    const shelfLifeDays = costSettings.shelfLifeEnabled
+      ? (costSettings.categoryShelfLifeDays[sku.category] ?? costSettings.categoryShelfLifeDays['Default'] ?? 9999)
+      : 9999;
+    const shelfLifeLtWarning = costSettings.shelfLifeEnabled && shelfLifeDays < sku.lead_time_days;
 
     // ─── Cost calculations ─────────────────────────────────────
     let holdingCost = 0;
@@ -198,7 +256,6 @@ export function analyzeSkus(
     }
 
     if (costSettings.stockoutCostEnabled && days_of_stock < sku.lead_time_days) {
-      // Estimated lost sales during stockout period × margin
       const shortfallDays = Math.max(0, sku.lead_time_days - days_of_stock);
       const lostSales = shortfallDays * avg_daily_demand * sku.unit_price;
       stockoutRisk = lostSales * (costSettings.defaultMarginPct / 100);
@@ -218,16 +275,17 @@ export function analyzeSkus(
       : 0;
     const tco = totalCarryingCost + annualOrderingCost;
 
-    // Price break detection
+    // Price break detection — 2h) Cap at 3× calculated reorder qty
     let priceBreakQty = 0;
     let priceBreakSaving = 0;
     if (costSettings.priceBreaksEnabled) {
       const breaks = costSettings.priceBreaks[sku.sku];
       if (breaks && breaks.length > 0) {
         const baseQty = reorder_point * 2 - effective_stock;
+        const maxBreakQty = baseQty * 3; // 2h) never suggest more than 3×
         const sortedBreaks = [...breaks].sort((a, b) => a.minQty - b.minQty);
         for (const brk of sortedBreaks) {
-          if (baseQty > 0 && baseQty < brk.minQty && brk.minQty <= baseQty * 1.15) {
+          if (baseQty > 0 && baseQty < brk.minQty && brk.minQty <= maxBreakQty) {
             const currentCost = baseQty * sku.unit_price;
             const breakCost = brk.minQty * brk.unitPrice;
             if (breakCost < currentCost) {
@@ -240,9 +298,6 @@ export function analyzeSkus(
     }
 
     // Shelf life risk
-    const shelfLifeDays = costSettings.shelfLifeEnabled
-      ? (costSettings.categoryShelfLifeDays[sku.category] ?? costSettings.categoryShelfLifeDays['Default'] ?? 9999)
-      : 9999;
     let shelfLifeRisk: 'none' | 'warning' | 'critical' = 'none';
     if (costSettings.shelfLifeEnabled && days_of_stock !== Infinity) {
       if (days_of_stock > shelfLifeDays) shelfLifeRisk = 'critical';
@@ -281,22 +336,69 @@ export function analyzeSkus(
       shelfLifeRisk,
       reserved_qty: 0,
       available_qty: sku.stock_qty,
+      // Edge case flags
+      insufficientData,
+      singleRecordEstimate,
+      dead_stock,
+      ewmaFallback,
+      pastDueOrders,
+      safetyStockCapped,
+      noStockData: sku.stock_qty === 0,
+      leadTimeClamped,
+      shelfLifeLtWarning,
+      overdueDelivery,
     });
   }
 
-  // ABC classification with configurable thresholds
+  // ─── ABC classification ────────────────────────────────────────
   const sortedByRevenue = [...analyses].sort((a, b) => b.total_revenue - a.total_revenue);
   const totalRevenue = sortedByRevenue.reduce((s, a) => s + a.total_revenue, 0);
-  let cumulative = 0;
 
-  for (const item of sortedByRevenue) {
-    const pctBefore = totalRevenue > 0 ? cumulative / totalRevenue : 0;
-    cumulative += item.total_revenue;
-    let abc: AbcClass = 'C';
-    if (pctBefore < abcACutoff) abc = 'A';
-    else if (pctBefore < abcBCutoff) abc = 'B';
-    const target = analyses.find(a => a.sku === item.sku);
-    if (target) target.abc_class = abc;
+  // 3c) All SKUs zero revenue
+  if (totalRevenue === 0) {
+    for (const item of analyses) {
+      item.abc_class = 'C';
+      item.abcInfo = 'ABC classification requires unit_price data';
+    }
+  }
+  // 3a) Single SKU → always A
+  else if (analyses.length === 1) {
+    analyses[0].abc_class = 'A';
+  }
+  // 3b) All SKUs equal revenue → distribute by count
+  else if (sortedByRevenue.length > 1 && sortedByRevenue[0].total_revenue === sortedByRevenue[sortedByRevenue.length - 1].total_revenue) {
+    const count = sortedByRevenue.length;
+    const aCount = Math.max(1, Math.round(count * (thresholds.abcA / 100)));
+    const bCount = Math.max(1, Math.round(count * ((thresholds.abcB - thresholds.abcA) / 100)));
+    for (let i = 0; i < sortedByRevenue.length; i++) {
+      let abc: AbcClass = 'C';
+      if (i < aCount) abc = 'A';
+      else if (i < aCount + bCount) abc = 'B';
+      const target = analyses.find(a => a.sku === sortedByRevenue[i].sku);
+      if (target) {
+        target.abc_class = abc;
+        target.abcInfo = 'Equal revenue distribution detected — ABC by item count';
+      }
+    }
+  } else {
+    let cumulative = 0;
+    for (const item of sortedByRevenue) {
+      const pctBefore = totalRevenue > 0 ? cumulative / totalRevenue : 0;
+      cumulative += item.total_revenue;
+      let abc: AbcClass = 'C';
+      if (pctBefore < abcACutoff) abc = 'A';
+      else if (pctBefore < abcBCutoff) abc = 'B';
+      const target = analyses.find(a => a.sku === item.sku);
+      if (target) target.abc_class = abc;
+    }
+  }
+
+  // 3d) All SKUs same CV → add info
+  const cvSet = new Set(analyses.map(a => a.xyz_class));
+  if (cvSet.size === 1 && analyses.length > 1) {
+    for (const item of analyses) {
+      item.xyzInfo = 'Uniform demand variability';
+    }
   }
 
   // ─── Pass 2: Per-ABC service level recalculation ────────────────
@@ -312,20 +414,27 @@ export function analyzeSkus(
       const z = SERVICE_LEVELS[slKey] ?? 1.65;
       item.effectiveServiceLevel = slKey;
 
-      const effectiveDemand = costSettings.ewmaEnabled ? item.avg_daily_demand_ewma : item.avg_daily_demand;
-      const supplierStats = costSettings.supplierLeadTimeStats[item.supplier];
+      const effDemand = costSettings.ewmaEnabled ? item.avg_daily_demand_ewma : item.avg_daily_demand;
+      const suppStats = costSettings.supplierLeadTimeStats[item.supplier];
 
-      if (supplierStats && supplierStats.stdDevLeadTime > 0) {
-        const lt = supplierStats.avgLeadTimeActual || item.lead_time_days;
-        item.safety_stock = z * Math.sqrt(lt * item.std_dev ** 2 + effectiveDemand ** 2 * supplierStats.stdDevLeadTime ** 2);
+      if (suppStats && suppStats.stdDevLeadTime > 0) {
+        const lt = suppStats.avgLeadTimeActual || item.lead_time_days;
+        item.safety_stock = z * Math.sqrt(lt * item.std_dev ** 2 + effDemand ** 2 * suppStats.stdDevLeadTime ** 2);
         item.safetyStockFormula = 'full';
       } else {
         item.safety_stock = z * item.std_dev * Math.sqrt(item.lead_time_days);
         item.safetyStockFormula = 'simple';
       }
 
-      const effectiveLeadTime = supplierStats?.avgLeadTimeActual || item.lead_time_days;
-      item.reorder_point = effectiveDemand * effectiveLeadTime + item.safety_stock;
+      // Re-apply safety stock cap
+      const ssMax2 = effDemand * item.lead_time_days;
+      if (ssMax2 > 0 && item.safety_stock > ssMax2) {
+        item.safety_stock = ssMax2;
+        item.safetyStockCapped = true;
+      }
+
+      const effLT = suppStats?.avgLeadTimeActual || item.lead_time_days;
+      item.reorder_point = effDemand * effLT + item.safety_stock;
     }
   }
 

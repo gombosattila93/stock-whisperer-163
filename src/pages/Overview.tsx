@@ -4,6 +4,7 @@ import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
 import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3, DollarSign, Euro, Percent, Coins } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
@@ -212,7 +213,13 @@ export default function Overview() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Inventory Overview</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Inventory Overview</h1>
+            <HelpTooltip
+              text="Dashboard showing real-time inventory health KPIs, ABC-XYZ matrix, and data quality."
+              tip="Use global filters to slice by supplier, category, or ABC class. Upload at least 6 months of data for reliable trend detection."
+            />
+          </div>
           <p className="page-subtitle">Real-time inventory health at a glance</p>
         </div>
         <ExportButton

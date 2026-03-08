@@ -9,6 +9,7 @@ import {
   Calculator,
   ClipboardList,
   Wallet,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -35,6 +36,7 @@ const navItems = [
   { title: "Projects", url: "/projects", icon: ClipboardList },
   { title: "Suppliers", url: "/suppliers", icon: Truck },
   { title: "Cost Model", url: "/cost-model", icon: Calculator },
+  { title: "Guide", url: "/guide", icon: BookOpen },
 ];
 
 export function AppSidebar() {

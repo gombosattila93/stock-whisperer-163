@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 const TIER_BADGE: Record<SkuCapability['tier'], { label: string; className: string }> = {
   full: { label: 'Complete', className: 'bg-primary/10 text-primary border-primary/30' },
@@ -90,7 +91,13 @@ export default function AbcXyzDetail() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">ABC-XYZ Detail</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">ABC-XYZ Detail</h1>
+            <HelpTooltip
+              text="Dual classification: ABC (revenue importance) × XYZ (demand variability)."
+              tip="A = top 80% revenue, X = CV < 0.5 (stable). AX items deserve tight management; CZ items may be candidates for make-to-order. Adjust thresholds in Classification Settings."
+            />
+          </div>
           <p className="page-subtitle">Full SKU analysis with classification filters</p>
         </div>
         <ExportButton data={exportData} filename="abc-xyz-detail.csv" />

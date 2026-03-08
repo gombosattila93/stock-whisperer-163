@@ -181,7 +181,7 @@ export default function CostModel() {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary" className="text-xs">
-            {enabledCount}/8 modules active
+            {enabledCount}/9 modules active
           </Badge>
           <Button
             variant="outline"

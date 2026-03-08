@@ -13,6 +13,7 @@ import Overstock from "./pages/Overstock";
 import AbcXyzDetail from "./pages/AbcXyzDetail";
 import Suppliers from "./pages/Suppliers";
 import CostModel from "./pages/CostModel";
+import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

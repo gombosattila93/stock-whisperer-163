@@ -117,7 +117,13 @@ export default function CriticalSkus() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Critical SKUs</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Critical SKUs</h1>
+            <HelpTooltip
+              text="Items where days of stock < lead time — at risk of stockout."
+              tip="Focus on CRITICAL urgency + Rising trend first. Click cells to edit stock or lead time in-place. Rows turn red when days of stock < 7."
+            />
+          </div>
           <p className="page-subtitle">Items where days of stock &lt; lead time — risk of stockout</p>
         </div>
         <ExportButton data={exportData} filename="critical-skus.csv" />

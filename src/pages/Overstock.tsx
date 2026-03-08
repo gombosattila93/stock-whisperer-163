@@ -90,7 +90,13 @@ export default function Overstock() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Overstock Analysis</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Overstock Analysis</h1>
+            <HelpTooltip
+              text="Items with >180 days of stock coverage, plus dead stock (zero sales)."
+              tip="Tied-up capital = excess qty × purchase price. Dead stock items are the best candidates for liquidation or returns. Review this page monthly."
+            />
+          </div>
           <p className="page-subtitle">
             Items with &gt;180 days of stock — Total tied-up capital:{' '}
             <span className="font-semibold text-foreground">€{totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>

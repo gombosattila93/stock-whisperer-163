@@ -213,7 +213,13 @@ export default function Overview() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Inventory Overview</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Inventory Overview</h1>
+            <HelpTooltip
+              text="Dashboard showing real-time inventory health KPIs, ABC-XYZ matrix, and data quality."
+              tip="Use global filters to slice by supplier, category, or ABC class. Upload at least 6 months of data for reliable trend detection."
+            />
+          </div>
           <p className="page-subtitle">Real-time inventory health at a glance</p>
         </div>
         <ExportButton

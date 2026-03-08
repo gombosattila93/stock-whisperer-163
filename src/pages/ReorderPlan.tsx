@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Slider } from "@/components/ui/slider";
 import { Download, Zap, AlertTriangle, CheckCircle, Clock, Info, SlidersHorizontal } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import type { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 

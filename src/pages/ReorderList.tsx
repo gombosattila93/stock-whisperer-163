@@ -292,7 +292,13 @@ export default function ReorderList() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Reorder List</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Reorder List</h1>
+            <HelpTooltip
+              text="Items where effective stock ≤ reorder point — the system recommends ordering."
+              tip="Choose a strategy (ROP/EOQ/Min-Max/Periodic), approve items with checkboxes, then export. Override strategy per-SKU with the dropdown. Lead time changes recalculate instantly."
+            />
+          </div>
           <p className="page-subtitle">Items where effective stock ≤ reorder point</p>
         </div>
         <ExportButton data={exportData} filename="reorder-list.csv" />

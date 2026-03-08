@@ -259,6 +259,44 @@ export default function ReorderList() {
         </div>
       )}
 
+      {needsLeadTime.length > 0 && (
+        <div className="rounded-lg border border-border bg-card mb-4">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Set lead time to enable reorder</span>
+            <span className="text-xs text-muted-foreground ml-1">({needsLeadTime.length} SKUs)</span>
+          </div>
+          <div className="overflow-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">SKU</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Name</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Stock</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Avg Demand/day</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Lead Time (days)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {needsLeadTime.map(s => (
+                  <tr key={s.sku}>
+                    <td className="font-mono font-medium text-sm">{s.sku}</td>
+                    <td className="text-sm">{s.sku_name}</td>
+                    <td className="text-sm">{s.supplier}</td>
+                    <td className="text-right text-sm">{s.stock_qty.toLocaleString()}</td>
+                    <td className="text-right text-sm">{s.avg_daily_demand.toFixed(1)}</td>
+                    <td>
+                      <LeadTimeQuickInput sku={s.sku} onSave={setStockOverride} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">
           <EoqSettingsPanel settings={eoqSettings} onChange={handleEoqChange} />

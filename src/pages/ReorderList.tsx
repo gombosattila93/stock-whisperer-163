@@ -2,6 +2,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getUrgency } from "@/lib/calculations";
+import { purchaseToEur } from "@/lib/fxRates";
 import { computeReorder, STRATEGY_OPTIONS, ReorderStrategy, EoqSettings, DEFAULT_EOQ_SETTINGS } from "@/lib/reorderStrategies";
 import { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 import { loadSkuOverrides, saveSkuOverrides, loadEoqSettings, saveEoqSettings } from "@/lib/persistence";
@@ -69,7 +70,7 @@ function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string
 }
 
 export default function ReorderList() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap, fxRates } = useInventory();
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
@@ -210,21 +211,26 @@ export default function ReorderList() {
 
   // ─── Supplier summary ─────────────────────────────────────────────────
   const supplierSummary = useMemo(() => {
-    const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValue: number; urgencies: string[] }>();
+    const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValueEur: number; totalValueUsdRaw: number; totalValueUsdAsEur: number; hasUsd: boolean; urgencies: string[] }>();
     for (const s of sorted) {
+      const pd = s.priceData;
+      const effPrice = pd?.effectivePurchasePriceEur ?? s.unit_price;
+      const orderValueEur = s.suggested_order_qty * effPrice;
+      const isUsd = pd?.purchaseCurrency === 'USD' && pd?.hasPurchasePrice;
+      const usdRaw = isUsd ? s.suggested_order_qty * (pd!.priceBreaks[0]?.price ?? 0) : 0;
+
       const existing = map.get(s.supplier);
-      const orderValue = s.suggested_order_qty * s.unit_price;
       if (existing) {
         existing.skuCount += 1;
         existing.totalQty += s.suggested_order_qty;
-        existing.totalValue += orderValue;
+        existing.totalValueEur += orderValueEur;
+        if (isUsd) { existing.totalValueUsdRaw += usdRaw; existing.totalValueUsdAsEur += orderValueEur; existing.hasUsd = true; }
         existing.urgencies.push(s.urgency);
       } else {
         map.set(s.supplier, {
-          supplier: s.supplier,
-          skuCount: 1,
-          totalQty: s.suggested_order_qty,
-          totalValue: orderValue,
+          supplier: s.supplier, skuCount: 1, totalQty: s.suggested_order_qty,
+          totalValueEur: orderValueEur, totalValueUsdRaw: isUsd ? usdRaw : 0,
+          totalValueUsdAsEur: isUsd ? orderValueEur : 0, hasUsd: isUsd,
           urgencies: [s.urgency],
         });
       }
@@ -240,7 +246,10 @@ export default function ReorderList() {
   const grandTotal = useMemo(() => ({
     skuCount: supplierSummary.reduce((s, r) => s + r.skuCount, 0),
     totalQty: supplierSummary.reduce((s, r) => s + r.totalQty, 0),
-    totalValue: supplierSummary.reduce((s, r) => s + r.totalValue, 0),
+    totalValueEur: supplierSummary.reduce((s, r) => s + r.totalValueEur, 0),
+    totalUsdRaw: supplierSummary.reduce((s, r) => s + r.totalValueUsdRaw, 0),
+    totalUsdAsEur: supplierSummary.reduce((s, r) => s + r.totalValueUsdAsEur, 0),
+    hasAnyUsd: supplierSummary.some(r => r.hasUsd),
   }), [supplierSummary]);
 
   if (!hasData) return <EmptyState />;
@@ -263,14 +272,16 @@ export default function ReorderList() {
       supplier: r.supplier,
       skus_to_order: r.skuCount,
       total_order_qty: r.totalQty,
-      total_order_value_eur: r.totalValue.toFixed(2),
+      total_order_value_eur: r.totalValueEur.toFixed(2),
+      usd_component: r.hasUsd ? `$${r.totalValueUsdRaw.toFixed(2)}` : '',
       avg_urgency: r.avgUrgency,
     }));
     data.push({
       supplier: 'GRAND TOTAL',
       skus_to_order: grandTotal.skuCount,
       total_order_qty: grandTotal.totalQty,
-      total_order_value_eur: grandTotal.totalValue.toFixed(2),
+      total_order_value_eur: grandTotal.totalValueEur.toFixed(2),
+      usd_component: grandTotal.hasAnyUsd ? `$${grandTotal.totalUsdRaw.toFixed(2)}` : '',
       avg_urgency: '',
     });
     exportToCsv(data, 'reorder-supplier-summary.csv');
@@ -429,6 +440,7 @@ export default function ReorderList() {
                     <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" />
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
                     <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Est. PO Value</th>
                     {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Price Break</th>}
                     {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Min Order</th>}
                     {hasReservations && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Reserved</th>}
@@ -540,6 +552,30 @@ export default function ReorderList() {
                           )}
                         </div>
                       </td>
+                      {/* Est. PO Value + price break hint */}
+                      <td className="text-right text-xs">
+                        {(() => {
+                          const pd = s.priceData;
+                          const effPrice = pd?.effectivePurchasePriceEur ?? null;
+                          if (!effPrice) return <span className="text-muted-foreground">—</span>;
+                          const poEur = s.suggested_order_qty * effPrice;
+                          const isUsd = pd?.purchaseCurrency === 'USD';
+                          const poUsd = isUsd && pd?.priceBreaks[0] ? s.suggested_order_qty * pd.priceBreaks[0].price : null;
+                          return (
+                            <div>
+                              <span className="font-semibold">€{poEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                              {isUsd && poUsd && (
+                                <div className="text-[10px] text-muted-foreground">≈ ${poUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                              )}
+                              {pd && pd.nextPriceBreakQty !== null && pd.nextPriceBreakQty > 0 && pd.nextPriceBreakSaving !== null && pd.nextPriceBreakSaving > 0 && (
+                                <div className="text-[10px] text-warning-foreground mt-0.5">
+                                  +{pd.nextPriceBreakQty} db → €{(pd.nextPriceBreakSaving / s.suggested_order_qty).toFixed(2)}/db megtakarítás
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
                       {costSettings.priceBreaksEnabled && (
                         <td className="text-xs">
                           {s.priceBreakQty > 0 ? (
@@ -612,7 +648,8 @@ export default function ReorderList() {
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">SKUs to Order</th>
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Qty</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Value (€)</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">EUR Value</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">USD Value</th>
                         <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Avg Urgency</th>
                       </tr>
                     </thead>
@@ -622,7 +659,17 @@ export default function ReorderList() {
                           <td className="font-medium">{row.supplier}</td>
                           <td className="text-right">{row.skuCount}</td>
                           <td className="text-right">{row.totalQty.toLocaleString()}</td>
-                          <td className="text-right">€{row.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td className="text-right">
+                            €{(row.totalValueEur - row.totalValueUsdAsEur).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </td>
+                          <td className="text-right">
+                            {row.hasUsd ? (
+                              <span>
+                                ${row.totalValueUsdRaw.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                <span className="text-muted-foreground text-[10px] ml-1">(≈ €{row.totalValueUsdAsEur.toLocaleString(undefined, { maximumFractionDigits: 0 })})</span>
+                              </span>
+                            ) : '—'}
+                          </td>
                           <td>
                             <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[row.avgUrgency]}`}>
                               {row.avgUrgency}
@@ -634,7 +681,12 @@ export default function ReorderList() {
                         <td>Grand Total</td>
                         <td className="text-right">{grandTotal.skuCount}</td>
                         <td className="text-right">{grandTotal.totalQty.toLocaleString()}</td>
-                        <td className="text-right">€{grandTotal.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="text-right">€{grandTotal.totalValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                        <td className="text-right">
+                          {grandTotal.hasAnyUsd && (
+                            <span className="text-muted-foreground text-xs">ebből USD: ${grandTotal.totalUsdRaw.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          )}
+                        </td>
                         <td></td>
                       </tr>
                     </tbody>

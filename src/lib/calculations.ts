@@ -342,6 +342,26 @@ export function analyzeSkus(
       else if (days_of_stock > shelfLifeDays * 0.75) shelfLifeRisk = 'warning';
     }
 
+    // ─── Build price data from raw fields ─────────────────────────
+    // Construct a row-like object for buildPriceData
+    const latestRawForPrice: Record<string, unknown> = {
+      unit_price: sku.unit_price,
+      selling_price_huf: sku.selling_price_huf,
+      purchase_currency: sku.purchase_currency,
+    };
+    // Copy price break fields from purchase_prices array
+    if (sku.purchase_prices) {
+      for (let i = 0; i < sku.purchase_prices.length && i < 8; i++) {
+        latestRawForPrice[`purchase_price_${i + 1}`] = sku.purchase_prices[i].price;
+        latestRawForPrice[`purchase_qty_${i + 1}`] = sku.purchase_prices[i].qty;
+      }
+    }
+
+    const suggestedQty = (reorder_point !== null)
+      ? getSuggestedOrderQty(reorder_point, effective_stock)
+      : 0;
+    const priceData = buildPriceData(latestRawForPrice, suggestedQty, fxRates);
+
     analyses.push({
       ...sku,
       avg_daily_demand,
@@ -375,6 +395,7 @@ export function analyzeSkus(
       reserved_qty: 0,
       available_qty: sku.stock_qty,
       capability,
+      priceData,
       // Edge case flags
       insufficientData,
       singleRecordEstimate,

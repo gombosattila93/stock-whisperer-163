@@ -419,7 +419,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings, fxRates },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap, fxRates]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);

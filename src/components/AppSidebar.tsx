@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Overview", url: "/", icon: LayoutDashboard },
+  { title: "Overview", url: "/overview", icon: LayoutDashboard },
   { title: "Critical SKUs", url: "/critical", icon: AlertTriangle },
   { title: "Reorder List", url: "/reorder", icon: ShoppingCart },
   { title: "Overstock", url: "/overstock", icon: PackageX },

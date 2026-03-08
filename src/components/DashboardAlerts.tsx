@@ -41,7 +41,7 @@ export function DashboardAlerts() {
     const overstockItems = filtered.filter(s => s.days_of_stock > 180 && s.avg_daily_demand > 0);
     if (overstockItems.length > 0) {
       const tiedUp = overstockItems.reduce((sum, s) => {
-        const idealStock = s.avg_daily_demand * 90;
+        const idealStock = s.avg_daily_demand * 180;
         const excess = Math.max(0, s.effective_stock - idealStock);
         return sum + excess * s.unit_price;
       }, 0);

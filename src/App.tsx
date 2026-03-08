@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { InventoryProvider } from "@/context/InventoryContext";
 import { Layout } from "@/components/Layout";
+import Index from "./pages/Index";
 import Overview from "./pages/Overview";
 import CriticalSkus from "./pages/CriticalSkus";
 import ReorderList from "./pages/ReorderList";
@@ -24,7 +25,8 @@ const App = () => (
         <InventoryProvider>
           <Layout>
             <Routes>
-              <Route path="/" element={<Overview />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/overview" element={<Overview />} />
               <Route path="/critical" element={<CriticalSkus />} />
               <Route path="/reorder" element={<ReorderList />} />
               <Route path="/overstock" element={<Overstock />} />

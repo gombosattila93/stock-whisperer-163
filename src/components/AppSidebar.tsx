@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Overview", url: "/", icon: LayoutDashboard },
+  { title: "Overview", url: "/overview", icon: LayoutDashboard },
   { title: "Critical SKUs", url: "/critical", icon: AlertTriangle },
   { title: "Reorder List", url: "/reorder", icon: ShoppingCart },
   { title: "Overstock", url: "/overstock", icon: PackageX },
@@ -61,7 +61,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      end={item.url === "/"}
+                      end={item.url === "/overview"}
                       className="hover:bg-sidebar-accent/50 transition-colors"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >

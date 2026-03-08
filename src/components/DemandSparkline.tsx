@@ -7,7 +7,10 @@ interface DemandSparklineProps {
 }
 
 function getWeeklyDemand(sales: { date: string; sold_qty: number }[]): { week: string; demand: number }[] {
-  const now = new Date();
+  // Use latest sale date as reference instead of current date
+  const now = sales.length > 0
+    ? new Date(Math.max(...sales.map(s => new Date(s.date).getTime())))
+    : new Date();
   const start = new Date(now);
   start.setDate(start.getDate() - 90);
 
@@ -39,7 +42,7 @@ function getWeeklyDemand(sales: { date: string; sold_qty: number }[]): { week: s
 
   return weeks.map(w => ({
     week: w.label,
-    demand: Math.round(w.total / 7 * 10) / 10, // avg daily demand per week
+    demand: Math.round(w.total / 7 * 10) / 10,
   }));
 }
 

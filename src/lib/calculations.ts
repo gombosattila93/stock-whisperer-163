@@ -414,17 +414,19 @@ export function analyzeSkus(
     const count = sortedByRevenue.length;
     const aCount = Math.max(1, Math.round(count * (thresholds.abcA / 100)));
     const bCount = Math.max(1, Math.round(count * ((thresholds.abcB - thresholds.abcA) / 100)));
+    const eqMap = new Map<string, SkuAnalysis>(analyses.map(a => [a.sku, a]));
     for (let i = 0; i < sortedByRevenue.length; i++) {
       let abc: AbcClass = 'C';
       if (i < aCount) abc = 'A';
       else if (i < aCount + bCount) abc = 'B';
-      const target = analyses.find(a => a.sku === sortedByRevenue[i].sku);
+      const target = eqMap.get(sortedByRevenue[i].sku);
       if (target) {
         target.abc_class = abc;
         target.abcInfo = 'Equal revenue distribution detected — ABC by item count';
       }
     }
   } else {
+    const revMap = new Map<string, SkuAnalysis>(analyses.map(a => [a.sku, a]));
     let cumulative = 0;
     for (const item of sortedByRevenue) {
       const pctBefore = totalRevenue > 0 ? cumulative / totalRevenue : 0;

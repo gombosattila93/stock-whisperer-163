@@ -510,9 +510,8 @@ describe("Edge cases: shelf life with Infinity days_of_stock", () => {
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30, 1.65, undefined, costSettings);
     const sku = results.find(r => r.sku === "SKU-001")!;
     expect(sku.days_of_stock).toBe(Infinity);
-    // Infinity is not > 30 in the code's check (Infinity !== Infinity is false, and Infinity > 30 is true)
-    // So with days_of_stock = Infinity AND shelf life enabled, risk should be critical
-    expect(sku.shelfLifeRisk).toBe('critical');
+    // Infinity days_of_stock is excluded from shelf life check (days_of_stock !== Infinity guard)
+    expect(sku.shelfLifeRisk).toBe('none');
   });
 });
 

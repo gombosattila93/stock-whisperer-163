@@ -99,8 +99,8 @@ export function analyzeSkus(
     const dailyValues = Array.from(dailyMap.values());
     while (dailyValues.length < demandDays) dailyValues.push(0);
 
-    const mean = dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length;
-    const variance = dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length;
+    const mean = dailyValues.length > 0 ? dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length : 0;
+    const variance = dailyValues.length > 0 ? dailyValues.reduce((s, v) => s + (v - mean) ** 2, 0) / dailyValues.length : 0;
     const std_dev = Math.sqrt(variance);
 
     // EWMA demand

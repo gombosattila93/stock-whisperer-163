@@ -194,7 +194,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'trend',
-              header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} />,
+              header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} tooltip="Rising = recent demand > historical avg. Falling = opposite. Based on linear regression of daily sales." />,
               render: (s) => (
                 <div className="flex items-center gap-1.5">
                   <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />

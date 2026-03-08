@@ -78,6 +78,8 @@ export function analyzeSkus(
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;
   const abcBCutoff = thresholds.abcB / 100;
+  // Determine global service level string from factor
+  const globalServiceLevel = Object.entries(SERVICE_LEVELS).find(([, v]) => Math.abs(v - serviceFactor) < 0.01)?.[0] || '95%';
 
   for (const [, sku] of skuMap) {
     const filteredSales = sku.sales.filter(s => {

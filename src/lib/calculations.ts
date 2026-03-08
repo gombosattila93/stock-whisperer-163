@@ -16,8 +16,8 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     const existing = map.get(row.sku);
     const sale: SaleRecord = {
       sku: row.sku,
-      date: row.date,
-      sold_qty: Number(row.sold_qty) || 0,
+      date: parseFlexibleDate(row.date) ?? row.date,
+      sold_qty: Math.max(0, Number(row.sold_qty) || 0),
       partner_id: row.partner_id,
     };
 

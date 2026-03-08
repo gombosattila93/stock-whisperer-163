@@ -165,8 +165,8 @@ export default function CriticalSkus() {
               key: 'days_of_stock',
               header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => (
-                <span className={`text-right font-semibold ${s.days_of_stock < 7 ? 'text-destructive' : 'text-warning'}`}>
-                  {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
+                <span className={`text-right font-semibold ${(s.days_of_stock ?? Infinity) < 7 ? 'text-destructive' : 'text-warning'}`}>
+                  {s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
                 </span>
               ),
             },

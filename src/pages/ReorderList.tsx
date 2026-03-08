@@ -272,14 +272,16 @@ export default function ReorderList() {
       supplier: r.supplier,
       skus_to_order: r.skuCount,
       total_order_qty: r.totalQty,
-      total_order_value_eur: r.totalValue.toFixed(2),
+      total_order_value_eur: r.totalValueEur.toFixed(2),
+      usd_component: r.hasUsd ? `$${r.totalValueUsdRaw.toFixed(2)}` : '',
       avg_urgency: r.avgUrgency,
     }));
     data.push({
       supplier: 'GRAND TOTAL',
       skus_to_order: grandTotal.skuCount,
       total_order_qty: grandTotal.totalQty,
-      total_order_value_eur: grandTotal.totalValue.toFixed(2),
+      total_order_value_eur: grandTotal.totalValueEur.toFixed(2),
+      usd_component: grandTotal.hasAnyUsd ? `$${grandTotal.totalUsdRaw.toFixed(2)}` : '',
       avg_urgency: '',
     });
     exportToCsv(data, 'reorder-supplier-summary.csv');

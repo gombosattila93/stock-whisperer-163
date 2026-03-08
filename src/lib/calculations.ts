@@ -96,6 +96,7 @@ export function analyzeSkus(
   serviceFactor: number = 1.65,
   thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS,
   costSettings: CostSettings = DEFAULT_COST_SETTINGS,
+  fxRates: FxRateConfig = FALLBACK_RATES,
 ): SkuAnalysis[] {
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;

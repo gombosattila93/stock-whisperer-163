@@ -6,6 +6,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ColumnMapper } from "@/components/ColumnMapper";
 import { DuplicateDetectionModal } from "@/components/DuplicateDetectionModal";
 import { ImportSummaryModal } from "@/components/ImportSummaryModal";
+import { FxBanner } from "@/components/FxBanner";
+import { FxSettingsPanel } from "@/components/FxSettingsPanel";
 import { useInventory } from "@/context/InventoryContext";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, Info } from "lucide-react";
@@ -42,10 +44,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           )}
 
+          <FxBanner />
+
           <header className="h-14 flex items-center gap-4 border-b bg-card px-4 shrink-0">
             <SidebarTrigger />
             <DataActions />
             <GlobalFilters />
+            <div className="ml-auto">
+              <FxSettingsPanel />
+            </div>
           </header>
           {isCalculating && (
             <div className="shrink-0">

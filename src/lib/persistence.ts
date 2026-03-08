@@ -5,7 +5,8 @@ import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
+const FX_RATES_KEY = 'fxRates';
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';
@@ -329,5 +330,37 @@ export async function loadReservations(): Promise<ProjectReservation[]> {
     });
   } catch {
     return [];
+  }
+}
+
+// ─── FX Rates Persistence ──────────────────────────────────────────────────
+
+export async function saveFxRates(rates: unknown): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SETTINGS_STORE, 'readwrite');
+      const store = tx.objectStore(SETTINGS_STORE);
+      store.put(rates, FX_RATES_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save FX rates to IndexedDB');
+  }
+}
+
+export async function loadFxRates(): Promise<unknown | null> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SETTINGS_STORE, 'readonly');
+      const store = tx.objectStore(SETTINGS_STORE);
+      const request = store.get(FX_RATES_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return null;
   }
 }

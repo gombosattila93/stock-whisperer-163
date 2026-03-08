@@ -10,8 +10,10 @@ import {
   saveCostSettings, loadCostSettings,
   SkuSupplierOptionsMap, saveSkuSupplierOptions, loadSkuSupplierOptions,
   saveReservations, loadReservations,
+  saveFxRates, loadFxRates,
   isIndexedDBAvailable, wasIndexedDBWarningShown, markIndexedDBWarningShown,
 } from '@/lib/persistence';
+import { FxRateConfig, FALLBACK_RATES } from '@/lib/fxRates';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from '@/lib/costSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';
@@ -77,6 +79,9 @@ interface InventoryContextType {
   confirmExtremeExclude: () => void;
   // IndexedDB availability
   indexedDBAvailable: boolean;
+  // FX rates
+  fxRates: FxRateConfig;
+  setFxRates: (rates: FxRateConfig) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
@@ -212,6 +217,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [skuSupplierOptions, setSkuSupplierOptionsRaw] = useState<SkuSupplierOptionsMap>({});
   const [reservations, setReservations] = useState<ProjectReservation[]>([]);
   const [indexedDBAvailable, setIndexedDBAvailable] = useState(true);
+  const [fxRates, setFxRatesRaw] = useState<FxRateConfig>(FALLBACK_RATES);
+
+  const setFxRates = useCallback((rates: FxRateConfig) => {
+    setFxRatesRaw(rates);
+    saveFxRates(rates);
+  }, []);
 
   // Import summary modal state
   const [pendingImportSummary, setPendingImportSummary] = useState<ImportSummary | null>(null);
@@ -306,7 +317,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions(), loadReservations()]).then(([rows, overrides, costs, supplierOpts, resv]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions(), loadReservations(), loadFxRates()]).then(([rows, overrides, costs, supplierOpts, resv, fx]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
@@ -320,6 +331,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
       if (resv && resv.length > 0) {
         setReservations(resv);
+      }
+      if (fx && typeof fx === 'object' && 'usdEur' in (fx as any)) {
+        setFxRatesRaw(fx as FxRateConfig);
       }
       setPersistenceLoaded(true);
 
@@ -402,10 +416,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const rowsWithOverrides = applyStockOverrides(rawRows, stockOverrides);
     const message: WorkerRequest = {
       type: 'ANALYZE',
-      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings },
+      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings, fxRates },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap, fxRates]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
@@ -756,6 +770,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       confirmExtremeInclude,
       confirmExtremeExclude,
       indexedDBAvailable,
+      fxRates,
+      setFxRates,
     }}>
       {children}
     </InventoryContext.Provider>

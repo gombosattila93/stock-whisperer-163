@@ -77,7 +77,7 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
 
     // Parse price breaks — skip entirely when first price break is absent
     const purchasePrices: Array<{ qty: number; price: number }> = [];
-    const rowRecord = row as Record<string, string | number | undefined>;
+    const rowRecord = row as unknown as Record<string, string | number | undefined>;
     if (rowRecord['purchase_price_1'] != null) for (let i = 1; i <= 8; i++) {
       const p = parseFloat(String(rowRecord[`purchase_price_${i}`] ?? ''));
       const q = parseFloat(String(rowRecord[`purchase_qty_${i}`] ?? ''));

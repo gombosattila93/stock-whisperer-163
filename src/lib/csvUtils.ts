@@ -59,7 +59,7 @@ export async function parseCsvFileWithEncoding(file: File): Promise<{ rows: Reco
     Papa.parse<Record<string, string>>(text, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
       complete: (results) => resolve({ rows: results.data, encoding }),
       error: (err: Error) => reject(err),
     });

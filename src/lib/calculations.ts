@@ -43,10 +43,10 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     const existing = map.get(row.sku);
     if (existing) {
       const parsedStock = Number(row.stock_qty);
-      existing.stock_qty = !isNaN(parsedStock) ? parsedStock : existing.stock_qty;
+      existing.stock_qty = (isFinite(parsedStock) && parsedStock >= 0) ? parsedStock : existing.stock_qty;
       existing.lead_time_days = leadTime;
       const parsedOrdered = Number(row.ordered_qty);
-      existing.ordered_qty = !isNaN(parsedOrdered) ? parsedOrdered : existing.ordered_qty;
+      existing.ordered_qty = (isFinite(parsedOrdered) && parsedOrdered >= 0) ? parsedOrdered : existing.ordered_qty;
       existing.expected_delivery_date = row.expected_delivery_date
         ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
         : existing.expected_delivery_date;
@@ -59,9 +59,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         supplier: row.supplier?.trim() || 'Unknown',
         category: row.category?.trim() || 'Uncategorized',
         unit_price: unitPrice,
-        stock_qty: Number(row.stock_qty) || 0,
+        stock_qty: Math.max(0, isFinite(Number(row.stock_qty)) ? Number(row.stock_qty) : 0),
         lead_time_days: leadTime,
-        ordered_qty: Number(row.ordered_qty) || 0,
+        ordered_qty: Math.max(0, isFinite(Number(row.ordered_qty)) ? Number(row.ordered_qty) : 0),
         expected_delivery_date: row.expected_delivery_date
           ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
           : '',
@@ -414,17 +414,19 @@ export function analyzeSkus(
     const count = sortedByRevenue.length;
     const aCount = Math.max(1, Math.round(count * (thresholds.abcA / 100)));
     const bCount = Math.max(1, Math.round(count * ((thresholds.abcB - thresholds.abcA) / 100)));
+    const eqMap = new Map<string, SkuAnalysis>(analyses.map(a => [a.sku, a]));
     for (let i = 0; i < sortedByRevenue.length; i++) {
       let abc: AbcClass = 'C';
       if (i < aCount) abc = 'A';
       else if (i < aCount + bCount) abc = 'B';
-      const target = analyses.find(a => a.sku === sortedByRevenue[i].sku);
+      const target = eqMap.get(sortedByRevenue[i].sku);
       if (target) {
         target.abc_class = abc;
         target.abcInfo = 'Equal revenue distribution detected — ABC by item count';
       }
     }
   } else {
+    const revMap = new Map<string, SkuAnalysis>(analyses.map(a => [a.sku, a]));
     let cumulative = 0;
     for (const item of sortedByRevenue) {
       const pctBefore = totalRevenue > 0 ? cumulative / totalRevenue : 0;
@@ -432,7 +434,7 @@ export function analyzeSkus(
       let abc: AbcClass = 'C';
       if (pctBefore < abcACutoff) abc = 'A';
       else if (pctBefore < abcBCutoff) abc = 'B';
-      const target = analyses.find(a => a.sku === item.sku);
+      const target = revMap.get(item.sku);
       if (target) target.abc_class = abc;
     }
   }

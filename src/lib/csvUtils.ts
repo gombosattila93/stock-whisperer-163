@@ -33,7 +33,7 @@ export function parseCsvString(csvString: string): Promise<RawRow[]> {
     Papa.parse<RawRow>(csvString, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
       complete: (results) => resolve(results.data),
       error: (err: Error) => reject(err),
     });
@@ -45,7 +45,7 @@ export function parseCsvFile(file: File): Promise<RawRow[]> {
     Papa.parse<RawRow>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
       complete: (results) => resolve(results.data),
       error: (err: Error) => reject(err),
     });
@@ -59,7 +59,7 @@ export async function parseCsvFileWithEncoding(file: File): Promise<{ rows: Reco
     Papa.parse<Record<string, string>>(text, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
       complete: (results) => resolve({ rows: results.data, encoding }),
       error: (err: Error) => reject(err),
     });
@@ -72,15 +72,28 @@ export function parseCsvFileRaw(file: File): Promise<Record<string, string>[]> {
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
       complete: (results) => resolve(results.data),
       error: (err: Error) => reject(err),
     });
   });
 }
 
+function sanitizeCsvCell(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  if (/^[=+\-@\t\r]/.test(value)) {
+    return `'${value}`;
+  }
+  return value;
+}
+
 export function exportToCsv(data: Record<string, unknown>[], filename: string) {
-  const csv = Papa.unparse(data);
+  const sanitized = data.map(row =>
+    Object.fromEntries(
+      Object.entries(row).map(([k, v]) => [k, sanitizeCsvCell(v)])
+    )
+  );
+  const csv = Papa.unparse(sanitized);
   // Add UTF-8 BOM for Excel compatibility
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');

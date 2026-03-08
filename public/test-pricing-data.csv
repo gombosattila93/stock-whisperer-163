@@ -1,0 +1,28 @@
+sku,sku_name,supplier,category,date,partner_id,sold_qty,unit_price,stock_qty,lead_time_days,ordered_qty,expected_delivery_date,selling_price_huf,purchase_currency,purchase_price_1,purchase_qty_1,purchase_price_2,purchase_qty_2,purchase_price_3,purchase_qty_3
+PSU-001,TDK-Lambda 24V PSU,TDK-Lambda,Power Supplies,2026-01-15,P001,5,45.00,120,21,,,"17662.5",EUR,29.00,1,26.50,10,24.00,25
+PSU-001,TDK-Lambda 24V PSU,TDK-Lambda,Power Supplies,2026-01-20,P002,3,45.00,115,21,,,,,,,,,
+PSU-001,TDK-Lambda 24V PSU,TDK-Lambda,Power Supplies,2026-01-25,P003,4,45.00,111,21,,,,,,,,,
+PSU-001,TDK-Lambda 24V PSU,TDK-Lambda,Power Supplies,2026-02-01,P001,6,45.00,105,21,,,,,,,,,
+PSU-001,TDK-Lambda 24V PSU,TDK-Lambda,Power Supplies,2026-02-05,P004,2,45.00,103,21,50,2026-02-28,,,,,,,
+PSU-002,Mean Well 48V PSU,Mean Well,Power Supplies,2026-01-15,P001,8,62.00,200,14,,,"29437.5",USD,34.09,1,31.39,10,,
+PSU-002,Mean Well 48V PSU,Mean Well,Power Supplies,2026-01-22,P002,5,62.00,195,14,,,,,,,,,
+PSU-002,Mean Well 48V PSU,Mean Well,Power Supplies,2026-01-30,P003,7,62.00,188,14,,,,,,,,,
+PSU-002,Mean Well 48V PSU,Mean Well,Power Supplies,2026-02-05,P001,4,62.00,184,14,,,,,,,,,
+PSU-002,Mean Well 48V PSU,Mean Well,Power Supplies,2026-02-10,P004,6,62.00,178,14,100,2026-03-01,,,,,,,
+RELAY-001,Omron G2R-2 Relay,Omron,Relays,2026-01-10,P002,12,8.50,500,7,,,"3925",EUR,6.50,1,5.80,50,5.20,100
+RELAY-001,Omron G2R-2 Relay,Omron,Relays,2026-01-18,P003,15,8.50,485,7,,,,,,,,,
+RELAY-001,Omron G2R-2 Relay,Omron,Relays,2026-01-26,P001,10,8.50,475,7,,,,,,,,,
+RELAY-001,Omron G2R-2 Relay,Omron,Relays,2026-02-03,P002,18,8.50,457,7,,,,,,,,,
+RELAY-001,Omron G2R-2 Relay,Omron,Relays,2026-02-10,P004,8,8.50,449,7,200,2026-02-20,,,,,,,
+CONN-001,Phoenix Contact Terminal,Phoenix,Connectors,2026-01-12,P001,20,3.20,1000,10,,,,,,,,,
+CONN-001,Phoenix Contact Terminal,Phoenix,Connectors,2026-01-20,P003,25,3.20,975,10,,,,,,,,,
+CONN-001,Phoenix Contact Terminal,Phoenix,Connectors,2026-01-28,P002,18,3.20,957,10,,,,,,,,,
+CONN-001,Phoenix Contact Terminal,Phoenix,Connectors,2026-02-05,P001,22,3.20,935,10,,,,,,,,,
+CONN-001,Phoenix Contact Terminal,Phoenix,Connectors,2026-02-10,P004,15,3.20,920,10,,,,,,,,,
+SENS-001,Sick Proximity Sensor,Sick,Sensors,2026-01-15,P002,2,125.00,30,28,,,"58875",EUR,95.00,1,88.00,5,,
+SENS-001,Sick Proximity Sensor,Sick,Sensors,2026-01-25,P001,1,125.00,29,28,,,,,,,,,
+SENS-001,Sick Proximity Sensor,Sick,Sensors,2026-02-01,P003,3,125.00,26,28,,,,,,,,,
+SENS-001,Sick Proximity Sensor,Sick,Sensors,2026-02-08,P002,2,125.00,24,28,10,2026-03-10,,,,,,,
+MOTOR-001,Siemens Servo Motor,Siemens,Motors,2026-01-10,P001,1,890.00,8,45,,,"392500",USD,450.00,1,420.00,3,390.00,5
+MOTOR-001,Siemens Servo Motor,Siemens,Motors,2026-01-25,P003,1,890.00,7,45,,,,,,,,,
+MOTOR-001,Siemens Servo Motor,Siemens,Motors,2026-02-08,P002,1,890.00,6,45,5,2026-03-25,,,,,,,

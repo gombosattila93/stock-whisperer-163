@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { Upload, FileSpreadsheet, Sparkles } from "lucide-react";
+import { Upload, FileSpreadsheet, Sparkles, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInventory } from "@/context/InventoryContext";
 
@@ -47,6 +47,52 @@ export function EmptyState() {
           sku, sku_name, supplier, category, date, partner_id, sold_qty, unit_price, stock_qty, lead_time_days, ordered_qty, expected_delivery_date
         </code>
       </div>
+    </div>
+  );
+}
+
+export function DataActions() {
+  const { hasData, loadFile, appendFile, clearData } = useInventory();
+  const replaceRef = useRef<HTMLInputElement>(null);
+  const appendRef = useRef<HTMLInputElement>(null);
+
+  if (!hasData) return null;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={() => appendRef.current?.click()}>
+        <Plus className="h-3.5 w-3.5 mr-1.5" />
+        Append CSV
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()}>
+        <Upload className="h-3.5 w-3.5 mr-1.5" />
+        Replace
+      </Button>
+      <Button variant="ghost" size="sm" onClick={clearData} className="text-muted-foreground">
+        Clear
+      </Button>
+      <input
+        ref={replaceRef}
+        type="file"
+        accept=".csv"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (file) await loadFile(file);
+          e.target.value = '';
+        }}
+        className="hidden"
+      />
+      <input
+        ref={appendRef}
+        type="file"
+        accept=".csv"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (file) await appendFile(file);
+          e.target.value = '';
+        }}
+        className="hidden"
+      />
     </div>
   );
 }

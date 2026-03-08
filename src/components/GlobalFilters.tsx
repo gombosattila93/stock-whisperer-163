@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
+import { SERVICE_LEVELS } from "@/lib/calculations";
 
 export function GlobalFilters() {
   const {
@@ -22,6 +23,8 @@ export function GlobalFilters() {
     setDemandDays,
     searchQuery,
     setSearchQuery,
+    serviceLevel,
+    setServiceLevel,
     hasData,
     filtered,
     analysis,
@@ -72,6 +75,20 @@ export function GlobalFilters() {
             <SelectItem value="all">All</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <Label className="text-xs text-muted-foreground whitespace-nowrap">Service level</Label>
+        <Select value={serviceLevel} onValueChange={setServiceLevel}>
+          <SelectTrigger className="w-[80px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.keys(SERVICE_LEVELS).map((level) => (
+              <SelectItem key={level} value={level}>{level}</SelectItem>
             ))}
           </SelectContent>
         </Select>

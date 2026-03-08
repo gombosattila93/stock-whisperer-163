@@ -25,12 +25,29 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
   today.setHours(23, 59, 59, 999);
   const todayTs = today.getTime();
 
-  const sorted = [...rows].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  // Cache parsed dates by unique date string — many rows share the same date,
+  // so this reduces parseFlexibleDate + new Date() calls from N to unique_dates
+  const parsedDateCache = new Map<string, { parsedDate: string; ts: number }>();
+  const getCachedDate = (dateStr: string) => {
+    let entry = parsedDateCache.get(dateStr);
+    if (!entry) {
+      const parsedDate = parseFlexibleDate(dateStr) ?? dateStr;
+      entry = { parsedDate, ts: new Date(parsedDate).getTime() };
+      parsedDateCache.set(dateStr, entry);
+    }
+    return entry;
+  };
+
+  // Pre-extract timestamps into a numeric array so the sort comparator does
+  // pure number subtraction instead of Map lookups on every comparison
+  const timestamps = rows.map(row => getCachedDate(row.date).ts);
+  const indices = Array.from({ length: rows.length }, (_, i) => i);
+  indices.sort((a, b) => timestamps[a] - timestamps[b]);
+  const sorted = indices.map(i => rows[i]);
 
   for (const row of sorted) {
     // 1b) Filter out future dates
-    const parsedDate = parseFlexibleDate(row.date) ?? row.date;
-    const dateTs = new Date(parsedDate).getTime();
+    const { parsedDate, ts: dateTs } = getCachedDate(row.date);
     if (dateTs > todayTs) continue; // skip future dates
 
     // 1d) Negative unit_price → treat as 0
@@ -52,16 +69,16 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
 
     const existing = map.get(row.sku);
 
-    // Parse multi-currency fields from row
-    const rawSellingHuf = parseFloat(String(row.selling_price_huf ?? ''));
+    // Parse multi-currency fields from row — only when data is present
+    const rawSellingHuf = row.selling_price_huf != null ? parseFloat(String(row.selling_price_huf)) : NaN;
     const sellingPriceHuf = (!isNaN(rawSellingHuf) && rawSellingHuf > 0) ? rawSellingHuf : undefined;
-    const rawPurchaseCurrency = String(row.purchase_currency ?? '').toUpperCase().trim();
+    const rawPurchaseCurrency = row.purchase_currency ? String(row.purchase_currency).toUpperCase().trim() : '';
     const purchaseCurrency: 'USD' | 'EUR' = rawPurchaseCurrency === 'USD' ? 'USD' : 'EUR';
 
-    // Parse price breaks from wide-format columns
+    // Parse price breaks — skip entirely when first price break is absent
     const purchasePrices: Array<{ qty: number; price: number }> = [];
-    const rowRecord = row as unknown as Record<string, string | number | undefined>;
-    for (let i = 1; i <= 8; i++) {
+    const rowRecord = row as Record<string, string | number | undefined>;
+    if (rowRecord['purchase_price_1'] != null) for (let i = 1; i <= 8; i++) {
       const p = parseFloat(String(rowRecord[`purchase_price_${i}`] ?? ''));
       const q = parseFloat(String(rowRecord[`purchase_qty_${i}`] ?? ''));
       if (!isNaN(p) && p > 0) {
@@ -143,10 +160,21 @@ export function analyzeSkus(
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
+  // Pre-build a date string → timestamp cache across all SKUs to avoid
+  // repeated Date allocations in the filter and trend loops
+  const startTs = startDate.getTime();
+  const endTs = endDate.getTime();
+  const dateCache = new Map<string, number>();
+  for (const [, sku] of skuMap) {
+    for (const s of sku.sales) {
+      if (!dateCache.has(s.date)) dateCache.set(s.date, new Date(s.date).getTime());
+    }
+  }
+
   for (const [, sku] of skuMap) {
     const filteredSales = sku.sales.filter(s => {
-      const d = new Date(s.date);
-      return d >= startDate && d <= endDate;
+      const ts = dateCache.get(s.date) ?? new Date(s.date).getTime();
+      return ts >= startTs && ts <= endTs;
     });
 
     // ─── Capability detection ───
@@ -282,7 +310,7 @@ export function analyzeSkus(
     let soldPrior30 = 0;
 
     for (const s of filteredSales) {
-      const t = new Date(s.date).getTime();
+      const t = dateCache.get(s.date) ?? new Date(s.date).getTime();
       if (t >= now - ms30) {
         soldLast30 += s.sold_qty;
       } else if (t >= now - 2 * ms30) {

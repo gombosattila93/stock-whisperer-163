@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
+import { HighlightText } from "@/components/HighlightText";
 import { useMemo } from "react";
 
 export default function Overstock() {

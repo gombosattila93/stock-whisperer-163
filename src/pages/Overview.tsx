@@ -132,11 +132,13 @@ export default function Overview() {
     let marginWeightedDenom = 0;
     let usdExposureEur = 0;
     let usdExposureUsd = 0;
+    let eurExposureEur = 0;
     let skusWithPurchase = 0;
     let skusWithoutPurchase = 0;
     let skusWithMargin = 0;
     let skusWithoutMargin = 0;
     let skusUsd = 0;
+    let skusEur = 0;
 
     for (const s of filtered) {
       const pd = s.priceData;
@@ -169,19 +171,34 @@ export default function Overview() {
         usdExposureUsd += baseUsd * s.stock_qty;
         skusUsd++;
       }
+
+      if (pd.purchaseCurrency === 'EUR' && pd.hasPurchasePrice && pd.basePurchasePriceEur !== null) {
+        eurExposureEur += pd.basePurchasePriceEur * s.stock_qty;
+        skusEur++;
+      }
     }
 
     const avgMarginPct = marginWeightedDenom > 0 ? marginWeightedSum / marginWeightedDenom : null;
     const hasAnyFinancialData = skusWithPurchase > 0 || skusWithMargin > 0;
 
+    // FX impact calculations
+    const usdStrengthImpactEur = usdExposureUsd * (fxRates?.usdEur ?? 0.924) * 0.01;
+    const totalFxExposure = eurExposureEur + usdExposureEur;
+    const eurPct = totalFxExposure > 0 ? (eurExposureEur / totalFxExposure) * 100 : 0;
+    const usdPct = totalFxExposure > 0 ? (usdExposureEur / totalFxExposure) * 100 : 0;
+    const hufImpactEur = totalFxExposure * 0.01;
+    const eurExposureHuf = eurExposureEur * (fxRates?.eurHuf ?? 392.5);
+
     return {
       purchaseValueEur, sellingValueHuf, sellingValueEur,
       avgMarginPct, usdExposureEur, usdExposureUsd,
+      eurExposureEur, eurExposureHuf,
       skusWithPurchase, skusWithoutPurchase,
       skusWithMargin, skusWithoutMargin,
-      skusUsd, hasAnyFinancialData,
+      skusUsd, skusEur, hasAnyFinancialData,
+      usdStrengthImpactEur, totalFxExposure, eurPct, usdPct, hufImpactEur,
     };
-  }, [filtered]);
+  }, [filtered, fxRates]);
 
   if (!hasData) return <EmptyState />;
 

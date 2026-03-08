@@ -29,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw, CheckSquare, Download } from "lucide-react";
+import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {

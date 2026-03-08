@@ -1,7 +1,0 @@
-product_code,product_name,vendor,product_category,sale_date,customer_id,quantity_sold,price,current_stock,delivery_lead_time,qty_ordered,eta
-SENSOR-001,Temperature Sensor,Acme Corp,Sensors,2024-01-15,CUST-A,10,25.50,500,7,100,2024-02-01
-SENSOR-001,Temperature Sensor,Acme Corp,Sensors,2024-01-16,CUST-B,5,25.50,500,7,100,2024-02-01
-SENSOR-002,Pressure Sensor,Acme Corp,Sensors,2024-01-15,CUST-A,8,45.00,300,10,50,2024-02-05
-MOTOR-001,Stepper Motor,GlobalParts,Motors,2024-01-15,CUST-C,3,120.00,150,14,30,2024-02-10
-MOTOR-001,Stepper Motor,GlobalParts,Motors,2024-01-17,CUST-A,7,120.00,150,14,30,2024-02-10
-RELAY-001,Power Relay,ChipWorld,Relays,2024-01-16,CUST-B,20,8.75,1000,5,200,2024-01-25

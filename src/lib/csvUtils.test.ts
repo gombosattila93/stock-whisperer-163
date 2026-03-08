@@ -138,12 +138,15 @@ SKU001,Widget A,Supplier X,Electronics,2024-01-01,P001,10,25.50,100,7,50,2024-01
     });
 
     it('should sanitize formula injection characters in exported CSV', () => {
-      // Capture the Blob passed to createObjectURL
-      let capturedBlob: Blob | null = null;
-      mockCreateObjectURL.mockImplementation((blob: Blob) => {
-        capturedBlob = blob;
-        return 'blob:mock-url';
-      });
+      // Intercept the CSV string before Blob creation
+      const originalBlob = global.Blob;
+      let capturedCsv = '';
+      global.Blob = class MockBlob extends originalBlob {
+        constructor(parts: BlobPart[], options?: BlobPropertyBag) {
+          super(parts, options);
+          capturedCsv = parts.map(p => String(p)).join('');
+        }
+      } as any;
 
       const maliciousData = [
         { sku: '=CMD|"/C calc"!A1', name: '+dangerous', qty: 5 },
@@ -152,29 +155,27 @@ SKU001,Widget A,Supplier X,Electronics,2024-01-01,P001,10,25.50,100,7,50,2024-01
       ];
 
       exportToCsv(maliciousData, 'test.csv');
+      global.Blob = originalBlob;
 
-      expect(capturedBlob).not.toBeNull();
-      // Read the blob content synchronously via Papa re-parse
-      // Read blob content as text
-      return (capturedBlob as Blob).text().then(csvText => {
-        // BOM prefix expected
-        expect(csvText.startsWith('\uFEFF')).toBe(true);
-        const stripped = csvText.replace(/^\uFEFF/, '');
-        
-        // Parse back to verify sanitization
-        const parsed = Papa.parse(stripped, { header: true, skipEmptyLines: true });
-        const rows = parsed.data as Record<string, string>[];
-        
-        // Formula characters must be prefixed with apostrophe
-        expect(rows[0].sku).toBe("'=CMD|\"/C calc\"!A1");
-        expect(rows[0].name).toBe("'+dangerous");
-        expect(rows[1].sku).toBe("'-formula");
-        expect(rows[1].name).toBe("'@import");
-        
-        // Safe values must be unchanged
-        expect(rows[2].sku).toBe('SAFE-001');
-        expect(rows[2].name).toBe('Normal Item');
-      });
+      // Strip BOM
+      expect(capturedCsv.startsWith('\uFEFF')).toBe(true);
+      const stripped = capturedCsv.replace(/^\uFEFF/, '');
+
+      // Parse back to verify sanitization
+      const parsed = Papa.parse(stripped, { header: true, skipEmptyLines: true });
+      const rows = parsed.data as Record<string, string>[];
+
+      // Formula characters must be prefixed with apostrophe
+      expect(rows[0].sku).toBe("'=CMD|\"/C calc\"!A1");
+      expect(rows[0].name).toBe("'+dangerous");
+      expect(rows[1].sku).toBe("'-formula");
+      expect(rows[1].name).toBe("'@import");
+
+      // Safe values unchanged
+      expect(rows[2].sku).toBe('SAFE-001');
+      expect(rows[2].name).toBe('Normal Item');
     });
+  });
+});
   });
 });

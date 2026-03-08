@@ -115,6 +115,67 @@ export default function Overview() {
     return { tiers, missingLeadTime, missingPrice, noSales, noStock, completePct };
   }, [filtered]);
 
+  // Financial KPI aggregations
+  const financialKpis = useMemo(() => {
+    if (filtered.length === 0) return null;
+    let purchaseValueEur = 0;
+    let sellingValueHuf = 0;
+    let sellingValueEur = 0;
+    let marginWeightedSum = 0;
+    let marginWeightedDenom = 0;
+    let usdExposureEur = 0;
+    let usdExposureUsd = 0;
+    let skusWithPurchase = 0;
+    let skusWithoutPurchase = 0;
+    let skusWithMargin = 0;
+    let skusWithoutMargin = 0;
+    let skusUsd = 0;
+
+    for (const s of filtered) {
+      const pd = s.priceData;
+      if (!pd) continue;
+
+      if (pd.hasPurchasePrice && pd.basePurchasePriceEur !== null) {
+        purchaseValueEur += pd.basePurchasePriceEur * s.stock_qty;
+        skusWithPurchase++;
+      } else {
+        skusWithoutPurchase++;
+      }
+
+      if (pd.hasSellingPrice) {
+        if (pd.sellingPriceHuf !== null) sellingValueHuf += pd.sellingPriceHuf * s.stock_qty;
+        if (pd.sellingPriceEur !== null) sellingValueEur += pd.sellingPriceEur * s.stock_qty;
+      }
+
+      if (pd.hasMarginData && pd.marginPct !== null && pd.sellingPriceEur !== null) {
+        const rev = pd.sellingPriceEur * s.stock_qty;
+        marginWeightedSum += pd.marginPct * rev;
+        marginWeightedDenom += rev;
+        skusWithMargin++;
+      } else {
+        skusWithoutMargin++;
+      }
+
+      if (pd.purchaseCurrency === 'USD' && pd.hasPurchasePrice && pd.basePurchasePriceEur !== null) {
+        usdExposureEur += pd.basePurchasePriceEur * s.stock_qty;
+        const baseUsd = pd.priceBreaks[0]?.price ?? 0;
+        usdExposureUsd += baseUsd * s.stock_qty;
+        skusUsd++;
+      }
+    }
+
+    const avgMarginPct = marginWeightedDenom > 0 ? marginWeightedSum / marginWeightedDenom : null;
+    const hasAnyFinancialData = skusWithPurchase > 0 || skusWithMargin > 0;
+
+    return {
+      purchaseValueEur, sellingValueHuf, sellingValueEur,
+      avgMarginPct, usdExposureEur, usdExposureUsd,
+      skusWithPurchase, skusWithoutPurchase,
+      skusWithMargin, skusWithoutMargin,
+      skusUsd, hasAnyFinancialData,
+    };
+  }, [filtered]);
+
   if (!hasData) return <EmptyState />;
 
   const totalSkus = filtered.length;

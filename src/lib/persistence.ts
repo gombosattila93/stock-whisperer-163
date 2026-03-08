@@ -1,14 +1,16 @@
 import { RawRow } from './types';
+import type { SupplierOption } from './types';
 import { SkuStrategyOverrides } from './skuStrategyOverrides';
 import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 4; // Bumped for cost-settings store
+const DB_VERSION = 5; // Bumped for sku-supplier-options store
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';
 const COST_SETTINGS_STORE = 'cost-settings';
+const SKU_SUPPLIER_OPTIONS_STORE = 'sku-supplier-options';
 const DATA_KEY = 'rawRows';
 const OVERRIDES_KEY = 'strategyOverrides';
 const EOQ_SETTINGS_KEY = 'eoqSettings';
@@ -37,6 +39,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(COST_SETTINGS_STORE)) {
         db.createObjectStore(COST_SETTINGS_STORE);
+      }
+      if (!db.objectStoreNames.contains(SKU_SUPPLIER_OPTIONS_STORE)) {
+        db.createObjectStore(SKU_SUPPLIER_OPTIONS_STORE);
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -226,5 +231,43 @@ export async function loadCostSettings(): Promise<CostSettings> {
     });
   } catch {
     return DEFAULT_COST_SETTINGS;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKU Supplier Options
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type SkuSupplierOptionsMap = Record<string, SupplierOption[]>;
+
+const SKU_SUPPLIER_KEY = 'all';
+
+export async function saveSkuSupplierOptions(options: SkuSupplierOptionsMap): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SKU_SUPPLIER_OPTIONS_STORE, 'readwrite');
+      const store = tx.objectStore(SKU_SUPPLIER_OPTIONS_STORE);
+      store.put(options, SKU_SUPPLIER_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save SKU supplier options to IndexedDB');
+  }
+}
+
+export async function loadSkuSupplierOptions(): Promise<SkuSupplierOptionsMap> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SKU_SUPPLIER_OPTIONS_STORE, 'readonly');
+      const store = tx.objectStore(SKU_SUPPLIER_OPTIONS_STORE);
+      const request = store.get(SKU_SUPPLIER_KEY);
+      request.onsuccess = () => resolve(request.result || {});
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return {};
   }
 }

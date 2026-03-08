@@ -48,6 +48,7 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
           ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
           : '',
         sales: [sale],
+        supplierOptions: [],
       });
     }
   }
@@ -314,9 +315,11 @@ export function analyzeSkus(
   return analyses;
 }
 
-export function getSuggestedOrderQty(reorder_point: number, effective_stock: number): number {
+export function getSuggestedOrderQty(reorder_point: number, effective_stock: number, moq: number = 1): number {
   const raw = reorder_point * 2 - effective_stock;
-  return raw > 0 ? Math.ceil(raw / 10) * 10 : 0;
+  if (raw <= 0) return 0;
+  const effectiveMoq = Math.max(1, moq);
+  return Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq);
 }
 
 export function getUrgency(days_of_stock: number, lead_time_days: number): string {

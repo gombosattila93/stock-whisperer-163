@@ -9,13 +9,36 @@ import { VirtualizedTable } from "@/components/VirtualizedTable";
 import { EditableCell } from "@/components/EditableCell";
 import { TrendBadge } from "@/components/TrendBadge";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useMemo } from "react";
 
 export default function CriticalSkus() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
     .sort((a, b) => a.days_of_stock - b.days_of_stock);
+
+  // Compute alt supplier suggestions
+  const altSupplierMap = useMemo(() => {
+    const map: Record<string, { supplier: string; lead_time_days: number }> = {};
+    for (const s of critical) {
+      if (s.lead_time_days <= 30) continue;
+      const opts = skuSupplierOptions[s.sku] || [];
+      const alt = opts
+        .filter(o => !o.is_primary && o.lead_time_days < s.lead_time_days)
+        .sort((a, b) => a.lead_time_days - b.lead_time_days)[0];
+      if (alt) {
+        map[s.sku] = { supplier: alt.supplier, lead_time_days: alt.lead_time_days };
+      }
+    }
+    return map;
+  }, [critical, skuSupplierOptions]);
 
   const { sorted, sort, toggleSort } = useSortableTable(critical, { column: "days_of_stock", direction: "asc" });
   const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
@@ -156,6 +179,28 @@ export default function CriticalSkus() {
                   </span>
                 ),
               }] : []),
+              {
+                key: 'altSupplier',
+                header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Alt Supplier</span>,
+                render: (s) => {
+                  const alt = altSupplierMap[s.sku];
+                  if (!alt) return <span className="text-muted-foreground">—</span>;
+                  return (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="text-[10px] cursor-help">
+                            Alt: {alt.supplier} — {alt.lead_time_days}d
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Alternative supplier with shorter lead time ({alt.lead_time_days}d vs {s.lead_time_days}d)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                },
+              },
             ]}
           />
           <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />

@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { RawRow, SkuAnalysis, XyzClass } from '@/lib/types';
+import { RawRow, SkuAnalysis, XyzClass, SupplierOption } from '@/lib/types';
 import { SERVICE_LEVELS } from '@/lib/calculations';
 import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
-import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides, saveCostSettings, loadCostSettings } from '@/lib/persistence';
+import {
+  saveRows, loadRows, clearRows,
+  StockOverrides, saveStockOverrides, loadStockOverrides,
+  saveCostSettings, loadCostSettings,
+  SkuSupplierOptionsMap, saveSkuSupplierOptions, loadSkuSupplierOptions,
+} from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from '@/lib/costSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';
@@ -56,6 +61,9 @@ interface InventoryContextType {
   // Cost settings
   costSettings: CostSettings;
   setCostSettings: (s: CostSettings) => void;
+  // Supplier options
+  skuSupplierOptions: SkuSupplierOptionsMap;
+  setSkuSupplierOptions: (sku: string, options: SupplierOption[]) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
@@ -109,6 +117,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
   const [stockOverrides, setStockOverrides] = useState<StockOverrides>({});
   const [costSettings, setCostSettingsRaw] = useState<CostSettings>(DEFAULT_COST_SETTINGS);
+  const [skuSupplierOptions, setSkuSupplierOptionsRaw] = useState<SkuSupplierOptionsMap>({});
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -137,6 +146,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     saveCostSettings(s);
   }, []);
 
+  const setSkuSupplierOption = useCallback((sku: string, options: SupplierOption[]) => {
+    setSkuSupplierOptionsRaw(prev => {
+      const next = { ...prev, [sku]: options };
+      if (options.length === 0) delete next[sku];
+      saveSkuSupplierOptions(next);
+      return next;
+    });
+  }, []);
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {
@@ -145,7 +163,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings()]).then(([rows, overrides, costs]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions()]).then(([rows, overrides, costs, supplierOpts]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
@@ -154,6 +172,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         setStockOverrides(overrides);
       }
       setCostSettingsRaw(costs);
+      if (supplierOpts && Object.keys(supplierOpts).length > 0) {
+        setSkuSupplierOptionsRaw(supplierOpts);
+      }
       setPersistenceLoaded(true);
     });
   }, []);
@@ -467,6 +488,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       cancelAppend,
       costSettings,
       setCostSettings,
+      skuSupplierOptions,
+      setSkuSupplierOptions: setSkuSupplierOption,
     }}>
       {children}
     </InventoryContext.Provider>

@@ -33,7 +33,7 @@ import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } 
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
@@ -85,21 +85,52 @@ export default function ReorderList() {
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
         const result = computeReorder(s, effectiveStrategy, eoqSettings);
+        // Get primary supplier MOQ
+        const supplierOpts = skuSupplierOptions[s.sku] || [];
+        const primaryOpt = supplierOpts.find(o => o.is_primary) || supplierOpts[0];
+        const moq = primaryOpt?.moq || 1;
         // Seasonality-adjusted suggested qty
         const seasonalMultiplier = s.seasonalityFlag ? 1 + (s.seasonalityPct / 200) : 1;
-        const adjustedQty = Math.ceil(result.suggested_order_qty * seasonalMultiplier / 10) * 10;
+        const baseAdjusted = Math.ceil(result.suggested_order_qty * seasonalMultiplier);
+        // Apply MOQ rounding
+        const effectiveMoq = Math.max(1, moq);
+        const moqAdjusted = Math.max(effectiveMoq, Math.ceil(baseAdjusted / effectiveMoq) * effectiveMoq);
+        const moqApplied = moq > 1 && moqAdjusted > baseAdjusted;
+
+        // Price break opportunity from supplier options
+        let pbOpportunityQty = 0;
+        let pbOpportunitySaving = 0;
+        if (primaryOpt && primaryOpt.price_breaks.length > 0) {
+          const sortedBreaks = [...primaryOpt.price_breaks].sort((a, b) => a.minQty - b.minQty);
+          for (const brk of sortedBreaks) {
+            if (moqAdjusted < brk.minQty && brk.minQty <= moqAdjusted * 1.2) {
+              const currentCost = moqAdjusted * (primaryOpt.unit_price || s.unit_price);
+              const breakCost = brk.minQty * brk.unitPrice;
+              if (breakCost < currentCost) {
+                pbOpportunityQty = brk.minQty;
+                pbOpportunitySaving = currentCost - breakCost;
+                break;
+              }
+            }
+          }
+        }
+
         return {
           ...s,
-          suggested_order_qty: adjustedQty,
+          suggested_order_qty: moqAdjusted,
           base_suggested_qty: result.suggested_order_qty,
           urgency: getUrgency(s.days_of_stock, s.lead_time_days),
           strategyLabel: result.strategyLabel,
           reorder_trigger: result.reorder_trigger,
           effectiveStrategy,
           hasOverride: !!skuOverrides[s.sku],
+          moq,
+          moqApplied,
+          pbOpportunityQty,
+          pbOpportunitySaving,
         };
       }),
-    [filtered, globalStrategy, skuOverrides, eoqSettings]
+    [filtered, globalStrategy, skuOverrides, eoqSettings, skuSupplierOptions]
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);
@@ -381,6 +412,18 @@ export default function ReorderList() {
                       </td>
                       <td className="text-right font-semibold">
                         <div className="flex items-center justify-end gap-1.5">
+                          {s.moqApplied && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-accent text-accent-foreground font-medium cursor-help">MOQ</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Rounded up to MOQ: {s.moq} units</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {s.seasonalityFlag && (
                             <TooltipProvider>
                               <Tooltip>
@@ -388,7 +431,7 @@ export default function ReorderList() {
                                   <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500 shrink-0 cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-[250px]">
-                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty} → {s.suggested_order_qty}</p>
+                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -412,9 +455,22 @@ export default function ReorderList() {
                       {costSettings.priceBreaksEnabled && (
                         <td className="text-xs">
                           {s.priceBreakQty > 0 ? (
-                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                            <span className="text-primary font-medium">
                               ↑{s.priceBreakQty} (save €{s.priceBreakSaving.toFixed(0)})
                             </span>
+                          ) : s.pbOpportunityQty > 0 ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="text-primary/80 font-medium cursor-help">
+                                    Order {s.pbOpportunityQty - s.suggested_order_qty} more → save €{s.pbOpportunitySaving.toFixed(0)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Next price break at {s.pbOpportunityQty} units from supplier options</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           ) : '—'}
                         </td>
                       )}

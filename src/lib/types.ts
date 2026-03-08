@@ -20,6 +20,16 @@ export interface SaleRecord {
   partner_id: string;
 }
 
+export interface SupplierOption {
+  supplier: string;
+  unit_price: number;
+  lead_time_days: number;
+  moq: number; // minimum order quantity
+  price_breaks: { minQty: number; unitPrice: number }[];
+  is_primary: boolean;
+  reliability_score?: number; // 0-1
+}
+
 export interface SkuData {
   sku: string;
   sku_name: string;
@@ -31,6 +41,7 @@ export interface SkuData {
   ordered_qty: number;
   expected_delivery_date: string;
   sales: SaleRecord[];
+  supplierOptions: SupplierOption[];
 }
 
 export type AbcClass = 'A' | 'B' | 'C';

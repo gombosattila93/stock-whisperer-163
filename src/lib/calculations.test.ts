@@ -58,3 +58,84 @@ describe("parseRows", () => {
     expect(map.get("SKU-001")!.stock_qty).toBe(100);
   });
 });
+
+// Helper: build a SkuData entry with a single sale
+function makeSku(sku: string, unitPrice: number, soldQty: number): SkuData {
+  return {
+    sku,
+    sku_name: sku,
+    supplier: "TestCo",
+    category: "Parts",
+    unit_price: unitPrice,
+    stock_qty: 100,
+    lead_time_days: 7,
+    ordered_qty: 0,
+    expected_delivery_date: "2026-02-01",
+    sales: [{ sku, date: "2026-01-15", sold_qty: soldQty, partner_id: "P001" }],
+  };
+}
+
+function runAbc(skus: SkuData[]) {
+  const map = new Map(skus.map((s) => [s.sku, s]));
+  return analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 31);
+}
+
+describe("ABC classification", () => {
+  it("classifies single SKU as A", () => {
+    const result = runAbc([makeSku("S1", 10, 100)]);
+    expect(result[0].abc_class).toBe("A");
+  });
+
+  it("assigns A to top 80% revenue, B to next 15%, C to rest", () => {
+    // Revenue: S1=800, S2=100, S3=50, S4=30, S5=20 → total=1000
+    // Cumulative: S1 0%→80% (A), S2 80%→90% (B), S3 90%→95% (B), S4 95%→98% (C), S5 98%→100% (C)
+    const skus = [
+      makeSku("S1", 8, 100),   // 800
+      makeSku("S2", 1, 100),   // 100
+      makeSku("S3", 0.5, 100), // 50
+      makeSku("S4", 0.3, 100), // 30
+      makeSku("S5", 0.2, 100), // 20
+    ];
+    const result = runAbc(skus);
+    const bySku = Object.fromEntries(result.map((r) => [r.sku, r.abc_class]));
+    expect(bySku["S1"]).toBe("A");
+    expect(bySku["S2"]).toBe("B");
+    expect(bySku["S3"]).toBe("B");
+    expect(bySku["S4"]).toBe("C");
+    expect(bySku["S5"]).toBe("C");
+  });
+
+  it("item crossing 80% boundary is still A", () => {
+    // Revenue: S1=79, S2=21 → total=100
+    // S1: pctBefore=0% < 80% → A; S2: pctBefore=79% < 80% → A
+    const skus = [
+      makeSku("S1", 79, 1),
+      makeSku("S2", 21, 1),
+    ];
+    const result = runAbc(skus);
+    const bySku = Object.fromEntries(result.map((r) => [r.sku, r.abc_class]));
+    expect(bySku["S1"]).toBe("A");
+    expect(bySku["S2"]).toBe("A");
+  });
+
+  it("item at exactly 80% cumulative before is B", () => {
+    // Revenue: S1=80, S2=15, S3=5 → total=100
+    // S1: pctBefore=0% → A; S2: pctBefore=80% → B; S3: pctBefore=95% → C
+    const skus = [
+      makeSku("S1", 80, 1),
+      makeSku("S2", 15, 1),
+      makeSku("S3", 5, 1),
+    ];
+    const result = runAbc(skus);
+    const bySku = Object.fromEntries(result.map((r) => [r.sku, r.abc_class]));
+    expect(bySku["S1"]).toBe("A");
+    expect(bySku["S2"]).toBe("B");
+    expect(bySku["S3"]).toBe("C");
+  });
+
+  it("all SKUs with zero revenue are C", () => {
+    const skus = [makeSku("S1", 0, 0), makeSku("S2", 0, 0)];
+    const result = runAbc(skus);
+    result.forEach((r) => expect(r.abc_class).toBe("C"));
+  });
+});

@@ -4,6 +4,12 @@ import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
 import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3, DollarSign, Euro, Percent, Coins } from "lucide-react";
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";

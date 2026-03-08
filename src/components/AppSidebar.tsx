@@ -6,6 +6,7 @@ import {
   Grid3X3,
   Upload,
   Truck,
+  Calculator,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -29,6 +30,7 @@ const navItems = [
   { title: "Overstock", url: "/overstock", icon: PackageX },
   { title: "ABC-XYZ Detail", url: "/abc-xyz", icon: Grid3X3 },
   { title: "Suppliers", url: "/suppliers", icon: Truck },
+  { title: "Cost Model", url: "/cost-model", icon: Calculator },
 ];
 
 export function AppSidebar() {

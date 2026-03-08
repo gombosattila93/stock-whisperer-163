@@ -244,11 +244,10 @@ describe("XYZ classification", () => {
     expect(result[0].cv).toBeGreaterThan(1.0);
   });
 
-  it("classifies zero demand as X (cv = 0)", () => {
+  it("classifies zero demand as N/A (insufficient history)", () => {
     const sales = Array(31).fill(0);
     const result = runAnalysis([makeSkuWithSales("S1", sales)]);
-    expect(result[0].xyz_class).toBe("X");
-    expect(result[0].cv).toBe(0);
+    expect(result[0].xyz_class).toBe("N/A");
   });
 });
 

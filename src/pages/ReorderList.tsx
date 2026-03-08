@@ -17,19 +17,21 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, CheckSquare } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 
 export default function ReorderList() {
   const { filtered, hasData } = useInventory();
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>(loadSkuOverrides);
+  const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
 
   const overrideCount = Object.keys(skuOverrides).length;
 
@@ -49,6 +51,15 @@ export default function ReorderList() {
   const clearAllOverrides = useCallback(() => {
     setSkuOverrides({});
     saveSkuOverrides({});
+  }, []);
+
+  const toggleSelect = useCallback((sku: string) => {
+    setSelectedSkus(prev => {
+      const next = new Set(prev);
+      if (next.has(sku)) next.delete(sku);
+      else next.add(sku);
+      return next;
+    });
   }, []);
 
   const reorder = useMemo(() =>
@@ -72,6 +83,37 @@ export default function ReorderList() {
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);
   const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
+
+  const allPageSelected = paginatedData.length > 0 && paginatedData.every(s => selectedSkus.has(s.sku));
+  const someSelected = selectedSkus.size > 0;
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedSkus(prev => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        paginatedData.forEach(s => next.delete(s.sku));
+      } else {
+        paginatedData.forEach(s => next.add(s.sku));
+      }
+      return next;
+    });
+  }, [allPageSelected, paginatedData]);
+
+  const applyBulkStrategy = useCallback((strategy: ReorderStrategy | '__global__') => {
+    setSkuOverrides(prev => {
+      const next = { ...prev };
+      selectedSkus.forEach(sku => {
+        if (strategy === '__global__') {
+          delete next[sku];
+        } else {
+          next[sku] = strategy;
+        }
+      });
+      saveSkuOverrides(next);
+      return next;
+    });
+    setSelectedSkus(new Set());
+  }, [selectedSkus]);
 
   if (!hasData) return <EmptyState />;
 
@@ -135,6 +177,35 @@ export default function ReorderList() {
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {someSelected && (
+        <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
+          <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm font-medium">{selectedSkus.size} selected</span>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Apply strategy:</Label>
+            <Select onValueChange={(v) => applyBulkStrategy(v as ReorderStrategy | '__global__')}>
+              <SelectTrigger className="h-7 w-[160px] text-xs">
+                <SelectValue placeholder="Choose…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__global__">
+                  <span className="text-muted-foreground">Reset to Default</span>
+                </SelectItem>
+                {STRATEGY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedSkus(new Set())} className="text-xs text-muted-foreground ml-auto">
+            Clear selection
+          </Button>
+        </div>
+      )}
+
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
           No items need reordering with current filters.
@@ -145,6 +216,13 @@ export default function ReorderList() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th className="px-3 py-3 bg-muted/50 w-10">
+                    <Checkbox
+                      checked={allPageSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all on page"
+                    />
+                  </th>
                   <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
@@ -157,7 +235,14 @@ export default function ReorderList() {
               </thead>
               <tbody>
                 {paginatedData.map(s => (
-                  <tr key={s.sku}>
+                  <tr key={s.sku} className={selectedSkus.has(s.sku) ? 'bg-primary/5' : ''}>
+                    <td className="px-3">
+                      <Checkbox
+                        checked={selectedSkus.has(s.sku)}
+                        onCheckedChange={() => toggleSelect(s.sku)}
+                        aria-label={`Select ${s.sku}`}
+                      />
+                    </td>
                     <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
                     <td><HighlightText text={s.sku_name} /></td>
                     <td><HighlightText text={s.supplier} /></td>

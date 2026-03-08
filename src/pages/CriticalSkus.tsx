@@ -1,17 +1,20 @@
 import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
+import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 
 export default function CriticalSkus() {
   const { filtered, hasData } = useInventory();
-
-  if (!hasData) return <EmptyState />;
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
     .sort((a, b) => a.days_of_stock - b.days_of_stock);
 
-  const exportData = critical.map(s => ({
+  const { sorted, sort, toggleSort } = useSortableTable(critical, { column: "days_of_stock", direction: "asc" });
+
+  if (!hasData) return <EmptyState />;
+
+  const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
     days_of_stock: Math.round(s.days_of_stock), reorder_point: Math.round(s.reorder_point),
     stock_qty: s.stock_qty, ordered_qty: s.ordered_qty,
@@ -28,7 +31,7 @@ export default function CriticalSkus() {
         <ExportButton data={exportData} filename="critical-skus.csv" />
       </div>
 
-      {critical.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
           No critical SKUs found with current filters.
         </div>
@@ -37,19 +40,19 @@ export default function CriticalSkus() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>SKU</th>
-                <th>Name</th>
-                <th>Supplier</th>
-                <th>Category</th>
-                <th className="text-right">Days of Stock</th>
-                <th className="text-right">Reorder Point</th>
-                <th className="text-right">Stock Qty</th>
-                <th className="text-right">Ordered Qty</th>
-                <th>Expected Delivery</th>
+                <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="expected_delivery_date" label="Expected Delivery" sort={sort} onSort={toggleSort} />
               </tr>
             </thead>
             <tbody>
-              {critical.map(s => (
+              {sorted.map(s => (
                 <tr key={s.sku} className={s.days_of_stock < 7 ? 'row-critical' : ''}>
                   <td className="font-mono font-medium">{s.sku}</td>
                   <td>{s.sku_name}</td>

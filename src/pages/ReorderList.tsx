@@ -211,21 +211,26 @@ export default function ReorderList() {
 
   // ─── Supplier summary ─────────────────────────────────────────────────
   const supplierSummary = useMemo(() => {
-    const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValue: number; urgencies: string[] }>();
+    const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValueEur: number; totalValueUsdRaw: number; totalValueUsdAsEur: number; hasUsd: boolean; urgencies: string[] }>();
     for (const s of sorted) {
+      const pd = s.priceData;
+      const effPrice = pd?.effectivePurchasePriceEur ?? s.unit_price;
+      const orderValueEur = s.suggested_order_qty * effPrice;
+      const isUsd = pd?.purchaseCurrency === 'USD' && pd?.hasPurchasePrice;
+      const usdRaw = isUsd ? s.suggested_order_qty * (pd!.priceBreaks[0]?.price ?? 0) : 0;
+
       const existing = map.get(s.supplier);
-      const orderValue = s.suggested_order_qty * s.unit_price;
       if (existing) {
         existing.skuCount += 1;
         existing.totalQty += s.suggested_order_qty;
-        existing.totalValue += orderValue;
+        existing.totalValueEur += orderValueEur;
+        if (isUsd) { existing.totalValueUsdRaw += usdRaw; existing.totalValueUsdAsEur += orderValueEur; existing.hasUsd = true; }
         existing.urgencies.push(s.urgency);
       } else {
         map.set(s.supplier, {
-          supplier: s.supplier,
-          skuCount: 1,
-          totalQty: s.suggested_order_qty,
-          totalValue: orderValue,
+          supplier: s.supplier, skuCount: 1, totalQty: s.suggested_order_qty,
+          totalValueEur: orderValueEur, totalValueUsdRaw: isUsd ? usdRaw : 0,
+          totalValueUsdAsEur: isUsd ? orderValueEur : 0, hasUsd: isUsd,
           urgencies: [s.urgency],
         });
       }

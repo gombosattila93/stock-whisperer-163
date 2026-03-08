@@ -68,7 +68,7 @@ export default function ReorderPlan() {
   // Build reorder items with priority scores
   const reorderItems = useMemo<ReorderItem[]>(() => {
     return filtered
-      .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || 'rop';
         const result = computeReorder(s, effectiveStrategy as ReorderStrategy, eoqSettings);

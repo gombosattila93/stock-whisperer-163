@@ -259,7 +259,7 @@ export default function Guide() {
 
         {/* Overstock */}
         <Section id="overstock" icon={PackageX} title="Overstock Analysis">
-          <p>Identifies items with excess inventory (>180 days of stock) and dead stock (zero sales). Helps free up warehouse space and working capital.</p>
+          <p>Identifies items with excess inventory (&gt;180 days of stock) and dead stock (zero sales). Helps free up warehouse space and working capital.</p>
           <div className="space-y-1">
             <p className="font-medium text-foreground">Two Categories:</p>
             <div className="space-y-0.5 text-xs">

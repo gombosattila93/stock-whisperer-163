@@ -55,6 +55,12 @@ export interface CostSettings {
   // Shelf life / expiry per category
   shelfLifeEnabled: boolean;
   categoryShelfLifeDays: Record<string, number>;
+
+  // Budget constraints
+  budgetEnabled: boolean;
+  monthlyBudget: number;           // € total
+  supplierBudgets: Record<string, number>;  // per supplier monthly €
+  budgetPeriodDays: number;        // default 30
 }
 
 export const DEFAULT_SHELF_LIFE: Record<string, number> = {

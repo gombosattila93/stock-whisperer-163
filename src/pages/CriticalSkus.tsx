@@ -173,7 +173,7 @@ export default function CriticalSkus() {
             {
               key: 'reorder_point',
               header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />,
-              render: (s) => <span className="text-right">{Math.round(s.reorder_point)}</span>,
+              render: (s) => <span className="text-right">{s.reorder_point !== null ? Math.round(s.reorder_point) : '—'}</span>,
             },
             {
               key: 'stock_qty',

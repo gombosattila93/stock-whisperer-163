@@ -253,7 +253,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'lead_time_days',
-              header: <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Supplier lead time in days. Click the cell to override. Shorter lead time = less safety stock needed." />,
               render: (s) => (
                 <EditableCell
                   value={s.lead_time_days}

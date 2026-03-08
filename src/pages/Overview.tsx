@@ -100,9 +100,9 @@ export default function Overview() {
   if (!hasData) return <EmptyState />;
 
   const totalSkus = filtered.length;
-  const criticalSkus = filtered.filter(s => s.days_of_stock < s.lead_time_days).length;
-  const reorderNeeded = filtered.filter(s => s.effective_stock <= s.reorder_point).length;
-  const overstockItems = filtered.filter(s => s.days_of_stock > 180 && !s.dead_stock).length;
+  const criticalSkus = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock < s.lead_time_days).length;
+  const reorderNeeded = filtered.filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point).length;
+  const overstockItems = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && !s.dead_stock).length;
 
   const risingCount = filtered.filter(s => s.trend === 'rising').length;
   const fallingCount = filtered.filter(s => s.trend === 'falling').length;

@@ -144,27 +144,29 @@ describe('GlobalFilters', () => {
   });
 
   describe('supplier filter', () => {
-    it('should render all supplier options', async () => {
+    it('should render all supplier options when dropdown is opened', async () => {
       vi.spyOn(InventoryContext, 'useInventory').mockReturnValue(
         createMockContext() as any
       );
 
       render(<GlobalFilters />);
 
-      // Find the supplier select trigger
+      // Find the supplier select trigger (first combobox)
       const supplierTriggers = screen.getAllByRole('combobox');
       const supplierTrigger = supplierTriggers[0];
       
       await userEvent.click(supplierTrigger);
 
-      expect(screen.getByText('Supplier A')).toBeInTheDocument();
-      expect(screen.getByText('Supplier B')).toBeInTheDocument();
-      expect(screen.getByText('Supplier C')).toBeInTheDocument();
+      // Wait for dropdown to open and check options
+      await screen.findByRole('listbox');
+      expect(screen.getByRole('option', { name: 'Supplier A' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Supplier B' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Supplier C' })).toBeInTheDocument();
     });
 
-    it('should call setFilterSupplier with empty string when "All" is selected', async () => {
+    it('should call setFilterSupplier when a supplier is selected', async () => {
       vi.spyOn(InventoryContext, 'useInventory').mockReturnValue(
-        createMockContext({ filterSupplier: 'Supplier A' }) as any
+        createMockContext() as any
       );
 
       render(<GlobalFilters />);
@@ -172,15 +174,16 @@ describe('GlobalFilters', () => {
       const supplierTriggers = screen.getAllByRole('combobox');
       await userEvent.click(supplierTriggers[0]);
       
-      const allOption = screen.getAllByText('All')[0];
-      await userEvent.click(allOption);
+      await screen.findByRole('listbox');
+      const supplierOption = screen.getByRole('option', { name: 'Supplier A' });
+      await userEvent.click(supplierOption);
 
-      expect(mockSetFilterSupplier).toHaveBeenCalledWith('');
+      expect(mockSetFilterSupplier).toHaveBeenCalledWith('Supplier A');
     });
   });
 
   describe('category filter', () => {
-    it('should render all category options', async () => {
+    it('should render all category options when dropdown is opened', async () => {
       vi.spyOn(InventoryContext, 'useInventory').mockReturnValue(
         createMockContext() as any
       );
@@ -192,14 +195,15 @@ describe('GlobalFilters', () => {
       
       await userEvent.click(categoryTrigger);
 
-      expect(screen.getByText('Electronics')).toBeInTheDocument();
-      expect(screen.getByText('Furniture')).toBeInTheDocument();
-      expect(screen.getByText('Clothing')).toBeInTheDocument();
+      await screen.findByRole('listbox');
+      expect(screen.getByRole('option', { name: 'Electronics' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Furniture' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Clothing' })).toBeInTheDocument();
     });
 
-    it('should call setFilterCategory with empty string when "All" is selected', async () => {
+    it('should call setFilterCategory when a category is selected', async () => {
       vi.spyOn(InventoryContext, 'useInventory').mockReturnValue(
-        createMockContext({ filterCategory: 'Electronics' }) as any
+        createMockContext() as any
       );
 
       render(<GlobalFilters />);
@@ -207,13 +211,11 @@ describe('GlobalFilters', () => {
       const categoryTriggers = screen.getAllByRole('combobox');
       await userEvent.click(categoryTriggers[1]);
       
-      const allOptions = screen.getAllByText('All');
-      // Click the All option in the category dropdown (the visible one in the popover)
-      const allOption = allOptions.find(el => el.closest('[role="option"]'));
-      if (allOption) {
-        await userEvent.click(allOption);
-        expect(mockSetFilterCategory).toHaveBeenCalledWith('');
-      }
+      await screen.findByRole('listbox');
+      const categoryOption = screen.getByRole('option', { name: 'Electronics' });
+      await userEvent.click(categoryOption);
+
+      expect(mockSetFilterCategory).toHaveBeenCalledWith('Electronics');
     });
   });
 

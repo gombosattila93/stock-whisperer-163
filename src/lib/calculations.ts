@@ -27,10 +27,10 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     const rawPrice = Number(row.unit_price);
     const unitPrice = (!isNaN(rawPrice) && rawPrice >= 0) ? rawPrice : 0;
 
-    // 1e/1f) Lead time clamping: 0→1, >365→365
-    let leadTime = Number(row.lead_time_days) || 0;
-    const leadTimeClamped = leadTime <= 0 || leadTime > 365;
-    if (leadTime <= 0) leadTime = 1;
+    // 1e/1f) Lead time: 0 or blank = missing (kept as 0), >365 capped
+    const rawLeadTime = Number(row.lead_time_days);
+    let leadTime = (!isNaN(rawLeadTime) && rawLeadTime > 0) ? rawLeadTime : 0;
+    const leadTimeClamped = leadTime > 365;
     if (leadTime > 365) leadTime = 365;
 
     const sale: SaleRecord = {

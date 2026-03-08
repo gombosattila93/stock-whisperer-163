@@ -33,7 +33,7 @@ import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } 
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
-  const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions } = useInventory();
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);

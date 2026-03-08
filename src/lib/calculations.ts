@@ -454,6 +454,10 @@ export function analyzeSkus(
     };
 
     for (const item of analyses) {
+      // Skip items that can't calculate safety stock
+      if (!item.capability.hasLeadTime || !item.capability.hasDemandHistory) continue;
+      if (item.abc_class === 'N/A') continue;
+
       const slKey = slMap[item.abc_class] || '95%';
       const z = SERVICE_LEVELS[slKey] ?? 1.65;
       item.effectiveServiceLevel = slKey;
@@ -472,13 +476,13 @@ export function analyzeSkus(
 
       // Re-apply safety stock cap
       const ssMax2 = effDemand * item.lead_time_days;
-      if (ssMax2 > 0 && item.safety_stock > ssMax2) {
+      if (ssMax2 > 0 && item.safety_stock! > ssMax2) {
         item.safety_stock = ssMax2;
         item.safetyStockCapped = true;
       }
 
       const effLT = suppStats?.avgLeadTimeActual || item.lead_time_days;
-      item.reorder_point = effDemand * effLT + item.safety_stock;
+      item.reorder_point = effDemand * effLT + item.safety_stock!;
     }
   }
 

@@ -3,10 +3,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
-import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock } from "lucide-react";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
+import { Badge } from "@/components/ui/badge";
 import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
@@ -81,21 +82,28 @@ export default function Overview() {
       }));
   }, [filtered, overridesLoaded]);
 
-  // Reserved stock value
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
   const reservedStockValue = useMemo(() =>
     filtered.reduce((sum, s) => sum + s.reserved_qty * s.unit_price, 0),
     [filtered]
   );
 
+  // Edge case info badges
+  const deadStockCount = filtered.filter(s => s.dead_stock).length;
+  const insufficientDataCount = filtered.filter(s => s.insufficientData).length;
+  const overdueCount = filtered.filter(s => s.overdueDelivery).length;
+  const abcInfo = filtered.find(s => s.abcInfo)?.abcInfo;
+  const xyzInfo = filtered.find(s => s.xyzInfo)?.xyzInfo;
+  // 3c) All zero revenue warning
+  const allZeroRevenue = filtered.length > 0 && filtered.every(s => s.total_revenue === 0);
+
   if (!hasData) return <EmptyState />;
 
   const totalSkus = filtered.length;
   const criticalSkus = filtered.filter(s => s.days_of_stock < s.lead_time_days).length;
   const reorderNeeded = filtered.filter(s => s.effective_stock <= s.reorder_point).length;
-  const overstockItems = filtered.filter(s => s.days_of_stock > 180).length;
+  const overstockItems = filtered.filter(s => s.days_of_stock > 180 && !s.dead_stock).length;
 
-  // Trend & seasonality
   const risingCount = filtered.filter(s => s.trend === 'rising').length;
   const fallingCount = filtered.filter(s => s.trend === 'falling').length;
   const stableCount = filtered.filter(s => s.trend === 'stable').length;
@@ -105,7 +113,6 @@ export default function Overview() {
     .sort((a, b) => b.trendPct - a.trendPct)
     .slice(0, 5);
 
-  // Weighted average service level
   const totalRev = filtered.reduce((s, a) => s + a.total_revenue, 0);
   const SERVICE_LEVEL_NUM: Record<string, number> = { '90%': 90, '95%': 95, '99%': 99 };
   const weightedAvgSL = totalRev > 0
@@ -113,7 +120,6 @@ export default function Overview() {
     : 95;
   const showPerClassSL = costSettings.serviceLevelSettings?.usePerClassServiceLevel;
 
-  // Matrix counts
   const matrixCounts: Record<string, number> = {};
   for (const abc of abcLabels) {
     for (const xyz of xyzLabels) {
@@ -135,12 +141,55 @@ export default function Overview() {
             sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
             abc_class: s.abc_class, xyz_class: s.xyz_class,
             stock_qty: s.stock_qty, days_of_stock: s.days_of_stock === Infinity ? 'Infinity' : Math.round(s.days_of_stock),
+            dead_stock: s.dead_stock ? 'Yes' : 'No',
+            insufficient_data: s.insufficientData ? 'Yes' : 'No',
           }))}
           filename="overview-export.csv"
         />
       </div>
 
       <DashboardAlerts />
+
+      {/* 3c) Zero revenue warning banner */}
+      {allZeroRevenue && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 mb-6">
+          <AlertTriangle className="h-4 w-4 text-warning-foreground mt-0.5 shrink-0" />
+          <p className="text-xs text-warning-foreground leading-relaxed">
+            <strong>ABC classification disabled</strong> — all SKUs have zero revenue. Please map the <code className="font-mono">unit_price</code> column for accurate classification.
+          </p>
+        </div>
+      )}
+
+      {/* Edge case info banners */}
+      {(abcInfo || xyzInfo || insufficientDataCount > 0 || deadStockCount > 0 || overdueCount > 0) && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {abcInfo && (
+            <Badge variant="outline" className="text-[10px] gap-1">
+              <Info className="h-3 w-3" /> {abcInfo}
+            </Badge>
+          )}
+          {xyzInfo && (
+            <Badge variant="outline" className="text-[10px] gap-1">
+              <Info className="h-3 w-3" /> {xyzInfo}
+            </Badge>
+          )}
+          {insufficientDataCount > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 border-warning/50 text-warning-foreground">
+              <AlertTriangle className="h-3 w-3" /> {insufficientDataCount} SKUs with limited data
+            </Badge>
+          )}
+          {deadStockCount > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1">
+              <PackageX className="h-3 w-3" /> {deadStockCount} dead stock SKUs
+            </Badge>
+          )}
+          {overdueCount > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 border-warning/50 text-warning-foreground">
+              {overdueCount} overdue deliveries
+            </Badge>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <KpiCard icon={Package} label="Total SKUs" value={totalSkus} />
@@ -233,7 +282,7 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* ─── Trend Summary ──────────────────────────────────────── */}
+      {/* Trend Summary */}
       <div className="bg-card border rounded-lg p-6 mb-8">
         <h2 className="font-semibold mb-4">Trend Summary</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">

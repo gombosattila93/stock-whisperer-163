@@ -7,6 +7,7 @@ import { TablePagination, usePagination } from "@/components/TablePagination";
 import { getSuggestedOrderQty } from "@/lib/calculations";
 import { ReorderEmailModal } from "@/components/ReorderEmailModal";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Mail } from "lucide-react";
 
 interface SupplierRow {
@@ -17,6 +18,7 @@ interface SupplierRow {
   tiedUpCapital: number;
   suggestedOrderValue: number;
   avgLeadTime: number;
+  overdueCount: number;
 }
 
 export default function Suppliers() {
@@ -44,6 +46,7 @@ export default function Suppliers() {
         existing.tiedUpCapital += tiedUp;
         existing.suggestedOrderValue += orderVal;
         existing.avgLeadTime += s.lead_time_days;
+        existing.overdueCount += s.overdueDelivery ? 1 : 0;
       } else {
         map.set(s.supplier, {
           supplier: s.supplier,
@@ -53,6 +56,7 @@ export default function Suppliers() {
           tiedUpCapital: tiedUp,
           suggestedOrderValue: orderVal,
           avgLeadTime: s.lead_time_days,
+          overdueCount: s.overdueDelivery ? 1 : 0,
         });
       }
     }
@@ -79,10 +83,11 @@ export default function Suppliers() {
         unit_price: s.unit_price,
         suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
         order_value: getSuggestedOrderQty(s.reorder_point, s.effective_stock) * s.unit_price,
+        overdueDelivery: s.overdueDelivery,
+        expected_delivery_date: s.expected_delivery_date,
       }));
   }, [expandedSupplier, filtered]);
 
-  // SKUs for the email modal
   const emailSkus = useMemo(() => {
     if (!emailSupplier) return [];
     return filtered
@@ -105,6 +110,7 @@ export default function Suppliers() {
     tied_up_capital_eur: s.tiedUpCapital.toFixed(2),
     suggested_order_value_eur: s.suggestedOrderValue.toFixed(2),
     avg_lead_time_days: s.avgLeadTime,
+    overdue_deliveries: s.overdueCount,
   }));
 
   return (
@@ -132,6 +138,7 @@ export default function Suppliers() {
                   <SortableHeader column="totalSkus" label="Total SKUs" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="criticalSkus" label="Critical SKUs" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="reorderSkus" label="To Reorder" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="overdueCount" label="Overdue" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="tiedUpCapital" label="Tied-Up Capital (€)" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="suggestedOrderValue" label="Suggested Order (€)" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="avgLeadTime" label="Avg Lead Time" sort={sort} onSort={toggleSort} align="right" />
@@ -162,13 +169,20 @@ export default function Suppliers() {
                           <span className="text-warning-foreground font-semibold">{row.reorderSkus}</span>
                         ) : '0'}
                       </td>
+                      <td className="text-right">
+                        {row.overdueCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] border-warning/50 bg-warning/10 text-warning-foreground">
+                            {row.overdueCount}
+                          </Badge>
+                        ) : '0'}
+                      </td>
                       <td className="text-right">€{row.tiedUpCapital.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="text-right font-semibold">€{row.suggestedOrderValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="text-right">{row.avgLeadTime}d</td>
                     </tr>
                     {expandedSupplier === row.supplier && expandedSkus.length > 0 && (
                       <tr key={`${row.supplier}-detail`}>
-                        <td colSpan={8} className="p-0">
+                        <td colSpan={9} className="p-0">
                           <div className="bg-muted/30 px-8 py-3">
                             <div className="flex items-center justify-between mb-2">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -198,6 +212,7 @@ export default function Suppliers() {
                                   <th className="text-right py-1.5 px-2">Days of Stock</th>
                                   <th className="text-right py-1.5 px-2">Order Qty</th>
                                   <th className="text-right py-1.5 px-2">Order Value (€)</th>
+                                  <th className="text-left py-1.5 px-2">Status</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -211,6 +226,13 @@ export default function Suppliers() {
                                     <td className="py-1.5 px-2 text-right">{s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}</td>
                                     <td className="py-1.5 px-2 text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
                                     <td className="py-1.5 px-2 text-right">€{s.order_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-1.5 px-2">
+                                      {s.overdueDelivery && (
+                                        <Badge variant="outline" className="text-[9px] border-warning/50 bg-warning/10 text-warning-foreground">
+                                          Overdue delivery
+                                        </Badge>
+                                      )}
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -221,7 +243,7 @@ export default function Suppliers() {
                     )}
                     {expandedSupplier === row.supplier && expandedSkus.length === 0 && (
                       <tr key={`${row.supplier}-empty`}>
-                        <td colSpan={8} className="p-0">
+                        <td colSpan={9} className="p-0">
                           <div className="bg-muted/30 px-8 py-4 text-xs text-muted-foreground">
                             No SKUs need reordering for this supplier.
                           </div>

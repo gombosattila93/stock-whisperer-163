@@ -65,6 +65,11 @@ interface InventoryContextType {
   // Supplier options
   skuSupplierOptions: SkuSupplierOptionsMap;
   setSkuSupplierOptions: (sku: string, options: SupplierOption[]) => void;
+  // Reservations
+  reservations: ProjectReservation[];
+  addReservation: (r: ProjectReservation) => void;
+  updateReservation: (id: string, status: 'fulfilled' | 'cancelled') => void;
+  reservedQtyMap: Record<string, number>;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);

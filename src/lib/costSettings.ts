@@ -84,4 +84,11 @@ export const DEFAULT_COST_SETTINGS: CostSettings = {
   ewmaAlpha: 0.3,
 
   supplierLeadTimeStats: {},
+
+  serviceLevelSettings: {
+    usePerClassServiceLevel: false,
+    classA: '99%',
+    classB: '95%',
+    classC: '90%',
+  },
 };

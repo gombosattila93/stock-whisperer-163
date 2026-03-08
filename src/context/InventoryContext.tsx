@@ -198,7 +198,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions()]).then(([rows, overrides, costs, supplierOpts]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions(), loadReservations()]).then(([rows, overrides, costs, supplierOpts, resv]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
@@ -209,6 +209,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setCostSettingsRaw(costs);
       if (supplierOpts && Object.keys(supplierOpts).length > 0) {
         setSkuSupplierOptionsRaw(supplierOpts);
+      }
+      if (resv && resv.length > 0) {
+        setReservations(resv);
       }
       setPersistenceLoaded(true);
     });

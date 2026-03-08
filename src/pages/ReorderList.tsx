@@ -249,6 +249,14 @@ export default function ReorderList() {
         <ExportButton data={exportData} filename="reorder-list.csv" />
       </div>
 
+      {excludedCount > 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-4 py-3 mb-4">
+          <span className="text-xs text-muted-foreground">
+            {excludedCount} SKUs excluded — missing stock, lead time, or demand data. See ABC-XYZ Detail for full list.
+          </span>
+        </div>
+      )}
+
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">
           <EoqSettingsPanel settings={eoqSettings} onChange={handleEoqChange} />

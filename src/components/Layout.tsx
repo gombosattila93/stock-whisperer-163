@@ -7,7 +7,7 @@ import { ColumnMapper } from "@/components/ColumnMapper";
 import { useInventory } from "@/context/InventoryContext";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { pendingFile, pendingHeaders, setPendingFile, loadFileWithMapping } = useInventory();
+  const { pendingFile, pendingHeaders, pendingRawData, setPendingFile, loadFileWithMapping } = useInventory();
 
   return (
     <SidebarProvider>
@@ -32,6 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           open={!!pendingFile}
           onOpenChange={(open) => { if (!open) setPendingFile(null); }}
           sourceColumns={pendingHeaders}
+          rawData={pendingRawData}
           onConfirm={(mapping) => {
             if (pendingFile) loadFileWithMapping(pendingFile, mapping);
           }}

@@ -36,6 +36,7 @@ interface InventoryContextType {
   // For column mapping flow
   pendingFile: File | null;
   pendingHeaders: string[];
+  pendingRawData: Record<string, string>[];
   setPendingFile: (f: File | null) => void;
 }
 
@@ -65,6 +66,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [thresholds, setThresholds] = useState<ClassificationThresholds>(DEFAULT_THRESHOLDS);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
+  const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
 
   const setDemandDays = useCallback((v: number) => {
     setDemandDaysRaw(clampDemandDays(v));
@@ -154,9 +156,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (missingRequired.length > 0) {
-        // Open column mapper
+        // Open column mapper with raw data for date preview
         setPendingFile(file);
         setPendingHeaders(headers);
+        setPendingRawData(rawParsed);
         toast.info('Column names don\'t match — please map your columns');
         return;
       }
@@ -206,6 +209,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
       setPendingFile(null);
       setPendingHeaders([]);
+      setPendingRawData([]);
     } catch (err) {
       toast.error('Failed to process mapped CSV', {
         description: err instanceof Error ? err.message : 'Unknown error',
@@ -269,6 +273,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setThresholds,
       pendingFile,
       pendingHeaders,
+      pendingRawData,
       setPendingFile,
     }}>
       {children}

@@ -22,7 +22,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { HelpCircle, CheckCircle2, AlertTriangle, Calendar } from "lucide-react";
+import { detectDateFormat, getDateFormatLabel } from "@/lib/dateUtils";
 
 export interface ColumnMapping {
   [targetField: string]: string; // targetField -> sourceColumn
@@ -32,6 +33,7 @@ interface ColumnMapperProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sourceColumns: string[];
+  rawData?: Record<string, string>[];
   onConfirm: (mapping: ColumnMapping) => void;
 }
 
@@ -149,8 +151,22 @@ function autoMap(sourceColumns: string[]): ColumnMapping {
   return mapping;
 }
 
-export function ColumnMapper({ open, onOpenChange, sourceColumns, onConfirm }: ColumnMapperProps) {
+export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onConfirm }: ColumnMapperProps) {
   const [mapping, setMapping] = useState<ColumnMapping>(() => autoMap(sourceColumns));
+
+  // Detect date format from the mapped date column
+  const dateFormatInfo = useMemo(() => {
+    const dateCol = mapping['date'];
+    if (!dateCol || !rawData?.length) return null;
+    const samples = rawData.map(r => r[dateCol] || '').filter(Boolean);
+    if (samples.length === 0) return null;
+    const fmt = detectDateFormat(samples);
+    return {
+      format: fmt,
+      label: getDateFormatLabel(fmt),
+      sampleValues: samples.slice(0, 3),
+    };
+  }, [mapping, rawData]);
 
   const unmappedRequired = TARGET_FIELDS.filter((f) => f.required && !mapping[f.key]);
   const mappedCount = Object.values(mapping).filter(Boolean).length;
@@ -197,6 +213,22 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, onConfirm }: C
             </span>
           )}
         </div>
+
+        {dateFormatInfo && (
+          <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3 text-xs">
+            <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground">
+                Date format detected: <span className="text-primary">{dateFormatInfo.label}</span>
+              </p>
+              <p className="text-muted-foreground mt-0.5">
+                Samples: {dateFormatInfo.sampleValues.map((v, i) => (
+                  <code key={i} className="mx-0.5 rounded bg-background px-1 py-0.5">{v}</code>
+                ))}
+              </p>
+            </div>
+          </div>
+        )}
 
         <TooltipProvider>
           <div className="space-y-2">

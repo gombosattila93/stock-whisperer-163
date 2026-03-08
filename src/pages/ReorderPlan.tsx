@@ -29,7 +29,7 @@ interface ReorderItem {
   abc_class: string;
   urgency: string;
   trend: string;
-  days_of_stock: number;
+  days_of_stock: number | null;
   lead_time_days: number;
   suggested_order_qty: number;
   unit_price: number;

@@ -1,0 +1,6 @@
+﻿sku,sku_name,supplier,category,date,partner_id,sold_qty,unit_price,stock_qty,lead_time_days,ordered_qty,expected_delivery_date
+BOM-001,BOM Test Widget,Acme Corp,Widgets,2025-01-15,P001,10,25.50,200,14,0,
+BOM-001,BOM Test Widget,Acme Corp,Widgets,2025-02-10,P002,15,25.50,200,14,0,
+BOM-001,BOM Test Widget,Acme Corp,Widgets,2025-03-05,P001,8,25.50,200,14,0,
+BOM-002,BOM Gadget,Beta Inc,Gadgets,2025-01-20,P003,25,12.00,50,7,10,2026-04-01
+BOM-002,BOM Gadget,Beta Inc,Gadgets,2025-02-15,P001,30,12.00,50,7,10,2026-04-01

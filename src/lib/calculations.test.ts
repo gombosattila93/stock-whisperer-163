@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseRows, analyzeSkus, getSuggestedOrderQty, getUrgency } from "./calculations";
+import { parseRows, analyzeSkus, getSuggestedOrderQty, getUrgency, ewmaDemand } from "./calculations";
 import { RawRow, SkuData } from "./types";
+import { DEFAULT_COST_SETTINGS, CostSettings } from "./costSettings";
 
 const makeRow = (overrides: Partial<RawRow> = {}): RawRow => ({
   sku: "SKU-001",
@@ -368,5 +369,165 @@ describe("getUrgency", () => {
 
   it("returns 'Watch' for Infinity days_of_stock", () => {
     expect(getUrgency(Infinity, 14)).toBe("Watch");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Edge case tests
+// ═══════════════════════════════════════════════════════════════
+
+describe("Edge cases: zero demand", () => {
+  const zeroSalesRows = [makeRow({ sold_qty: 0, stock_qty: 50, ordered_qty: 10 })];
+
+  it("days_of_stock should be Infinity when demand is 0 and stock > 0", () => {
+    const map = parseRows(zeroSalesRows);
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.avg_daily_demand).toBe(0);
+    expect(sku.days_of_stock).toBe(Infinity);
+  });
+
+  it("days_of_stock should be 0 when both demand and stock are 0", () => {
+    const rows = [makeRow({ sold_qty: 0, stock_qty: 0, ordered_qty: 0 })];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.days_of_stock).toBe(0);
+  });
+
+  it("safety_stock should be 0 when there is no variability", () => {
+    const map = parseRows(zeroSalesRows);
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.safety_stock).toBe(0);
+  });
+
+  it("suggested order qty should be 0 when demand is 0", () => {
+    expect(getSuggestedOrderQty(0, 50)).toBe(0);
+  });
+});
+
+describe("Edge cases: negative / zero stock", () => {
+  it("handles stock_qty = 0 without NaN", () => {
+    const rows = [makeRow({ stock_qty: 0, sold_qty: 5 })];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(Number.isFinite(sku.days_of_stock)).toBe(true);
+    expect(sku.effective_stock).toBe(50); // ordered_qty default is 50
+  });
+
+  it("effective_stock can be negative if stock is 0 and ordered is 0", () => {
+    const rows = [makeRow({ stock_qty: 0, ordered_qty: 0, sold_qty: 5 })];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.effective_stock).toBe(0);
+    expect(sku.days_of_stock).toBe(0);
+  });
+});
+
+describe("Edge cases: EWMA with extreme alpha", () => {
+  const sales = [
+    { date: "2026-01-01", qty: 10 },
+    { date: "2026-01-02", qty: 20 },
+    { date: "2026-01-03", qty: 30 },
+  ];
+
+  it("alpha = 0 falls back to 0.3", () => {
+    const result = ewmaDemand(sales, 0);
+    expect(result).toBeGreaterThan(0);
+    // With alpha=0.3: s0=10, s1=0.3*20+0.7*10=13, s2=0.3*30+0.7*13=18.1
+    expect(result).toBeCloseTo(18.1, 1);
+  });
+
+  it("alpha = NaN falls back to 0.3", () => {
+    const result = ewmaDemand(sales, NaN);
+    expect(result).toBeGreaterThan(0);
+    expect(result).toBeCloseTo(18.1, 1);
+  });
+
+  it("alpha = 1 gives full weight to latest value", () => {
+    const result = ewmaDemand(sales, 1);
+    expect(result).toBe(30);
+  });
+
+  it("alpha = 0.01 (minimum) gives heavy weight to early values", () => {
+    const result = ewmaDemand(sales, 0.01);
+    expect(result).toBeGreaterThan(0);
+    expect(result).toBeLessThan(15); // mostly influenced by first value (10)
+  });
+
+  it("negative alpha is clamped to 0.01", () => {
+    const result = ewmaDemand(sales, -5);
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns 0 for empty sales", () => {
+    expect(ewmaDemand([], 0.3)).toBe(0);
+  });
+
+  it("single data point returns that value regardless of alpha", () => {
+    expect(ewmaDemand([{ date: "2026-01-01", qty: 42 }], 0.5)).toBe(42);
+  });
+});
+
+describe("Edge cases: demandDays = 0", () => {
+  it("should not produce NaN or Infinity avg_daily_demand", () => {
+    const rows = [makeRow({ sold_qty: 10 })];
+    const map = parseRows(rows);
+    // demandDays = 0 should be clamped to 1
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 0);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(Number.isFinite(sku.avg_daily_demand)).toBe(true);
+    expect(sku.avg_daily_demand).toBeGreaterThan(0);
+  });
+});
+
+describe("Edge cases: getUrgency guards", () => {
+  it("Infinity days_of_stock returns Watch", () => {
+    expect(getUrgency(Infinity, 30)).toBe("Watch");
+  });
+
+  it("NaN days_of_stock returns Watch", () => {
+    expect(getUrgency(NaN, 30)).toBe("Watch");
+  });
+
+  it("zero lead_time with 0 days_of_stock is Critical", () => {
+    expect(getUrgency(0, 0)).toBe("Critical");
+  });
+});
+
+describe("Edge cases: shelf life with Infinity days_of_stock", () => {
+  it("shelf life risk should be none when days_of_stock is Infinity", () => {
+    const rows = [makeRow({ sold_qty: 0, stock_qty: 100 })];
+    const map = parseRows(rows);
+    const costSettings: CostSettings = {
+      ...DEFAULT_COST_SETTINGS,
+      shelfLifeEnabled: true,
+      categoryShelfLifeDays: { 'Parts': 30 },
+    };
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30, 1.65, undefined, costSettings);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.days_of_stock).toBe(Infinity);
+    // Infinity days_of_stock is excluded from shelf life check (days_of_stock !== Infinity guard)
+    expect(sku.shelfLifeRisk).toBe('none');
+  });
+});
+
+describe("Edge cases: storage cost with unitsPerPallet = 0", () => {
+  it("should not produce NaN or Infinity storage cost", () => {
+    const rows = [makeRow({ sold_qty: 10, stock_qty: 100 })];
+    const map = parseRows(rows);
+    const costSettings: CostSettings = {
+      ...DEFAULT_COST_SETTINGS,
+      storageCostEnabled: true,
+      storageCostPerPalletPerMonth: 15,
+      unitsPerPallet: 0,
+    };
+    const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30, 1.65, undefined, costSettings);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(Number.isFinite(sku.storageCost)).toBe(true);
+    expect(sku.storageCost).toBe(0); // guarded by unitsPerPallet > 0
   });
 });

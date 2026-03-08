@@ -102,11 +102,11 @@ export function analyzeSkus(
   let cumulative = 0;
 
   for (const item of sortedByRevenue) {
+    const pctBefore = totalRevenue > 0 ? cumulative / totalRevenue : 0;
     cumulative += item.total_revenue;
-    const pct = totalRevenue > 0 ? cumulative / totalRevenue : 1;
     let abc: AbcClass = 'C';
-    if (pct <= 0.8) abc = 'A';
-    else if (pct <= 0.95) abc = 'B';
+    if (pctBefore < 0.8) abc = 'A';
+    else if (pctBefore < 0.95) abc = 'B';
     // Update in the analyses array
     const target = analyses.find(a => a.sku === item.sku);
     if (target) target.abc_class = abc;

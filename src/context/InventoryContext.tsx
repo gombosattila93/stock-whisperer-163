@@ -36,6 +36,7 @@ interface InventoryContextType {
   // For column mapping flow
   pendingFile: File | null;
   pendingHeaders: string[];
+  pendingRawData: Record<string, string>[];
   setPendingFile: (f: File | null) => void;
 }
 

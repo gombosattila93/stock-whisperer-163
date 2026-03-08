@@ -7,7 +7,7 @@ import { RawRow } from './types';
 /** Fixed reference date: 2026-03-01 — all data generated relative to this */
 export const TEST_REFERENCE_DATE = new Date('2026-03-01T00:00:00Z');
 
-function dateString(daysBeforeRef: number): string {
+export function dateString(daysBeforeRef: number): string {
   const d = new Date(TEST_REFERENCE_DATE);
   d.setDate(d.getDate() - daysBeforeRef);
   return d.toISOString().slice(0, 10);

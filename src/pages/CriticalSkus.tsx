@@ -5,6 +5,7 @@ import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
+import { VirtualizedTable } from "@/components/VirtualizedTable";
 
 export default function CriticalSkus() {
   const { filtered, hasData } = useInventory();
@@ -25,6 +26,8 @@ export default function CriticalSkus() {
     expected_delivery_date: s.expected_delivery_date,
   }));
 
+  const thClass = "px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50";
+
   return (
     <div>
       <div className="page-header flex items-center justify-between">
@@ -41,42 +44,67 @@ export default function CriticalSkus() {
         </div>
       ) : (
         <div className="bg-card border rounded-lg overflow-hidden">
-          <div className="overflow-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
-                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
-                  <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="expected_delivery_date" label="Expected Delivery" sort={sort} onSort={toggleSort} />
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map(s => (
-                  <tr key={s.sku} className={s.days_of_stock < 7 ? 'row-critical' : ''}>
-                    <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
-                    <td><HighlightText text={s.sku_name} /></td>
-                    <td><HighlightText text={s.supplier} /></td>
-                    <td><HighlightText text={s.category} /></td>
-                    <td><DemandSparkline sku={s} /></td>
-                    <td className={`text-right font-semibold ${s.days_of_stock < 7 ? 'text-destructive' : 'text-warning'}`}>
-                      {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
-                    </td>
-                    <td className="text-right">{Math.round(s.reorder_point)}</td>
-                    <td className="text-right">{s.stock_qty.toLocaleString()}</td>
-                    <td className="text-right">{s.ordered_qty.toLocaleString()}</td>
-                    <td>{s.expected_delivery_date || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <VirtualizedTable
+            data={paginatedData}
+            rowKey={(s) => s.sku}
+            rowClassName={(s) => s.days_of_stock < 7 ? 'row-critical' : ''}
+            columns={[
+              {
+                key: 'sku',
+                header: <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />,
+                render: (s) => <span className="font-mono font-medium"><HighlightText text={s.sku} /></span>,
+              },
+              {
+                key: 'sku_name',
+                header: <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />,
+                render: (s) => <HighlightText text={s.sku_name} />,
+              },
+              {
+                key: 'supplier',
+                header: <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />,
+                render: (s) => <HighlightText text={s.supplier} />,
+              },
+              {
+                key: 'category',
+                header: <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />,
+                render: (s) => <HighlightText text={s.category} />,
+              },
+              {
+                key: 'trend',
+                header: <span className={thClass}>Trend</span>,
+                render: (s) => <DemandSparkline sku={s} />,
+              },
+              {
+                key: 'days_of_stock',
+                header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />,
+                render: (s) => (
+                  <span className={`text-right font-semibold ${s.days_of_stock < 7 ? 'text-destructive' : 'text-warning'}`}>
+                    {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
+                  </span>
+                ),
+              },
+              {
+                key: 'reorder_point',
+                header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />,
+                render: (s) => <span className="text-right">{Math.round(s.reorder_point)}</span>,
+              },
+              {
+                key: 'stock_qty',
+                header: <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />,
+                render: (s) => <span className="text-right">{s.stock_qty.toLocaleString()}</span>,
+              },
+              {
+                key: 'ordered_qty',
+                header: <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />,
+                render: (s) => <span className="text-right">{s.ordered_qty.toLocaleString()}</span>,
+              },
+              {
+                key: 'expected_delivery_date',
+                header: <SortableHeader column="expected_delivery_date" label="Expected Delivery" sort={sort} onSort={toggleSort} />,
+                render: (s) => <span>{s.expected_delivery_date || '—'}</span>,
+              },
+            ]}
+          />
           <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
         </div>
       )}

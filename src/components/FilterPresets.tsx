@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Bookmark, Plus, Trash2, Check } from "lucide-react";
+import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export interface FilterPreset {
@@ -19,19 +19,57 @@ export interface FilterPreset {
   demandDays: number;
 }
 
-const STORAGE_KEY = "inventory-filter-presets";
+// IndexedDB persistence using same pattern as persistence.ts
+const DB_NAME = 'inventory-dashboard';
+const DB_VERSION = 2;
+const STORE_NAME = 'settings';
+const PRESETS_KEY = 'filterPresets';
 
-function loadPresets(): FilterPreset[] {
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('data')) {
+        db.createObjectStore('data');
+      }
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function loadPresets(): Promise<FilterPreset[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(PRESETS_KEY);
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
   } catch {
     return [];
   }
 }
 
-function savePresets(presets: FilterPreset[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+async function savePresets(presets: FilterPreset[]): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put(presets, PRESETS_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    console.warn('Failed to save filter presets to IndexedDB');
+  }
 }
 
 export function FilterPresets() {
@@ -43,13 +81,25 @@ export function FilterPresets() {
     hasData,
   } = useInventory();
 
-  const [presets, setPresets] = useState<FilterPreset[]>(loadPresets);
+  const [presets, setPresets] = useState<FilterPreset[]>([]);
   const [newName, setNewName] = useState("");
   const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
+  // Load presets from IndexedDB on mount
   useEffect(() => {
-    savePresets(presets);
-  }, [presets]);
+    loadPresets().then(p => {
+      setPresets(p);
+      setLoaded(true);
+    });
+  }, []);
+
+  // Save to IndexedDB whenever presets change (after initial load)
+  useEffect(() => {
+    if (loaded) {
+      savePresets(presets);
+    }
+  }, [presets, loaded]);
 
   if (!hasData) return null;
 

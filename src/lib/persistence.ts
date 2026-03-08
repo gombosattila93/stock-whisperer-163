@@ -330,6 +330,7 @@ export async function loadReservations(): Promise<ProjectReservation[]> {
     });
   } catch {
     return [];
+  }
 }
 
 // ─── FX Rates Persistence ──────────────────────────────────────────────────
@@ -362,5 +363,4 @@ export async function loadFxRates(): Promise<unknown | null> {
   } catch {
     return null;
   }
-}
 }

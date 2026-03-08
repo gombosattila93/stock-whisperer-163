@@ -24,6 +24,22 @@ export default function CriticalSkus() {
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
     .sort((a, b) => a.days_of_stock - b.days_of_stock);
 
+  // Compute alt supplier suggestions
+  const altSupplierMap = useMemo(() => {
+    const map: Record<string, { supplier: string; lead_time_days: number }> = {};
+    for (const s of critical) {
+      if (s.lead_time_days <= 30) continue;
+      const opts = skuSupplierOptions[s.sku] || [];
+      const alt = opts
+        .filter(o => !o.is_primary && o.lead_time_days < s.lead_time_days)
+        .sort((a, b) => a.lead_time_days - b.lead_time_days)[0];
+      if (alt) {
+        map[s.sku] = { supplier: alt.supplier, lead_time_days: alt.lead_time_days };
+      }
+    }
+    return map;
+  }, [critical, skuSupplierOptions]);
+
   const { sorted, sort, toggleSort } = useSortableTable(critical, { column: "days_of_stock", direction: "asc" });
   const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
 

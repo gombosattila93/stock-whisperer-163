@@ -455,9 +455,22 @@ export default function ReorderList() {
                       {costSettings.priceBreaksEnabled && (
                         <td className="text-xs">
                           {s.priceBreakQty > 0 ? (
-                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                            <span className="text-primary font-medium">
                               ↑{s.priceBreakQty} (save €{s.priceBreakSaving.toFixed(0)})
                             </span>
+                          ) : s.pbOpportunityQty > 0 ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="text-primary/80 font-medium cursor-help">
+                                    Order {s.pbOpportunityQty - s.suggested_order_qty} more → save €{s.pbOpportunitySaving.toFixed(0)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Next price break at {s.pbOpportunityQty} units from supplier options</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           ) : '—'}
                         </td>
                       )}

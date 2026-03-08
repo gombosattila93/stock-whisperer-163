@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
-function KpiCard({ icon: Icon, label, value, accent }: {
+function KpiCard({ icon: Icon, label, value, accent, subLabel }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
   accent?: string;
+  subLabel?: string;
 }) {
   return (
     <div className="kpi-card">
@@ -26,6 +27,7 @@ function KpiCard({ icon: Icon, label, value, accent }: {
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
           <p className="text-2xl font-bold mt-0.5">{value}</p>
+          {subLabel && <p className="text-[10px] text-muted-foreground mt-0.5">{subLabel}</p>}
         </div>
       </div>
     </div>

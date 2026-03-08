@@ -22,7 +22,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { HelpCircle, CheckCircle2, AlertTriangle, Calendar } from "lucide-react";
+import { detectDateFormat, getDateFormatLabel } from "@/lib/dateUtils";
 
 export interface ColumnMapping {
   [targetField: string]: string; // targetField -> sourceColumn
@@ -32,6 +33,7 @@ interface ColumnMapperProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sourceColumns: string[];
+  rawData?: Record<string, string>[];
   onConfirm: (mapping: ColumnMapping) => void;
 }
 

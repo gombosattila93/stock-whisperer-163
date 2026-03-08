@@ -2,6 +2,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
+import { TablePagination, usePagination } from "@/components/TablePagination";
 import { useMemo } from "react";
 
 export default function Overstock() {
@@ -20,6 +21,7 @@ export default function Overstock() {
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(overstock, { column: "tied_up_capital", direction: "desc" });
+  const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
 
   if (!hasData) return <EmptyState />;
 
@@ -49,35 +51,38 @@ export default function Overstock() {
           No overstock items found with current filters.
         </div>
       ) : (
-        <div className="bg-card border rounded-lg overflow-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
-                <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" />
-                <SortableHeader column="tied_up_capital" label="Tied-up Capital" sort={sort} onSort={toggleSort} align="right" />
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map(s => (
-                <tr key={s.sku}>
-                  <td className="font-mono font-medium">{s.sku}</td>
-                  <td>{s.sku_name}</td>
-                  <td>{s.supplier}</td>
-                  <td className="text-right">
-                    {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
-                  </td>
-                  <td className="text-right">{s.excess_qty.toLocaleString()}</td>
-                  <td className="text-right font-semibold">
-                    ${s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </td>
+        <div className="bg-card border rounded-lg overflow-hidden">
+          <div className="overflow-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="tied_up_capital" label="Tied-up Capital" sort={sort} onSort={toggleSort} align="right" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedData.map(s => (
+                  <tr key={s.sku}>
+                    <td className="font-mono font-medium">{s.sku}</td>
+                    <td>{s.sku_name}</td>
+                    <td>{s.supplier}</td>
+                    <td className="text-right">
+                      {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
+                    </td>
+                    <td className="text-right">{s.excess_qty.toLocaleString()}</td>
+                    <td className="text-right font-semibold">
+                      ${s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
         </div>
       )}
     </div>

@@ -599,6 +599,42 @@ export default function CostModel() {
             )}
           </div>
         </div>
+
+        {/* Budget Constraints */}
+        <div className="bg-card border rounded-lg p-5 space-y-4">
+          <SectionHeader
+            icon={Wallet}
+            title="Budget Constraints"
+            enabled={costSettings.budgetEnabled}
+            onToggle={(v) => update('budgetEnabled', v)}
+            tip="Set monthly reorder budgets (total and per-supplier). When enabled, the Reorder Plan page will prioritize orders within budget limits."
+          />
+          <div className={`space-y-3 ${!costSettings.budgetEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            <NumericField
+              label="Monthly budget"
+              value={costSettings.monthlyBudget}
+              onChange={(v) => update('monthlyBudget', v)}
+              disabled={!costSettings.budgetEnabled}
+              suffix="€"
+            />
+            <NumericField
+              label="Budget period"
+              value={costSettings.budgetPeriodDays}
+              onChange={(v) => update('budgetPeriodDays', v)}
+              disabled={!costSettings.budgetEnabled}
+              suffix="days"
+              min={1}
+            />
+            <SupplierCostEditor
+              costs={costSettings.supplierBudgets}
+              suppliers={suppliers}
+              onChange={(v) => update('supplierBudgets', v)}
+              disabled={!costSettings.budgetEnabled}
+              label="Per-supplier budget caps"
+              suffix="€"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

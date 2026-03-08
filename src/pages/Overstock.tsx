@@ -7,7 +7,7 @@ import { HighlightText } from "@/components/HighlightText";
 import { useMemo } from "react";
 
 export default function Overstock() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, costSettings } = useInventory();
 
   const overstock = useMemo(() =>
     filtered
@@ -27,11 +27,15 @@ export default function Overstock() {
   if (!hasData) return <EmptyState />;
 
   const totalTiedUp = overstock.reduce((s, o) => s + o.tied_up_capital, 0);
+  const showHolding = costSettings.holdingCostEnabled;
+  const showStorage = costSettings.storageCostEnabled;
 
   const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier,
     days_of_stock: s.days_of_stock === Infinity ? 'N/A' : Math.round(s.days_of_stock),
     excess_qty: s.excess_qty, tied_up_capital: s.tied_up_capital.toFixed(2),
+    ...(showHolding ? { annual_holding_cost: s.holdingCost.toFixed(2) } : {}),
+    ...(showStorage ? { monthly_storage_cost: s.storageCost.toFixed(2) } : {}),
   }));
 
   return (
@@ -63,6 +67,8 @@ export default function Overstock() {
                   <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="tied_up_capital" label="Tied-up Capital" sort={sort} onSort={toggleSort} align="right" />
+                  {showHolding && <SortableHeader column="holdingCost" label="Annual Holding €" sort={sort} onSort={toggleSort} align="right" />}
+                  {showStorage && <SortableHeader column="storageCost" label="Storage €/mo" sort={sort} onSort={toggleSort} align="right" />}
                 </tr>
               </thead>
               <tbody>
@@ -78,6 +84,12 @@ export default function Overstock() {
                     <td className="text-right font-semibold">
                       €{s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
+                    {showHolding && (
+                      <td className="text-right text-sm">€{s.holdingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    )}
+                    {showStorage && (
+                      <td className="text-right text-sm">€{s.storageCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    )}
                   </tr>
                 ))}
               </tbody>

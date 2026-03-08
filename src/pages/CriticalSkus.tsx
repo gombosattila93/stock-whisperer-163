@@ -139,6 +139,15 @@ export default function CriticalSkus() {
                 header: <SortableHeader column="expected_delivery_date" label="Expected Delivery" sort={sort} onSort={toggleSort} />,
                 render: (s) => <span>{s.expected_delivery_date || '—'}</span>,
               },
+              ...(costSettings.stockoutCostEnabled ? [{
+                key: 'stockoutRisk',
+                header: <SortableHeader column="stockoutRisk" label="Stockout Risk €" sort={sort} onSort={toggleSort} align="right" />,
+                render: (s: typeof paginatedData[0]) => (
+                  <span className="text-right text-destructive font-medium">
+                    {s.stockoutRisk > 0 ? `€${s.stockoutRisk.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
+                  </span>
+                ),
+              }] : []),
             ]}
           />
           <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />

@@ -302,7 +302,8 @@ export default function ReorderList() {
                     <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
                     <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                     <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Sparkline</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Direction</th>
                     <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
                     <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />
                     <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />

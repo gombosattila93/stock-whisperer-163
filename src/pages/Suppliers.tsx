@@ -165,7 +165,13 @@ export default function Suppliers() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Supplier Summary</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="page-title">Supplier Summary</h1>
+            <HelpTooltip
+              text="Aggregated view of inventory and purchasing metrics per supplier."
+              tip="Click a row to expand the detailed SKU list. Use this to prepare supplier-specific POs and compare lead times across vendors."
+            />
+          </div>
           <p className="page-subtitle">Aggregated metrics per supplier — click a row to see its reorder list</p>
         </div>
         <ExportButton data={exportData} filename="supplier-summary.csv" />

@@ -79,6 +79,9 @@ interface InventoryContextType {
   confirmExtremeExclude: () => void;
   // IndexedDB availability
   indexedDBAvailable: boolean;
+  // FX rates
+  fxRates: FxRateConfig;
+  setFxRates: (rates: FxRateConfig) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);

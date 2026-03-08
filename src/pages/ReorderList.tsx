@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getUrgency } from "@/lib/calculations";
 import { computeReorder, STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
+import { loadSkuOverrides, saveSkuOverrides, SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
@@ -15,26 +16,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { RotateCcw } from "lucide-react";
+import { useMemo, useState, useCallback } from "react";
 
 export default function ReorderList() {
   const { filtered, hasData } = useInventory();
-  const [strategy, setStrategy] = useState<ReorderStrategy>('rop');
+  const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
+  const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>(loadSkuOverrides);
+
+  const overrideCount = Object.keys(skuOverrides).length;
+
+  const setSkuStrategy = useCallback((sku: string, strategy: ReorderStrategy | '__global__') => {
+    setSkuOverrides(prev => {
+      const next = { ...prev };
+      if (strategy === '__global__') {
+        delete next[sku];
+      } else {
+        next[sku] = strategy;
+      }
+      saveSkuOverrides(next);
+      return next;
+    });
+  }, []);
+
+  const clearAllOverrides = useCallback(() => {
+    setSkuOverrides({});
+    saveSkuOverrides({});
+  }, []);
 
   const reorder = useMemo(() =>
     filtered
       .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => {
-        const result = computeReorder(s, strategy);
+        const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
+        const result = computeReorder(s, effectiveStrategy);
         return {
           ...s,
           suggested_order_qty: result.suggested_order_qty,
           urgency: getUrgency(s.days_of_stock, s.lead_time_days),
           strategyLabel: result.strategyLabel,
           reorder_trigger: result.reorder_trigger,
+          effectiveStrategy,
+          hasOverride: !!skuOverrides[s.sku],
         };
       }),
-    [filtered, strategy]
+    [filtered, globalStrategy, skuOverrides]
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);
@@ -46,6 +79,7 @@ export default function ReorderList() {
     sku: s.sku, name: s.sku_name, supplier: s.supplier,
     suggested_order_qty: s.suggested_order_qty, urgency: s.urgency,
     strategy: s.strategyLabel, trigger: s.reorder_trigger,
+    has_override: s.hasOverride ? 'Yes' : 'No',
   }));
 
   const urgencyClass: Record<string, string> = {
@@ -66,8 +100,8 @@ export default function ReorderList() {
 
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Reorder Strategy</Label>
-          <Select value={strategy} onValueChange={(v) => setStrategy(v as ReorderStrategy)}>
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">Default Strategy</Label>
+          <Select value={globalStrategy} onValueChange={(v) => setGlobalStrategy(v as ReorderStrategy)}>
             <SelectTrigger className="w-[220px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -83,7 +117,22 @@ export default function ReorderList() {
             </SelectContent>
           </Select>
         </div>
-        <span className="text-xs text-muted-foreground ml-auto">{totalItems} items need reordering</span>
+        <div className="flex items-center gap-3 ml-auto">
+          {overrideCount > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={clearAllOverrides} className="text-xs text-muted-foreground gap-1.5">
+                    <RotateCcw className="h-3 w-3" />
+                    {overrideCount} override{overrideCount !== 1 ? 's' : ''}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Clear all per-SKU strategy overrides</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          <span className="text-xs text-muted-foreground">{totalItems} items need reordering</span>
+        </div>
       </div>
 
       {sorted.length === 0 ? (
@@ -100,7 +149,8 @@ export default function ReorderList() {
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
                   <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
-                  <SortableHeader column="suggested_order_qty" label="Suggested Order Qty" sort={sort} onSort={toggleSort} align="right" />
+                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Strategy</th>
+                  <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" />
                   <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
                   <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
                 </tr>
@@ -112,6 +162,28 @@ export default function ReorderList() {
                     <td><HighlightText text={s.sku_name} /></td>
                     <td><HighlightText text={s.supplier} /></td>
                     <td><DemandSparkline sku={s} /></td>
+                    <td>
+                      <Select
+                        value={skuOverrides[s.sku] || '__global__'}
+                        onValueChange={(v) => setSkuStrategy(s.sku, v as ReorderStrategy | '__global__')}
+                      >
+                        <SelectTrigger
+                          className={`h-7 text-[11px] w-[140px] ${s.hasOverride ? 'border-primary/50 bg-primary/5' : ''}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__global__">
+                            <span className="text-muted-foreground">Default</span>
+                          </SelectItem>
+                          {STRATEGY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
                     <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
                     <td className="text-xs text-muted-foreground max-w-[180px]">{s.reorder_trigger}</td>
                     <td>

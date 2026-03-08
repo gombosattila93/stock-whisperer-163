@@ -4,7 +4,7 @@ import { SERVICE_LEVELS } from '@/lib/calculations';
 import { parseCsvFile, parseCsvString, parseCsvFileRaw, detectDateFormat, getDateFormatLabel } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
-import { saveRows, loadRows, clearRows } from '@/lib/persistence';
+import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides } from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
 import { ColumnMapping } from '@/components/ColumnMapper';
 import { toast } from 'sonner';
@@ -36,6 +36,11 @@ interface InventoryContextType {
   setThresholds: (t: ClassificationThresholds) => void;
   isCalculating: boolean;
   calculationProgress: number;
+  // Stock overrides
+  stockOverrides: StockOverrides;
+  setStockOverride: (sku: string, field: string, value: number) => void;
+  clearStockOverrides: () => void;
+  stockOverrideCount: number;
   // For column mapping flow
   pendingFile: File | null;
   pendingHeaders: string[];
@@ -61,6 +66,21 @@ function createWorker() {
   return new Worker(new URL('../workers/inventoryWorker.ts', import.meta.url), { type: 'module' });
 }
 
+/** Apply stock overrides to raw rows before sending to the worker */
+function applyStockOverrides(rows: RawRow[], overrides: StockOverrides): RawRow[] {
+  if (Object.keys(overrides).length === 0) return rows;
+  return rows.map(row => {
+    const ov = overrides[row.sku];
+    if (!ov) return row;
+    return {
+      ...row,
+      stock_qty: ov.stock_qty ?? row.stock_qty,
+      ordered_qty: ov.ordered_qty ?? row.ordered_qty,
+      lead_time_days: ov.lead_time_days ?? row.lead_time_days,
+    };
+  });
+}
+
 export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [rawRows, setRawRows] = useState<RawRow[]>([]);
   const [analysis, setAnalysis] = useState<SkuAnalysis[]>([]);
@@ -77,12 +97,29 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
   const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
+  const [stockOverrides, setStockOverrides] = useState<StockOverrides>({});
 
   const workerRef = useRef<Worker | null>(null);
 
   const setDemandDays = useCallback((v: number) => {
     setDemandDaysRaw(clampDemandDays(v));
   }, []);
+
+  const setStockOverride = useCallback((sku: string, field: string, value: number) => {
+    setStockOverrides(prev => {
+      const next = { ...prev, [sku]: { ...prev[sku], [field]: value } };
+      saveStockOverrides(next);
+      return next;
+    });
+  }, []);
+
+  const clearStockOverrides = useCallback(() => {
+    setStockOverrides({});
+    saveStockOverrides({});
+    toast.info('All stock overrides cleared');
+  }, []);
+
+  const stockOverrideCount = useMemo(() => Object.keys(stockOverrides).length, [stockOverrides]);
 
   // Cleanup worker on unmount
   useEffect(() => {
@@ -92,10 +129,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    loadRows().then(rows => {
+    Promise.all([loadRows(), loadStockOverrides()]).then(([rows, overrides]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
+      }
+      if (overrides && Object.keys(overrides).length > 0) {
+        setStockOverrides(overrides);
       }
       setPersistenceLoaded(true);
     });
@@ -109,7 +149,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const serviceFactor = SERVICE_LEVELS[serviceLevel] ?? 1.65;
 
-  // Run analysis via Web Worker whenever inputs change
+  // Run analysis via Web Worker whenever inputs change (including stockOverrides)
   useEffect(() => {
     if (rawRows.length === 0) {
       setAnalysis([]);
@@ -149,12 +189,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    const rowsWithOverrides = applyStockOverrides(rawRows, stockOverrides);
     const message: WorkerRequest = {
       type: 'ANALYZE',
-      payload: { rows: rawRows, demandDays, serviceFactor, thresholds },
+      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds },
     };
     worker.postMessage(message);
-  }, [rawRows, demandDays, serviceFactor, thresholds]);
+  }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
@@ -334,6 +375,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setThresholds,
       isCalculating,
       calculationProgress,
+      stockOverrides,
+      setStockOverride,
+      clearStockOverrides,
+      stockOverrideCount,
       pendingFile,
       pendingHeaders,
       pendingRawData,

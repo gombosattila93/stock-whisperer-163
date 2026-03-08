@@ -6,9 +6,10 @@ import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { VirtualizedTable } from "@/components/VirtualizedTable";
+import { EditableCell } from "@/components/EditableCell";
 
 export default function CriticalSkus() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, stockOverrides, setStockOverride } = useInventory();
 
   const critical = filtered
     .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
@@ -91,12 +92,41 @@ export default function CriticalSkus() {
               {
                 key: 'stock_qty',
                 header: <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />,
-                render: (s) => <span className="text-right">{s.stock_qty.toLocaleString()}</span>,
+                render: (s) => (
+                  <EditableCell
+                    value={s.stock_qty}
+                    sku={s.sku}
+                    field="stock_qty"
+                    isOverridden={stockOverrides[s.sku]?.stock_qty !== undefined}
+                    onSave={setStockOverride}
+                  />
+                ),
               },
               {
                 key: 'ordered_qty',
                 header: <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />,
-                render: (s) => <span className="text-right">{s.ordered_qty.toLocaleString()}</span>,
+                render: (s) => (
+                  <EditableCell
+                    value={s.ordered_qty}
+                    sku={s.sku}
+                    field="ordered_qty"
+                    isOverridden={stockOverrides[s.sku]?.ordered_qty !== undefined}
+                    onSave={setStockOverride}
+                  />
+                ),
+              },
+              {
+                key: 'lead_time_days',
+                header: <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />,
+                render: (s) => (
+                  <EditableCell
+                    value={s.lead_time_days}
+                    sku={s.sku}
+                    field="lead_time_days"
+                    isOverridden={stockOverrides[s.sku]?.lead_time_days !== undefined}
+                    onSave={setStockOverride}
+                  />
+                ),
               },
               {
                 key: 'expected_delivery_date',

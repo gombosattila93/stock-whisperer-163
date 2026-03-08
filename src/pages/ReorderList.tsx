@@ -11,6 +11,7 @@ import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { EoqSettingsPanel } from "@/components/EoqSettingsPanel";
 import { EditableCell } from "@/components/EditableCell";
+import { TrendBadge } from "@/components/TrendBadge";
 import { exportToCsv } from "@/lib/csvUtils";
 import {
   Select,
@@ -28,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw, CheckSquare, Download } from "lucide-react";
+import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 export default function ReorderList() {
@@ -84,9 +85,13 @@ export default function ReorderList() {
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
         const result = computeReorder(s, effectiveStrategy, eoqSettings);
+        // Seasonality-adjusted suggested qty
+        const seasonalMultiplier = s.seasonalityFlag ? 1 + (s.seasonalityPct / 200) : 1;
+        const adjustedQty = Math.ceil(result.suggested_order_qty * seasonalMultiplier / 10) * 10;
         return {
           ...s,
-          suggested_order_qty: result.suggested_order_qty,
+          suggested_order_qty: adjustedQty,
+          base_suggested_qty: result.suggested_order_qty,
           urgency: getUrgency(s.days_of_stock, s.lead_time_days),
           strategyLabel: result.strategyLabel,
           reorder_trigger: result.reorder_trigger,
@@ -297,7 +302,8 @@ export default function ReorderList() {
                     <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
                     <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                     <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Sparkline</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Direction</th>
                     <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
                     <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />
                     <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" />
@@ -321,6 +327,7 @@ export default function ReorderList() {
                       <td><HighlightText text={s.sku_name} /></td>
                       <td><HighlightText text={s.supplier} /></td>
                       <td><DemandSparkline sku={s} /></td>
+                      <td><TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} /></td>
                       <td className="text-right">
                         <EditableCell
                           value={s.stock_qty}
@@ -370,7 +377,23 @@ export default function ReorderList() {
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
+                      <td className="text-right font-semibold">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {s.seasonalityFlag && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500 shrink-0 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-[250px]">
+                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty} → {s.suggested_order_qty}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {s.suggested_order_qty.toLocaleString()}
+                        </div>
+                      </td>
                       <td className="text-xs text-muted-foreground max-w-[180px]">{s.reorder_trigger}</td>
                       <td>
                         <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>

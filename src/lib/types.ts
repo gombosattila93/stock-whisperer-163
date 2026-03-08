@@ -37,6 +37,8 @@ export type AbcClass = 'A' | 'B' | 'C';
 export type XyzClass = 'X' | 'Y' | 'Z';
 export type Urgency = 'Critical' | 'Warning' | 'Watch';
 
+export type TrendDirection = 'rising' | 'falling' | 'stable';
+
 export interface SkuAnalysis extends SkuData {
   avg_daily_demand: number;
   std_dev: number;
@@ -48,6 +50,10 @@ export interface SkuAnalysis extends SkuData {
   xyz_class: XyzClass;
   total_revenue: number;
   cv: number;
+  trend: TrendDirection;
+  trendPct: number;
+  seasonalityFlag: boolean;
+  seasonalityPct: number;
 }
 
 export interface InventoryState {

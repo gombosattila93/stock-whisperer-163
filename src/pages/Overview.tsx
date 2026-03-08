@@ -2,7 +2,8 @@ import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
-import { Package, AlertTriangle, ShoppingCart, PackageX } from "lucide-react";
+import { TrendBadge } from "@/components/TrendBadge";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
@@ -86,6 +87,16 @@ export default function Overview() {
   const criticalSkus = filtered.filter(s => s.days_of_stock < s.lead_time_days).length;
   const reorderNeeded = filtered.filter(s => s.effective_stock <= s.reorder_point).length;
   const overstockItems = filtered.filter(s => s.days_of_stock > 180).length;
+
+  // Trend & seasonality
+  const risingCount = filtered.filter(s => s.trend === 'rising').length;
+  const fallingCount = filtered.filter(s => s.trend === 'falling').length;
+  const stableCount = filtered.filter(s => s.trend === 'stable').length;
+  const seasonalCount = filtered.filter(s => s.seasonalityFlag).length;
+  const top5Rising = [...filtered]
+    .filter(s => s.trend === 'rising')
+    .sort((a, b) => b.trendPct - a.trendPct)
+    .slice(0, 5);
 
   // Matrix counts
   const matrixCounts: Record<string, number> = {};
@@ -199,6 +210,56 @@ export default function Overview() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      {/* ─── Trend Summary ──────────────────────────────────────── */}
+      <div className="bg-card border rounded-lg p-6 mb-8">
+        <h2 className="font-semibold mb-4">Trend Summary</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+            <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
+            <div>
+              <p className="text-lg font-bold">{risingCount}</p>
+              <p className="text-xs text-muted-foreground">Rising</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+            <Minus className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-lg font-bold">{stableCount}</p>
+              <p className="text-xs text-muted-foreground">Stable</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+            <TrendingDown className="h-4 w-4 text-destructive shrink-0" />
+            <div>
+              <p className="text-lg font-bold">{fallingCount}</p>
+              <p className="text-xs text-muted-foreground">Falling</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+            <Flame className="h-4 w-4 text-amber-500 shrink-0" />
+            <div>
+              <p className="text-lg font-bold">{seasonalCount}</p>
+              <p className="text-xs text-muted-foreground">Seasonal spikes</p>
+            </div>
+          </div>
+        </div>
+
+        {top5Rising.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Top 5 Fastest Rising SKUs</h3>
+            <div className="space-y-1.5">
+              {top5Rising.map(s => (
+                <div key={s.sku} className="flex items-center gap-3 text-sm px-3 py-1.5 rounded-md bg-muted/30">
+                  <span className="font-mono font-medium w-24 shrink-0">{s.sku}</span>
+                  <span className="text-muted-foreground truncate flex-1">{s.sku_name}</span>
+                  <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

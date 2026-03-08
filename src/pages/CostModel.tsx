@@ -167,7 +167,10 @@ export default function CostModel() {
     costSettings.obsolescenceCostEnabled,
     costSettings.minOrderValueEnabled,
     costSettings.paymentTermsEnabled,
+    costSettings.ewmaEnabled,
   ].filter(Boolean).length;
+
+  const hasLeadTimeStats = Object.keys(costSettings.supplierLeadTimeStats).length > 0;
 
   return (
     <div>

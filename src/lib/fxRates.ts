@@ -66,7 +66,14 @@ export function createManualRates(usdEur: number, eurHuf: number): FxRateConfig 
 export async function fetchEcbRates(): Promise<FxRateConfig> {
   const url = 'https://data-api.ecb.europa.eu/service/data/EXR/D.USD+HUF.EUR.SP00.A?lastNObservations=1&format=csvdata';
 
-  const resp = await fetch(url);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  let resp: Response;
+  try {
+    resp = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
   if (!resp.ok) throw new Error(`ECB API returned ${resp.status}`);
 
   const text = await resp.text();

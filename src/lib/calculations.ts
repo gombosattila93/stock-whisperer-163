@@ -5,6 +5,14 @@ import { parseFlexibleDate } from './dateUtils';
 import { FxRateConfig, FALLBACK_RATES } from './fxRates';
 import { buildPriceData } from './priceUtils';
 
+// ─── Thresholds ────────────────────────────────────────────────────────────
+/** Minimum fraction of demandDays with actual sales to consider data sufficient */
+const INSUFFICIENT_DATA_THRESHOLD = 0.3;
+/** Percent change in 30-day avg demand to classify as rising/falling trend */
+const TREND_THRESHOLD_PCT = 15;
+/** Conservative std_dev multiplier when only a single sale record exists */
+const SINGLE_RECORD_STD_DEV_FACTOR = 0.5;
+
 export const SERVICE_LEVELS: Record<string, number> = {
   '90%': 1.28,
   '95%': 1.65,
@@ -162,7 +170,7 @@ export function analyzeSkus(
     // 2a) Insufficient data: count actual unique sales days
     const uniqueSalesDays = new Set(filteredSales.map(s => s.date)).size;
     const safeDemandDays = Math.max(1, demandDays);
-    const insufficientData = uniqueSalesDays < safeDemandDays * 0.3;
+    const insufficientData = uniqueSalesDays < safeDemandDays * INSUFFICIENT_DATA_THRESHOLD;
     // Use actual coverage for avg calculation if insufficient
     const effectiveDemandDays = insufficientData && uniqueSalesDays > 0 ? Math.max(uniqueSalesDays, 1) : safeDemandDays;
 
@@ -184,7 +192,7 @@ export function analyzeSkus(
     // 2b) Single record: conservative estimate
     const singleRecordEstimate = filteredSales.length === 1;
     if (singleRecordEstimate && avg_daily_demand > 0) {
-      std_dev = avg_daily_demand * 0.5;
+      std_dev = avg_daily_demand * SINGLE_RECORD_STD_DEV_FACTOR;
     }
 
     // 2d) EWMA with < 3 data points falls back to simple
@@ -294,7 +302,7 @@ export function analyzeSkus(
       trendPct = 100;
     }
 
-    const trend: TrendDirection = trendPct > 15 ? 'rising' : trendPct < -15 ? 'falling' : 'stable';
+    const trend: TrendDirection = trendPct > TREND_THRESHOLD_PCT ? 'rising' : trendPct < -TREND_THRESHOLD_PCT ? 'falling' : 'stable';
 
     const seasonalityPct = avg_daily_demand > 0
       ? ((avgLast30 / avg_daily_demand) - 1) * 100

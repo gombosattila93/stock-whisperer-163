@@ -240,8 +240,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setStockOverride = useCallback((sku: string, field: string, value: number) => {
+    if (!Number.isFinite(value)) return;
+    let clamped = value;
+    if (field === 'lead_time_days') clamped = Math.max(0, Math.min(365, Math.round(value)));
+    else if (field === 'stock_qty' || field === 'ordered_qty') clamped = Math.max(0, Math.round(value));
     setStockOverrides(prev => {
-      const next = { ...prev, [sku]: { ...prev[sku], [field]: value } };
+      const next = { ...prev, [sku]: { ...prev[sku], [field]: clamped } };
       saveStockOverrides(next);
       return next;
     });
@@ -535,7 +539,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const { rows: rawParsed, encoding } = await parseCsvFileWithEncoding(file);
       lastEncoding.current = encoding;
 
-      if (encoding !== 'UTF-8') {
+      if (encoding === 'UTF-8 (with errors)') {
+        toast.warning('File has encoding issues — some characters may display incorrectly. Consider re-saving as UTF-8.');
+      } else if (encoding !== 'UTF-8') {
         toast.info(`Detected ${encoding} encoding, converted to UTF-8`);
       }
 

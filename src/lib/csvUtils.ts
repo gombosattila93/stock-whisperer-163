@@ -60,7 +60,7 @@ export async function parseCsvFileWithEncoding(file: File): Promise<{ rows: Reco
       header: true,
       skipEmptyLines: true,
       transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
-      complete: (results) => resolve({ rows: results.data, encoding }),
+      complete: (results) => resolve({ rows: results.data.map(sanitizeImportRow), encoding }),
       error: (err: Error) => reject(err),
     });
   });
@@ -73,7 +73,7 @@ export function parseCsvFileRaw(file: File): Promise<Record<string, string>[]> {
       header: true,
       skipEmptyLines: true,
       transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
-      complete: (results) => resolve(results.data),
+      complete: (results) => resolve(results.data.map(sanitizeImportRow)),
       error: (err: Error) => reject(err),
     });
   });
@@ -85,6 +85,19 @@ function sanitizeCsvCell(value: unknown): unknown {
     return `'${value}`;
   }
   return value;
+}
+
+/** Strip formula-injection prefixes from string fields on import */
+export function sanitizeImportRow(row: Record<string, string>): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (typeof value === 'string' && /^[=+\-@\t\r]/.test(value)) {
+      result[key] = value.replace(/^[=+\-@\t\r]+/, '');
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 
 export function exportToCsv(data: Record<string, unknown>[], filename: string) {

@@ -63,7 +63,7 @@ export function createManualRates(usdEur: number, eurHuf: number): FxRateConfig 
 
 // ─── ECB API fetch ─────────────────────────────────────────────────────────
 
-export async function fetchEcbRates(): Promise<FxRateConfig> {
+async function fetchEcbRatesOnce(): Promise<FxRateConfig> {
   const url = 'https://data-api.ecb.europa.eu/service/data/EXR/D.USD+HUF.EUR.SP00.A?lastNObservations=1&format=csvdata';
 
   const controller = new AbortController();
@@ -112,6 +112,16 @@ export async function fetchEcbRates(): Promise<FxRateConfig> {
     source: 'ecb',
     manualOverride: false,
   };
+}
+
+export async function fetchEcbRates(): Promise<FxRateConfig> {
+  try {
+    return await fetchEcbRatesOnce();
+  } catch {
+    // Retry once after a short delay
+    await new Promise(r => setTimeout(r, 2000));
+    return fetchEcbRatesOnce();
+  }
 }
 
 // ─── Rate deviation check ──────────────────────────────────────────────────

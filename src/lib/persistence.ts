@@ -373,3 +373,18 @@ export async function loadFxRates(): Promise<unknown | null> {
     return null;
   }
 }
+
+// ─── Storage Quota ─────────────────────────────────────────────────────────
+
+export async function checkStorageQuota(): Promise<{ usageMb: number; quotaMb: number; pct: number } | null> {
+  if (typeof navigator === 'undefined' || !navigator.storage?.estimate) return null;
+  try {
+    const { usage = 0, quota = 0 } = await navigator.storage.estimate();
+    const usageMb = usage / (1024 * 1024);
+    const quotaMb = quota / (1024 * 1024);
+    const pct = quota > 0 ? (usage / quota) * 100 : 0;
+    return { usageMb, quotaMb, pct };
+  } catch {
+    return null;
+  }
+}

@@ -12,6 +12,7 @@ import {
   saveReservations, loadReservations,
   saveFxRates, loadFxRates,
   isIndexedDBAvailable, wasIndexedDBWarningShown, markIndexedDBWarningShown,
+  checkStorageQuota,
 } from '@/lib/persistence';
 import { FxRateConfig, FALLBACK_RATES } from '@/lib/fxRates';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
@@ -358,7 +359,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (persistenceLoaded && rawRows.length > 0) {
-      saveRows(rawRows);
+      saveRows(rawRows).then(() => {
+        checkStorageQuota().then(quota => {
+          if (quota && quota.pct >= 80) {
+            toast.warning(`Storage ${quota.pct.toFixed(0)}% full (${quota.usageMb.toFixed(1)} MB / ${quota.quotaMb.toFixed(0)} MB) — consider clearing old data`);
+          }
+        });
+      });
     }
   }, [rawRows, persistenceLoaded]);
 
@@ -496,16 +503,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const confirmExtremeExclude = useCallback(() => {
     if (extremeRowsToConfirm && pendingExtremeValues) {
-      const extremeSkuSet = new Set(pendingExtremeValues.skus);
-      const filtered = extremeRowsToConfirm.filter(r => {
-        const qty = Number(r.sold_qty) || 0;
-        // Only exclude the extreme qty rows, not whole SKUs
-        const quantities = extremeRowsToConfirm.map(row => Number(row.sold_qty) || 0).filter(q => q > 0);
-        const mean = quantities.reduce((s, v) => s + v, 0) / quantities.length;
-        const variance = quantities.reduce((s, v) => s + (v - mean) ** 2, 0) / quantities.length;
-        const stddev = Math.sqrt(variance);
-        return qty <= mean + 4 * stddev;
-      });
+      // Compute threshold once, outside the filter loop
+      const quantities = extremeRowsToConfirm.map(row => Number(row.sold_qty) || 0).filter(q => q > 0);
+      const mean = quantities.reduce((s, v) => s + v, 0) / quantities.length;
+      const variance = quantities.reduce((s, v) => s + (v - mean) ** 2, 0) / quantities.length;
+      const stddev = Math.sqrt(variance);
+      const threshold = mean + 4 * stddev;
+      const filtered = extremeRowsToConfirm.filter(r => (Number(r.sold_qty) || 0) <= threshold);
       showImportSummaryForRows(filtered, lastEncoding.current, lastTotalRows.current);
     }
     setPendingExtremeValues(null);

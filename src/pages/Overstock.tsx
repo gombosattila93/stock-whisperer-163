@@ -19,7 +19,7 @@ export default function Overstock() {
 
   const overstock = useMemo(() =>
     filtered
-      .filter(s => s.days_of_stock > 180 && !s.dead_stock)
+      .filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && !s.dead_stock)
       .map(s => {
         const idealStock = s.avg_daily_demand * 180;
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
@@ -31,6 +31,12 @@ export default function Overstock() {
         if (b.shelfLifeRisk === 'critical' && a.shelfLifeRisk !== 'critical') return 1;
         return b.tied_up_capital - a.tied_up_capital;
       }),
+    [filtered]
+  );
+
+  // Stock-only SKUs: have stock but no demand data — unknown if overstock
+  const stockOnlySkus = useMemo(() =>
+    filtered.filter(s => s.capability.tier === 'stock-only' && s.stock_qty > 0 && !s.dead_stock),
     [filtered]
   );
 

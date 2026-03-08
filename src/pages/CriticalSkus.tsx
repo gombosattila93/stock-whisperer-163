@@ -68,7 +68,7 @@ export default function CriticalSkus() {
 
   const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
-    days_of_stock: Math.round(s.days_of_stock), reorder_point: Math.round(s.reorder_point),
+    days_of_stock: s.days_of_stock !== null ? Math.round(s.days_of_stock) : 'N/A', reorder_point: s.reorder_point !== null ? Math.round(s.reorder_point) : 'N/A',
     stock_qty: s.stock_qty, ordered_qty: s.ordered_qty,
     expected_delivery_date: s.expected_delivery_date,
     overdue_delivery: s.overdueDelivery ? 'Yes' : 'No',

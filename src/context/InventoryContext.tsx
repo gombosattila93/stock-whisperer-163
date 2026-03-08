@@ -140,7 +140,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides()]).then(([rows, overrides]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings()]).then(([rows, overrides, costs]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);
@@ -148,6 +148,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (overrides && Object.keys(overrides).length > 0) {
         setStockOverrides(overrides);
       }
+      setCostSettingsRaw(costs);
       setPersistenceLoaded(true);
     });
   }, []);

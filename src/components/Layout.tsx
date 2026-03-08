@@ -7,7 +7,7 @@ import { ColumnMapper } from "@/components/ColumnMapper";
 import { useInventory } from "@/context/InventoryContext";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { pendingFile, pendingHeaders, setPendingFile, loadFileWithMapping } = useInventory();
+  const { pendingFile, pendingHeaders, pendingRawData, setPendingFile, loadFileWithMapping } = useInventory();
 
   return (
     <SidebarProvider>

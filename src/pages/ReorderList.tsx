@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getSuggestedOrderQty, getUrgency } from "@/lib/calculations";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
+import { TablePagination, usePagination } from "@/components/TablePagination";
 import { useMemo } from "react";
 
 export default function ReorderList() {
@@ -20,6 +21,7 @@ export default function ReorderList() {
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);
+  const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
 
   if (!hasData) return <EmptyState />;
 
@@ -49,33 +51,36 @@ export default function ReorderList() {
           No items need reordering with current filters.
         </div>
       ) : (
-        <div className="bg-card border rounded-lg overflow-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                <SortableHeader column="suggested_order_qty" label="Suggested Order Qty" sort={sort} onSort={toggleSort} align="right" />
-                <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map(s => (
-                <tr key={s.sku}>
-                  <td className="font-mono font-medium">{s.sku}</td>
-                  <td>{s.sku_name}</td>
-                  <td>{s.supplier}</td>
-                  <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
-                  <td>
-                    <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>
-                      {s.urgency}
-                    </span>
-                  </td>
+        <div className="bg-card border rounded-lg overflow-hidden">
+          <div className="overflow-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="suggested_order_qty" label="Suggested Order Qty" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedData.map(s => (
+                  <tr key={s.sku}>
+                    <td className="font-mono font-medium">{s.sku}</td>
+                    <td>{s.sku_name}</td>
+                    <td>{s.supplier}</td>
+                    <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
+                    <td>
+                      <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>
+                        {s.urgency}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
         </div>
       )}
     </div>

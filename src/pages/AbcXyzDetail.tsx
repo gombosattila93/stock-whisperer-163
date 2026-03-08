@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
+import { TablePagination, usePagination } from "@/components/TablePagination";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AbcClass, XyzClass } from "@/lib/types";
-import { useMemo } from "react";
 
 export default function AbcXyzDetail() {
   const { filtered, hasData } = useInventory();
@@ -28,6 +28,7 @@ export default function AbcXyzDetail() {
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(data);
+  const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
 
   if (!hasData) return <EmptyState />;
 
@@ -52,7 +53,7 @@ export default function AbcXyzDetail() {
       <div className="filter-bar">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">ABC Class</span>
-          <Select value={abcFilter} onValueChange={(v) => setAbcFilter(v === "all" ? "" : v)}>
+          <Select value={abcFilter} onValueChange={(v) => { setAbcFilter(v === "all" ? "" : v); setCurrentPage(1); }}>
             <SelectTrigger className="w-[100px] h-8 text-xs">
               <SelectValue placeholder="All" />
             </SelectTrigger>
@@ -66,7 +67,7 @@ export default function AbcXyzDetail() {
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">XYZ Class</span>
-          <Select value={xyzFilter} onValueChange={(v) => setXyzFilter(v === "all" ? "" : v)}>
+          <Select value={xyzFilter} onValueChange={(v) => { setXyzFilter(v === "all" ? "" : v); setCurrentPage(1); }}>
             <SelectTrigger className="w-[100px] h-8 text-xs">
               <SelectValue placeholder="All" />
             </SelectTrigger>
@@ -78,62 +79,65 @@ export default function AbcXyzDetail() {
             </SelectContent>
           </Select>
         </div>
-        <span className="text-xs text-muted-foreground ml-auto">{sorted.length} SKUs</span>
+        <span className="text-xs text-muted-foreground ml-auto">{totalItems} SKUs</span>
       </div>
 
-      <div className="bg-card border rounded-lg overflow-auto">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-              <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-              <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-              <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
-              <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
-              <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} />
-              <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" />
-              <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" />
-              <SortableHeader column="avg_daily_demand" label="Avg Daily Demand" sort={sort} onSort={toggleSort} align="right" />
-              <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
-              <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map(s => (
-              <tr key={s.sku}>
-                <td className="font-mono font-medium">{s.sku}</td>
-                <td>{s.sku_name}</td>
-                <td>{s.supplier}</td>
-                <td>{s.category}</td>
-                <td>
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                    s.abc_class === 'A' ? 'bg-primary/10 text-primary' :
-                    s.abc_class === 'B' ? 'bg-warning/10 text-warning-foreground' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {s.abc_class}
-                  </span>
-                </td>
-                <td>
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                    s.xyz_class === 'X' ? 'bg-success/10 text-success' :
-                    s.xyz_class === 'Y' ? 'bg-warning/10 text-warning-foreground' :
-                    'bg-destructive/10 text-destructive'
-                  }`}>
-                    {s.xyz_class}
-                  </span>
-                </td>
-                <td className="text-right">${s.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td className="text-right">{s.cv.toFixed(3)}</td>
-                <td className="text-right">{s.avg_daily_demand.toFixed(2)}</td>
-                <td className="text-right">{s.stock_qty.toLocaleString()}</td>
-                <td className="text-right">
-                  {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
-                </td>
+      <div className="bg-card border rounded-lg overflow-hidden">
+        <div className="overflow-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} />
+                <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="avg_daily_demand" label="Avg Daily Demand" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />
+                <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedData.map(s => (
+                <tr key={s.sku}>
+                  <td className="font-mono font-medium">{s.sku}</td>
+                  <td>{s.sku_name}</td>
+                  <td>{s.supplier}</td>
+                  <td>{s.category}</td>
+                  <td>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
+                      s.abc_class === 'A' ? 'bg-primary/10 text-primary' :
+                      s.abc_class === 'B' ? 'bg-warning/10 text-warning-foreground' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {s.abc_class}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
+                      s.xyz_class === 'X' ? 'bg-success/10 text-success' :
+                      s.xyz_class === 'Y' ? 'bg-warning/10 text-warning-foreground' :
+                      'bg-destructive/10 text-destructive'
+                    }`}>
+                      {s.xyz_class}
+                    </span>
+                  </td>
+                  <td className="text-right">${s.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="text-right">{s.cv.toFixed(3)}</td>
+                  <td className="text-right">{s.avg_daily_demand.toFixed(2)}</td>
+                  <td className="text-right">{s.stock_qty.toLocaleString()}</td>
+                  <td className="text-right">
+                    {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <TablePagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />
       </div>
     </div>
   );

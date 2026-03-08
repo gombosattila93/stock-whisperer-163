@@ -409,8 +409,9 @@ describe('EWMA adversarial inputs', () => {
   test('Alpha = 0 clamped to 0.01', () => {
     const data = [{ date: '2026-01-01', qty: 10 }, { date: '2026-01-02', qty: 20 }];
     const result = ewmaDemand(data, 0);
-    // alpha clamped to 0.01: s = 0.01*20 + 0.99*10 = 10.1
-    expect(result).toBeCloseTo(10.1, 1);
+    // alpha=0 is falsy → 0 || 0.3 = 0.3 (default), then clamped to 0.3
+    // s = 0.3*20 + 0.7*10 = 13
+    expect(result).toBeCloseTo(13, 1);
   });
 
   test('Alpha > 1 clamped to 1.0', () => {

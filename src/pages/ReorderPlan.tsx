@@ -275,7 +275,7 @@ export default function ReorderPlan() {
 
       {/* Budget optimization button */}
       {budgetEnabled && (
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
           {!optimized ? (
             <Button onClick={optimizeWithinBudget} className="gap-1.5">
               <Zap className="h-4 w-4" />
@@ -286,6 +286,15 @@ export default function ReorderPlan() {
               Reset optimization
             </Button>
           )}
+          <Button
+            variant={whatIfOpen ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setWhatIfOpen(v => !v)}
+            className="gap-1.5"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            What-if
+          </Button>
           {overBudget && !optimized && (
             <div className="flex items-center gap-1.5 text-destructive text-sm">
               <AlertTriangle className="h-4 w-4" />
@@ -293,7 +302,70 @@ export default function ReorderPlan() {
             </div>
           )}
         </div>
-      )}
+
+        {/* What-if budget slider */}
+        {whatIfOpen && (
+          <div className="bg-card border rounded-lg p-5 mb-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 text-primary" />
+                What-if Budget Simulator
+              </h3>
+              <span className="text-lg font-bold text-primary">
+                €{whatIfBudget.toLocaleString()}
+              </span>
+            </div>
+            <Slider
+              value={[whatIfBudget]}
+              onValueChange={([v]) => setWhatIfBudget(v)}
+              min={0}
+              max={Math.max(totalOrderValue * 1.5, budget * 2, 1000)}
+              step={100}
+              className="w-full"
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>€0</span>
+              <span className="font-medium text-foreground">
+                Current budget: €{budget.toLocaleString()}
+              </span>
+              <span>€{Math.max(totalOrderValue * 1.5, budget * 2, 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            </div>
+            {whatIfResult && (
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3 text-primary" /> Approved
+                  </p>
+                  <p className="text-xl font-bold text-primary">
+                    {whatIfResult.approvedCount} SKUs
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    €{whatIfResult.approvedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Deferred
+                  </p>
+                  <p className="text-xl font-bold text-muted-foreground">
+                    {whatIfResult.deferredCount} SKUs
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    €{whatIfResult.deferredValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </p>
+                </div>
+              </div>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setWhatIfBudget(budget)}
+              className="text-xs"
+            >
+              Reset to current budget
+            </Button>
+          </div>
+        )}
 
       {/* Per-supplier budget tracking */}
       {budgetEnabled && Object.keys(supplierSpend).length > 0 && (

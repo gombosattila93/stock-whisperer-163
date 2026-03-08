@@ -85,9 +85,13 @@ export default function ReorderList() {
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
         const result = computeReorder(s, effectiveStrategy, eoqSettings);
+        // Seasonality-adjusted suggested qty
+        const seasonalMultiplier = s.seasonalityFlag ? 1 + (s.seasonalityPct / 200) : 1;
+        const adjustedQty = Math.ceil(result.suggested_order_qty * seasonalMultiplier / 10) * 10;
         return {
           ...s,
-          suggested_order_qty: result.suggested_order_qty,
+          suggested_order_qty: adjustedQty,
+          base_suggested_qty: result.suggested_order_qty,
           urgency: getUrgency(s.days_of_stock, s.lead_time_days),
           strategyLabel: result.strategyLabel,
           reorder_trigger: result.reorder_trigger,

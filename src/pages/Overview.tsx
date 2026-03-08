@@ -81,6 +81,13 @@ export default function Overview() {
       }));
   }, [filtered, overridesLoaded]);
 
+  // Reserved stock value
+  const hasReservations = Object.keys(reservedQtyMap).length > 0;
+  const reservedStockValue = useMemo(() =>
+    filtered.reduce((sum, s) => sum + s.reserved_qty * s.unit_price, 0),
+    [filtered]
+  );
+
   if (!hasData) return <EmptyState />;
 
   const totalSkus = filtered.length;

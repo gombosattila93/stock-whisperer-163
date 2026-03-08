@@ -273,6 +273,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setThresholds,
       pendingFile,
       pendingHeaders,
+      pendingRawData,
       setPendingFile,
     }}>
       {children}

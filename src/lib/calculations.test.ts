@@ -415,7 +415,7 @@ describe("Edge cases: negative / zero stock", () => {
     const map = parseRows(rows);
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(Number.isFinite(sku.days_of_stock)).toBe(true);
+    expect(sku.days_of_stock !== null && Number.isFinite(sku.days_of_stock)).toBe(true);
     expect(sku.effective_stock).toBe(50); // ordered_qty default is 50
   });
 

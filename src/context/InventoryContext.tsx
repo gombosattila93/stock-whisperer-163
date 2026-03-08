@@ -245,7 +245,21 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (e.data.type === 'PROGRESS') {
         setCalculationProgress(e.data.payload.pct);
       } else if (e.data.type === 'RESULT') {
-        setAnalysis(e.data.payload);
+        // Apply reservation data to analysis
+        const results = e.data.payload.map(item => {
+          const reserved = reservedQtyMap[item.sku] || 0;
+          const available = item.stock_qty - reserved;
+          const newEffective = available + item.ordered_qty;
+          const newDaysOfStock = item.avg_daily_demand > 0 ? newEffective / item.avg_daily_demand : Infinity;
+          return {
+            ...item,
+            reserved_qty: reserved,
+            available_qty: available,
+            effective_stock: reserved > 0 ? newEffective : item.effective_stock,
+            days_of_stock: reserved > 0 ? newDaysOfStock : item.days_of_stock,
+          };
+        });
+        setAnalysis(results);
         setIsCalculating(false);
         setCalculationProgress(100);
         worker.terminate();

@@ -377,7 +377,23 @@ export default function ReorderList() {
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
+                      <td className="text-right font-semibold">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {s.seasonalityFlag && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500 shrink-0 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-[250px]">
+                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty} → {s.suggested_order_qty}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {s.suggested_order_qty.toLocaleString()}
+                        </div>
+                      </td>
                       <td className="text-xs text-muted-foreground max-w-[180px]">{s.reorder_trigger}</td>
                       <td>
                         <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>

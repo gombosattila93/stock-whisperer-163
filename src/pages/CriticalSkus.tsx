@@ -86,6 +86,14 @@ export default function CriticalSkus() {
         <ExportButton data={exportData} filename="critical-skus.csv" />
       </div>
 
+      {excludedCount > 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-4 py-3 mb-4">
+          <span className="text-xs text-muted-foreground">
+            {excludedCount} SKUs excluded — missing stock or lead time data. See ABC-XYZ Detail for full list.
+          </span>
+        </div>
+      )}
+
       <div className="bg-card border rounded-lg overflow-hidden">
         <VirtualizedTable
           data={paginatedData}

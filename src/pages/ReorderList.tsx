@@ -80,9 +80,12 @@ export default function ReorderList() {
     });
   }, []);
 
+  const calculable = filtered.filter(s => s.reorder_point !== null && s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
+  const excludedCount = filtered.length - calculable.length;
+
   const reorder = useMemo(() =>
-    filtered
-      .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+    calculable
+      .filter(s => s.effective_stock <= s.reorder_point! && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
         const result = computeReorder(s, effectiveStrategy, eoqSettings);

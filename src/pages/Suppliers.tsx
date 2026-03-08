@@ -190,13 +190,13 @@ export default function Suppliers() {
                   <th className="px-4 py-3 w-8 bg-muted/50"></th>
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="totalSkus" label="Total SKUs" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="criticalSkus" label="Critical SKUs" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="reorderSkus" label="To Reorder" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="overdueCount" label="Overdue" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="tiedUpCapital" label="Tied-Up Capital (€)" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="suggestedOrderValueEur" label="Suggested Order (€)" sort={sort} onSort={toggleSort} align="right" />
-                  {hasPricingData && <SortableHeader column="avgMarginPct" label="Avg Margin" sort={sort} onSort={toggleSort} align="right" />}
-                  <SortableHeader column="avgLeadTime" label="Avg Lead Time" sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="criticalSkus" label="Critical SKUs" sort={sort} onSort={toggleSort} align="right" tooltip="SKUs where days of stock < lead time. Higher count = more urgency from this supplier." />
+                  <SortableHeader column="reorderSkus" label="To Reorder" sort={sort} onSort={toggleSort} align="right" tooltip="SKUs where effective stock ≤ reorder point. These need purchase orders." />
+                  <SortableHeader column="overdueCount" label="Overdue" sort={sort} onSort={toggleSort} align="right" tooltip="Open orders past their expected delivery date. Flag for supplier performance review." />
+                  <SortableHeader column="tiedUpCapital" label="Tied-Up Capital (€)" sort={sort} onSort={toggleSort} align="right" tooltip="Capital locked in overstock (>180 days) from this supplier. Target for reduction." />
+                  <SortableHeader column="suggestedOrderValueEur" label="Suggested Order (€)" sort={sort} onSort={toggleSort} align="right" tooltip="Total EUR value of all pending reorder suggestions for this supplier." />
+                  {hasPricingData && <SortableHeader column="avgMarginPct" label="Avg Margin" sort={sort} onSort={toggleSort} align="right" tooltip="Revenue-weighted average margin across all SKUs from this supplier." />}
+                  <SortableHeader column="avgLeadTime" label="Avg Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Average delivery lead time across all SKUs. Compare across suppliers for same category." />
                 </tr>
               </thead>
               <tbody>

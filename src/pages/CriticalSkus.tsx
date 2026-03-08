@@ -296,7 +296,7 @@ export default function CriticalSkus() {
             },
             ...(costSettings.stockoutCostEnabled ? [{
               key: 'stockoutRisk',
-              header: <SortableHeader column="stockoutRisk" label="Stockout Risk €" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="stockoutRisk" label="Stockout Risk €" sort={sort} onSort={toggleSort} align="right" tooltip="Estimated revenue loss if this item goes out of stock during the lead time period. Based on avg daily demand × unit price × lead time." />,
               render: (s: typeof paginatedData[0]) => (
                 <span className="text-right text-destructive font-medium">
                   {s.stockoutRisk > 0 ? `€${s.stockoutRisk.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}

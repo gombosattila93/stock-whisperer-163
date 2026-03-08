@@ -416,7 +416,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const rowsWithOverrides = applyStockOverrides(rawRows, stockOverrides);
     const message: WorkerRequest = {
       type: 'ANALYZE',
-      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings },
+      payload: { rows: rowsWithOverrides, demandDays, serviceFactor, thresholds, costSettings, fxRates },
     };
     worker.postMessage(message);
   }, [rawRows, demandDays, serviceFactor, thresholds, stockOverrides, costSettings, reservedQtyMap]);

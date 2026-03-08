@@ -449,7 +449,7 @@ export default function ReorderPlan() {
                         {item.urgency}
                       </span>
                     </td>
-                    <td className="text-right">{item.days_of_stock === Infinity ? '∞' : Math.round(item.days_of_stock)}</td>
+                    <td className="text-right">{item.days_of_stock === null ? '—' : item.days_of_stock === Infinity ? '∞' : Math.round(item.days_of_stock)}</td>
                     <td className="text-right font-semibold">{item.suggested_order_qty.toLocaleString()}</td>
                     <td className="text-right">€{item.order_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   </tr>

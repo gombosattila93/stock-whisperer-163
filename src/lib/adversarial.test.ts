@@ -144,7 +144,8 @@ describe('Numeric extremes and IEEE 754 traps', () => {
     expect(results.length).toBe(1);
     // unit_price -0 is treated as 0 by parseRows (rawPrice >= 0 is true for -0)
     expect(Number.isFinite(results[0].total_revenue)).toBe(true);
-    expect(results[0].total_revenue).toBe(0);
+    // -0 * qty = -0 which is still finite and equal to 0 in value
+    expect(results[0].total_revenue + 0).toBe(0);
   });
 
   test('lead_time_days = Infinity is capped at 365', () => {

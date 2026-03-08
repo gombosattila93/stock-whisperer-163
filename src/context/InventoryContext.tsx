@@ -217,6 +217,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [skuSupplierOptions, setSkuSupplierOptionsRaw] = useState<SkuSupplierOptionsMap>({});
   const [reservations, setReservations] = useState<ProjectReservation[]>([]);
   const [indexedDBAvailable, setIndexedDBAvailable] = useState(true);
+  const [fxRates, setFxRatesRaw] = useState<FxRateConfig>(FALLBACK_RATES);
+
+  const setFxRates = useCallback((rates: FxRateConfig) => {
+    setFxRatesRaw(rates);
+    saveFxRates(rates);
+  }, []);
 
   // Import summary modal state
   const [pendingImportSummary, setPendingImportSummary] = useState<ImportSummary | null>(null);

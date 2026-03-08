@@ -60,7 +60,7 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
 
     // Parse price breaks from wide-format columns
     const purchasePrices: Array<{ qty: number; price: number }> = [];
-    const rowRecord = row as Record<string, string | number | undefined>;
+    const rowRecord = row as unknown as Record<string, string | number | undefined>;
     for (let i = 1; i <= 8; i++) {
       const p = parseFloat(String(rowRecord[`purchase_price_${i}`] ?? ''));
       const q = parseFloat(String(rowRecord[`purchase_qty_${i}`] ?? ''));

@@ -4,6 +4,12 @@ import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
 import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3, DollarSign, Euro, Percent, Coins } from "lucide-react";
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
@@ -126,11 +132,13 @@ export default function Overview() {
     let marginWeightedDenom = 0;
     let usdExposureEur = 0;
     let usdExposureUsd = 0;
+    let eurExposureEur = 0;
     let skusWithPurchase = 0;
     let skusWithoutPurchase = 0;
     let skusWithMargin = 0;
     let skusWithoutMargin = 0;
     let skusUsd = 0;
+    let skusEur = 0;
 
     for (const s of filtered) {
       const pd = s.priceData;
@@ -163,19 +171,34 @@ export default function Overview() {
         usdExposureUsd += baseUsd * s.stock_qty;
         skusUsd++;
       }
+
+      if (pd.purchaseCurrency === 'EUR' && pd.hasPurchasePrice && pd.basePurchasePriceEur !== null) {
+        eurExposureEur += pd.basePurchasePriceEur * s.stock_qty;
+        skusEur++;
+      }
     }
 
     const avgMarginPct = marginWeightedDenom > 0 ? marginWeightedSum / marginWeightedDenom : null;
     const hasAnyFinancialData = skusWithPurchase > 0 || skusWithMargin > 0;
 
+    // FX impact calculations
+    const usdStrengthImpactEur = usdExposureUsd * (fxRates?.usdEur ?? 0.924) * 0.01;
+    const totalFxExposure = eurExposureEur + usdExposureEur;
+    const eurPct = totalFxExposure > 0 ? (eurExposureEur / totalFxExposure) * 100 : 0;
+    const usdPct = totalFxExposure > 0 ? (usdExposureEur / totalFxExposure) * 100 : 0;
+    const hufImpactEur = totalFxExposure * 0.01;
+    const eurExposureHuf = eurExposureEur * (fxRates?.eurHuf ?? 392.5);
+
     return {
       purchaseValueEur, sellingValueHuf, sellingValueEur,
       avgMarginPct, usdExposureEur, usdExposureUsd,
+      eurExposureEur, eurExposureHuf,
       skusWithPurchase, skusWithoutPurchase,
       skusWithMargin, skusWithoutMargin,
-      skusUsd, hasAnyFinancialData,
+      skusUsd, skusEur, hasAnyFinancialData,
+      usdStrengthImpactEur, totalFxExposure, eurPct, usdPct, hufImpactEur,
     };
-  }, [filtered]);
+  }, [filtered, fxRates]);
 
   if (!hasData) return <EmptyState />;
 
@@ -292,35 +315,104 @@ export default function Overview() {
 
       {/* Financial KPI cards */}
       {financialKpis?.hasAnyFinancialData && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KpiCard
-            icon={Coins}
-            label="Készlet beszerz. értéke"
-            value={`€${financialKpis.purchaseValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-            subLabel={financialKpis.skusWithoutPurchase > 0 ? `${financialKpis.skusWithoutPurchase} SKU ár nélkül` : undefined}
-          />
-          <KpiCard
-            icon={Euro}
-            label="Készlet eladási értéke"
-            value={`${financialKpis.sellingValueHuf.toLocaleString(undefined, { maximumFractionDigits: 0 })} Ft`}
-            subLabel={`≈ €${financialKpis.sellingValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          />
-          <KpiCard
-            icon={Percent}
-            label="Átlag árrés"
-            value={financialKpis.avgMarginPct !== null ? `${financialKpis.avgMarginPct.toFixed(1)}%` : '—'}
-            accent={financialKpis.avgMarginPct !== null && financialKpis.avgMarginPct < 15 ? 'bg-destructive' : undefined}
-            subLabel={financialKpis.skusWithoutMargin > 0 ? `${financialKpis.skusWithoutMargin} SKU margin-adat nélkül` : undefined}
-          />
-          {financialKpis.skusUsd > 0 && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <KpiCard
-              icon={DollarSign}
-              label="USD kitettség"
-              value={`€${financialKpis.usdExposureEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-              subLabel={`≈ $${financialKpis.usdExposureUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} · ${financialKpis.skusUsd} SKU`}
+              icon={Coins}
+              label="Készlet beszerz. értéke"
+              value={`€${financialKpis.purchaseValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+              subLabel={financialKpis.skusWithoutPurchase > 0 ? `${financialKpis.skusWithoutPurchase} SKU ár nélkül` : undefined}
             />
+            <KpiCard
+              icon={Euro}
+              label="Készlet eladási értéke"
+              value={`${financialKpis.sellingValueHuf.toLocaleString(undefined, { maximumFractionDigits: 0 })} Ft`}
+              subLabel={`≈ €${financialKpis.sellingValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            />
+            <KpiCard
+              icon={Percent}
+              label="Átlag árrés"
+              value={financialKpis.avgMarginPct !== null ? `${financialKpis.avgMarginPct.toFixed(1)}%` : '—'}
+              accent={financialKpis.avgMarginPct !== null && financialKpis.avgMarginPct < 15 ? 'bg-destructive' : undefined}
+              subLabel={financialKpis.skusWithoutMargin > 0 ? `${financialKpis.skusWithoutMargin} SKU margin-adat nélkül` : undefined}
+            />
+          </div>
+
+          {/* EUR & USD Exposure cards side by side */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
+            {/* EUR Exposure */}
+            <div className="kpi-card">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg p-2.5 bg-primary/10">
+                  <Euro className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">EUR Exposure</p>
+                  <p className="text-2xl font-bold mt-0.5">
+                    {financialKpis.skusEur > 0
+                      ? `€${financialKpis.eurExposureEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : '€0'}
+                  </p>
+                  {financialKpis.skusEur > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      ≈ {financialKpis.eurExposureHuf.toLocaleString(undefined, { maximumFractionDigits: 0 })} HUF
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {financialKpis.skusEur > 0 ? `${financialKpis.skusEur} EUR suppliers` : 'No EUR purchases'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* USD Exposure */}
+            <div className="kpi-card">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg p-2.5 bg-primary/10">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">USD Exposure</p>
+                    {financialKpis.skusUsd > 0 && (
+                      <TooltipProvider delayDuration={200}>
+                        <UiTooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors p-0.5" tabIndex={-1}>
+                              <Info style={{ width: 12, height: 12 }} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                            <p>Every 1% USD strengthening increases your stock purchase cost by approximately <strong>€{financialKpis.usdStrengthImpactEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></p>
+                          </TooltipContent>
+                        </UiTooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                  <p className="text-2xl font-bold mt-0.5">
+                    {financialKpis.skusUsd > 0
+                      ? `€${financialKpis.usdExposureEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : '—'}
+                  </p>
+                  {financialKpis.skusUsd > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      ≈ ${financialKpis.usdExposureUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} · {financialKpis.skusUsd} SKU
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* FX Summary line */}
+          {financialKpis.totalFxExposure > 0 && (
+            <p className="text-xs text-muted-foreground mb-8 px-1">
+              Total FX exposure: €{financialKpis.totalFxExposure.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {' '}(EUR: {financialKpis.eurPct.toFixed(0)}% | USD: {financialKpis.usdPct.toFixed(0)}% | HUF impact: ±€{financialKpis.hufImpactEur.toLocaleString(undefined, { maximumFractionDigits: 0 })} per 1% EUR/HUF movement)
+            </p>
           )}
-        </div>
+          {financialKpis.totalFxExposure === 0 && <div className="mb-8" />}
+        </>
       )}
 
       {/* Data Quality Card */}

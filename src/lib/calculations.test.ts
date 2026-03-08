@@ -26,10 +26,10 @@ describe("parseRows", () => {
     expect(map.get("SKU-001")!.stock_qty).toBe(0);
   });
 
-  it("clamps zero lead_time_days to 1", () => {
+  it("keeps zero lead_time_days as 0 (missing)", () => {
     const rows = [makeRow({ lead_time_days: 0 })];
     const map = parseRows(rows);
-    expect(map.get("SKU-001")!.lead_time_days).toBe(1); // clamped from 0→1
+    expect(map.get("SKU-001")!.lead_time_days).toBe(0); // 0 = missing
   });
 
   it("preserves zero ordered_qty", () => {
@@ -47,7 +47,7 @@ describe("parseRows", () => {
     const sku = map.get("SKU-001")!;
     expect(sku.stock_qty).toBe(0);
     expect(sku.ordered_qty).toBe(0);
-    expect(sku.lead_time_days).toBe(1); // clamped from 0→1
+    expect(sku.lead_time_days).toBe(0); // 0 = missing
   });
 
   it("keeps previous value when field is NaN", () => {
@@ -637,7 +637,7 @@ describe("SkuCapability tier calculation", () => {
     expect(results[0].capability.hasOrderData).toBe(true);
   });
 
-  it("returns null safety_stock when lead time is missing", () => {
+  it("returns null safety_stock when lead time is 0 (missing)", () => {
     const rows = [
       makeRow({ sold_qty: 10, lead_time_days: 0 }),
       makeRow({ date: "2026-02-01", sold_qty: 15, lead_time_days: 0 }),
@@ -645,8 +645,9 @@ describe("SkuCapability tier calculation", () => {
     const map = parseRows(rows);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    // lead_time_days=0 gets clamped to 1, so hasLeadTime will be true
-    expect(sku.capability.hasLeadTime).toBe(true);
+    expect(sku.capability.hasLeadTime).toBe(false);
+    expect(sku.safety_stock).toBeNull();
+    expect(sku.reorder_point).toBeNull();
   });
 
   it("xyz_class is N/A with fewer than 3 sales records", () => {

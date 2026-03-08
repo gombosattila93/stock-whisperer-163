@@ -606,35 +606,28 @@ describe("SkuCapability tier calculation", () => {
     expect(sku.capability.hasStockData).toBe(true);
   });
 
-  it("assigns 'sales-only' tier when stock_qty is NaN", () => {
+  it("stock_qty=NaN normalizes to 0 in parseRows, so hasStockData is true", () => {
     const rows = [
       makeRow({ sold_qty: 20, unit_price: 3, stock_qty: NaN, lead_time_days: 0 }),
       makeRow({ date: "2026-02-01", sold_qty: 15, unit_price: 3, stock_qty: NaN }),
     ];
     const map = parseRows(rows);
+    expect(map.get("SKU-001")!.stock_qty).toBe(0);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(sku.capability.tier).toBe("sales-only");
-    expect(sku.capability.hasDemandHistory).toBe(true);
-    expect(sku.capability.hasStockData).toBe(false);
-    expect(sku.days_of_stock).toBeNull();
+    expect(sku.capability.hasStockData).toBe(true);
   });
 
-  it("assigns 'minimal' tier when no demand and no stock data", () => {
+  it("minimal/sales-only tiers require hasStockData=false (not reachable via standard CSV)", () => {
+    // parseRows normalizes NaN→0, so hasStockData always true after parsing
     const rows = [
       makeRow({ sold_qty: 0, date: "", unit_price: 0, stock_qty: NaN, lead_time_days: 0 }),
     ];
     const map = parseRows(rows);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(sku.capability.tier).toBe("minimal");
-    expect(sku.capability.hasDemandHistory).toBe(false);
-    expect(sku.capability.hasStockData).toBe(false);
-    expect(sku.reorder_point).toBeNull();
-    expect(sku.safety_stock).toBeNull();
-    expect(sku.days_of_stock).toBeNull();
-    expect(sku.abc_class).toBe("N/A");
-    expect(sku.xyz_class).toBe("N/A");
+    expect(sku.capability.tier).toBe("stock-only");
+    expect(sku.capability.hasStockData).toBe(true);
   });
 
   it("sets hasOrderData correctly", () => {

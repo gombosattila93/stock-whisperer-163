@@ -400,6 +400,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         if (workerRef.current === worker) {
           workerRef.current = null;
         }
+      } else if (e.data.type === 'ERROR') {
+        setIsCalculating(false);
+        toast.error('Calculation failed', { description: e.data.payload.message });
+        worker.terminate();
+        if (workerRef.current === worker) {
+          workerRef.current = null;
+        }
       }
     };
 

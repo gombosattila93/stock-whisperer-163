@@ -65,6 +65,7 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
       const parsedStock = Number(row.stock_qty);
       existing.stock_qty = (isFinite(parsedStock) && parsedStock >= 0) ? parsedStock : existing.stock_qty;
       existing.lead_time_days = leadTime;
+      existing.leadTimeClamped = leadTimeClamped || !!existing.leadTimeClamped;
       const parsedOrdered = Number(row.ordered_qty);
       existing.ordered_qty = (isFinite(parsedOrdered) && parsedOrdered >= 0) ? parsedOrdered : existing.ordered_qty;
       existing.expected_delivery_date = row.expected_delivery_date
@@ -85,6 +86,7 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
         unit_price: unitPrice,
         stock_qty: Math.max(0, isFinite(Number(row.stock_qty)) ? Number(row.stock_qty) : 0),
         lead_time_days: leadTime,
+        leadTimeClamped: leadTimeClamped,
         ordered_qty: Math.max(0, isFinite(Number(row.ordered_qty)) ? Number(row.ordered_qty) : 0),
         expected_delivery_date: row.expected_delivery_date
           ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
@@ -127,6 +129,8 @@ export function analyzeSkus(
   const abcACutoff = thresholds.abcA / 100;
   const abcBCutoff = thresholds.abcB / 100;
   const globalServiceLevel = Object.entries(SERVICE_LEVELS).find(([, v]) => Math.abs(v - serviceFactor) < 0.01)?.[0] || '95%';
+  const xyzXThreshold = Number.isFinite(thresholds.xyzX) && thresholds.xyzX >= 0 ? thresholds.xyzX : DEFAULT_THRESHOLDS.xyzX;
+  const xyzYThreshold = Number.isFinite(thresholds.xyzY) && thresholds.xyzY >= 0 ? thresholds.xyzY : DEFAULT_THRESHOLDS.xyzY;
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
@@ -208,7 +212,7 @@ export function analyzeSkus(
     const overdueDelivery = pastDueOrders;
 
     // Lead time clamping flags
-    const leadTimeClamped = sku.lead_time_days > 365;
+    const leadTimeClamped = sku.leadTimeClamped ?? false;
 
     // ─── Conditional calculations based on capability ───
 
@@ -259,7 +263,7 @@ export function analyzeSkus(
 
     // XYZ class: only if hasDemandHistory with >= 3 records
     const xyz_class: XyzClass = (hasDemandHistory && filteredSales.length >= 3)
-      ? (cv < thresholds.xyzX ? 'X' : cv <= thresholds.xyzY ? 'Y' : 'Z')
+      ? (cv < xyzXThreshold ? 'X' : cv <= xyzYThreshold ? 'Y' : 'Z')
       : 'N/A';
 
     // ─── Trend & Seasonality ─────────────────────────────────────

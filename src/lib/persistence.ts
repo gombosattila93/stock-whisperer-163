@@ -43,8 +43,14 @@ export function markIndexedDBWarningShown() {
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      _indexedDBAvailable = false;
+      reject(new Error('IndexedDB open timed out'));
+    }, 10000);
+
     try {
       if (typeof indexedDB === 'undefined') {
+        clearTimeout(timeoutId);
         _indexedDBAvailable = false;
         reject(new Error('IndexedDB not available'));
         return;
@@ -60,14 +66,17 @@ function openDB(): Promise<IDBDatabase> {
         if (!db.objectStoreNames.contains(RESERVATIONS_STORE)) db.createObjectStore(RESERVATIONS_STORE);
       };
       request.onsuccess = () => {
+        clearTimeout(timeoutId);
         _indexedDBAvailable = true;
         resolve(request.result);
       };
       request.onerror = () => {
+        clearTimeout(timeoutId);
         _indexedDBAvailable = false;
         reject(request.error);
       };
     } catch (err) {
+      clearTimeout(timeoutId);
       _indexedDBAvailable = false;
       reject(err);
     }

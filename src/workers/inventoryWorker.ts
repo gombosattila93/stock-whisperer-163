@@ -27,25 +27,34 @@ export interface WorkerResultMessage {
   payload: SkuAnalysis[];
 }
 
-export type WorkerResponse = WorkerProgressMessage | WorkerResultMessage;
+export interface WorkerErrorMessage {
+  type: 'ERROR';
+  payload: { message: string };
+}
+
+export type WorkerResponse = WorkerProgressMessage | WorkerResultMessage | WorkerErrorMessage;
 
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   if (e.data.type !== 'ANALYZE') return;
 
-  const { rows, demandDays, serviceFactor, thresholds, costSettings, fxRates } = e.data.payload;
+  try {
+    const { rows, demandDays, serviceFactor, thresholds, costSettings, fxRates } = e.data.payload;
 
-  // Stage 1: parseRows
-  self.postMessage({ type: 'PROGRESS', payload: { pct: 10, stage: 'Parsing rows…' } } satisfies WorkerProgressMessage);
-  const skuMap = parseRows(rows);
+    // Stage 1: parseRows
+    self.postMessage({ type: 'PROGRESS', payload: { pct: 10, stage: 'Parsing rows…' } } satisfies WorkerProgressMessage);
+    const skuMap = parseRows(rows);
 
-  // Stage 2: analyzeSkus
-  self.postMessage({ type: 'PROGRESS', payload: { pct: 50, stage: 'Analyzing SKUs…' } } satisfies WorkerProgressMessage);
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - demandDays);
-  const analyses = analyzeSkus(skuMap, startDate, endDate, demandDays, serviceFactor, thresholds, costSettings, fxRates || FALLBACK_RATES);
+    // Stage 2: analyzeSkus
+    self.postMessage({ type: 'PROGRESS', payload: { pct: 50, stage: 'Analyzing SKUs…' } } satisfies WorkerProgressMessage);
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - demandDays);
+    const analyses = analyzeSkus(skuMap, startDate, endDate, demandDays, serviceFactor, thresholds, costSettings, fxRates || FALLBACK_RATES);
 
-  // Done
-  self.postMessage({ type: 'PROGRESS', payload: { pct: 100, stage: 'Complete' } } satisfies WorkerProgressMessage);
-  self.postMessage({ type: 'RESULT', payload: analyses } satisfies WorkerResultMessage);
+    // Done
+    self.postMessage({ type: 'PROGRESS', payload: { pct: 100, stage: 'Complete' } } satisfies WorkerProgressMessage);
+    self.postMessage({ type: 'RESULT', payload: analyses } satisfies WorkerResultMessage);
+  } catch (err) {
+    self.postMessage({ type: 'ERROR', payload: { message: err instanceof Error ? err.message : 'Unknown calculation error' } });
+  }
 };

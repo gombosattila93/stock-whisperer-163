@@ -97,6 +97,7 @@ export interface SkuData {
   selling_price_huf?: number | null;
   purchase_currency?: 'USD' | 'EUR';
   purchase_prices?: Array<{ qty: number; price: number }>;
+  leadTimeClamped?: boolean;
 }
 
 export type AbcClass = 'A' | 'B' | 'C' | 'N/A';

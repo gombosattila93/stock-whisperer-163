@@ -162,6 +162,34 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Reservations
+  const addReservation = useCallback((r: ProjectReservation) => {
+    setReservations(prev => {
+      const next = [...prev, r];
+      saveReservations(next);
+      return next;
+    });
+  }, []);
+
+  const updateReservation = useCallback((id: string, status: 'fulfilled' | 'cancelled') => {
+    setReservations(prev => {
+      const next = prev.map(r => r.id === id ? { ...r, status } : r);
+      saveReservations(next);
+      return next;
+    });
+  }, []);
+
+  const reservedQtyMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of reservations) {
+      if (r.status !== 'active') continue;
+      for (const item of r.items) {
+        map[item.sku] = (map[item.sku] || 0) + item.reservedQty;
+      }
+    }
+    return map;
+  }, [reservations]);
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {

@@ -57,7 +57,7 @@ const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
 ) as Record<ReorderStrategy, string>;
 
 export default function Overview() {
-  const { filtered, hasData, costSettings } = useInventory();
+  const { filtered, hasData, costSettings, reservedQtyMap } = useInventory();
 
   const [overridesLoaded, setOverridesLoaded] = useState<Record<string, ReorderStrategy>>({});
 

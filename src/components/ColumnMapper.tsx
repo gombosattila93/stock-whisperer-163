@@ -122,7 +122,7 @@ const FIELD_ALIASES: Record<string, string[]> = {
   sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],
   sku_name: ["skuname", "productname", "itemname", "description", "itemdescription", "productdescription", "title", "materialname", "articlename"],
   supplier: ["supplier", "vendor", "vendorname", "suppliername", "manufacturer", "source"],
-  category: ["category", "productcategory", "itemcategory", "group", "productgroup", "type", "producttype", "class", "family"],
+  category: ["category", "productcategory", "itemcategory", "group", "productgroup", "type", "producttype", "class", "family", "dept", "department"],
   date: ["date", "saledate", "transactiondate", "orderdate", "invoicedate", "salesdate", "txndate", "transdate"],
   partner_id: ["partnerid", "customerid", "clientid", "buyerid", "accountid", "custid", "customer", "client"],
   sold_qty: ["soldqty", "quantitysold", "qtysold", "salesqty", "quantity", "qty", "units", "unitssold"],

@@ -314,9 +314,13 @@ describe("getSuggestedOrderQty", () => {
     expect(getSuggestedOrderQty(100, 50)).toBe(150);
   });
 
-  it("rounds up to nearest 10", () => {
-    // (50 * 2 - 75) = 25 → ceil(25/10)*10 = 30
-    expect(getSuggestedOrderQty(50, 75)).toBe(30);
+  it("rounds up to nearest MOQ", () => {
+    // (50 * 2 - 75) = 25 → with MOQ=10: max(10, ceil(25/10)*10) = 30
+    expect(getSuggestedOrderQty(50, 75, 10)).toBe(30);
+    // with default MOQ=1: raw = 25
+    expect(getSuggestedOrderQty(50, 75)).toBe(25);
+    // MOQ=50: max(50, ceil(25/50)*50) = 50
+    expect(getSuggestedOrderQty(50, 75, 50)).toBe(50);
   });
 
   it("returns 0 when effective_stock exceeds 2× reorder_point", () => {

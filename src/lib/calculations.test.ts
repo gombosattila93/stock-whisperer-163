@@ -724,12 +724,14 @@ describe("trend detection", () => {
   });
 
   it("detects falling trend when last 30d demand < prior 30d by >15%", () => {
+    // Prior 30d (Jan 7 - Feb 6): high sales
+    // Last 30d (Feb 6 - Mar 8): low sales
     const rows = [
-      makeRow({ date: "2026-01-15", sold_qty: 5 }),
-      makeRow({ date: "2026-02-01", sold_qty: 50 }),
-      makeRow({ date: "2026-02-15", sold_qty: 50 }),
+      makeRow({ date: "2026-01-15", sold_qty: 100 }),
+      makeRow({ date: "2026-01-25", sold_qty: 100 }),
+      makeRow({ date: "2026-02-01", sold_qty: 100 }),
+      makeRow({ date: "2026-02-20", sold_qty: 5 }),
       makeRow({ date: "2026-03-01", sold_qty: 5 }),
-      makeRow({ date: "2026-03-05", sold_qty: 5 }),
     ];
     const map = parseRows(rows);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
@@ -738,11 +740,12 @@ describe("trend detection", () => {
   });
 
   it("detects stable trend when change is within ±15%", () => {
+    // Spread evenly across both windows
     const rows = [
-      makeRow({ date: "2026-02-01", sold_qty: 100 }),
-      makeRow({ date: "2026-02-15", sold_qty: 100 }),
-      makeRow({ date: "2026-03-01", sold_qty: 100 }),
-      makeRow({ date: "2026-03-05", sold_qty: 105 }),
+      makeRow({ date: "2026-01-15", sold_qty: 30 }),
+      makeRow({ date: "2026-01-25", sold_qty: 30 }),
+      makeRow({ date: "2026-02-15", sold_qty: 30 }),
+      makeRow({ date: "2026-02-25", sold_qty: 30 }),
     ];
     const map = parseRows(rows);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);

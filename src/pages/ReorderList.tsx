@@ -33,6 +33,41 @@ import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, C
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 
+function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string, field: string, value: number) => void }) {
+  const [value, setValue] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num >= 1 && num <= 365) {
+      onSave(sku, 'lead_time_days', num);
+      setSaved(true);
+    }
+  };
+
+  if (saved) {
+    return <span className="text-xs text-primary font-medium">✓ Saved — will appear in reorder list on next refresh</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="number"
+        min={1}
+        max={365}
+        placeholder="e.g. 14"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+        className="h-7 w-20 text-xs"
+      />
+      <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleSave} disabled={!value}>
+        Save
+      </Button>
+    </div>
+  );
+}
+
 export default function ReorderList() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
   const hasReservations = Object.keys(reservedQtyMap).length > 0;

@@ -8,6 +8,7 @@ import { getSuggestedOrderQty } from "@/lib/calculations";
 import { ReorderEmailModal } from "@/components/ReorderEmailModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import {
   Tooltip,
   TooltipContent,

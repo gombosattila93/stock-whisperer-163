@@ -369,6 +369,7 @@ describe("getUrgency", () => {
 
   it("returns 'Watch' for Infinity days_of_stock", () => {
     expect(getUrgency(Infinity, 14)).toBe("Watch");
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════

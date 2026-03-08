@@ -303,8 +303,8 @@ describe("safety stock and reorder point", () => {
     const result = runAnalysis([
       makeSkuWithSales("S1", sales, { stockQty: 50, orderedQty: 50 }),
     ]);
-    // effective = 100, avg_daily = 10 → days = 10
-    expect(result[0].days_of_stock).toBeCloseTo(10, 2);
+    // effective = 50 (ordered excluded due to past due), avg_daily = 10 → days = 5
+    expect(result[0].days_of_stock).toBeCloseTo(5, 2);
   });
 });
 

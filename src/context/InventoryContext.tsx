@@ -370,7 +370,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           const available = item.stock_qty - reserved;
           const newEffective = available + item.ordered_qty;
           const effectiveDemand = item.demandMethod === 'ewma' ? item.avg_daily_demand_ewma : item.avg_daily_demand;
-          const newDaysOfStock = effectiveDemand > 0 ? newEffective / effectiveDemand : (newEffective > 0 ? Infinity : 0);
+          const newDaysOfStock = effectiveDemand > 0 ? newEffective / effectiveDemand : (newEffective > 0 ? Infinity : null);
           return {
             ...item,
             reserved_qty: reserved,

@@ -345,6 +345,7 @@ export default function ReorderList() {
                     <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
                     {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Price Break</th>}
                     {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Min Order</th>}
+                    {hasReservations && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Reserved</th>}
                   </tr>
                 </thead>
                 <tbody>

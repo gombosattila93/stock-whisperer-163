@@ -1,0 +1,11 @@
+sku,sku_name,supplier,category,date,partner_id,sold_qty,stock_qty
+WIDGET-001,Blue Widget,Acme Corp,Widgets,2025-01-15,P001,10,200
+WIDGET-001,Blue Widget,Acme Corp,Widgets,2025-02-10,P002,15,200
+WIDGET-001,Blue Widget,Acme Corp,Widgets,2025-03-05,P001,8,200
+WIDGET-002,Red Gadget,Beta Inc,Gadgets,2025-01-20,P003,25,50
+WIDGET-002,Red Gadget,Beta Inc,Gadgets,2025-02-15,P001,30,50
+WIDGET-002,Red Gadget,Beta Inc,Gadgets,2025-03-10,P003,20,50
+WIDGET-003,Green Gizmo,Acme Corp,Gizmos,2025-02-01,P002,5,300
+WIDGET-003,Green Gizmo,Acme Corp,Gizmos,2025-03-01,P002,3,300
+STOCK-ONLY,Shelf Item,Beta Inc,Widgets,,,0,500
+STOCK-ONLY,Shelf Item,Beta Inc,Widgets,,,0,500

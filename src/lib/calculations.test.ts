@@ -637,7 +637,7 @@ describe("SkuCapability tier calculation", () => {
     expect(results[0].capability.hasOrderData).toBe(true);
   });
 
-  it("returns null safety_stock when lead time is missing", () => {
+  it("returns null safety_stock when lead time is 0 (missing)", () => {
     const rows = [
       makeRow({ sold_qty: 10, lead_time_days: 0 }),
       makeRow({ date: "2026-02-01", sold_qty: 15, lead_time_days: 0 }),
@@ -645,8 +645,9 @@ describe("SkuCapability tier calculation", () => {
     const map = parseRows(rows);
     const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    // lead_time_days=0 gets clamped to 1, so hasLeadTime will be true
-    expect(sku.capability.hasLeadTime).toBe(true);
+    expect(sku.capability.hasLeadTime).toBe(false);
+    expect(sku.safety_stock).toBeNull();
+    expect(sku.reorder_point).toBeNull();
   });
 
   it("xyz_class is N/A with fewer than 3 sales records", () => {

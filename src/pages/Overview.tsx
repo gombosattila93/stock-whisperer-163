@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
-import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3 } from "lucide-react";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3, DollarSign, Euro, Percent, Coins } from "lucide-react";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
-function KpiCard({ icon: Icon, label, value, accent }: {
+function KpiCard({ icon: Icon, label, value, accent, subLabel }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
   accent?: string;
+  subLabel?: string;
 }) {
   return (
     <div className="kpi-card">
@@ -26,6 +27,7 @@ function KpiCard({ icon: Icon, label, value, accent }: {
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
           <p className="text-2xl font-bold mt-0.5">{value}</p>
+          {subLabel && <p className="text-[10px] text-muted-foreground mt-0.5">{subLabel}</p>}
         </div>
       </div>
     </div>
@@ -58,7 +60,7 @@ const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
 ) as Record<ReorderStrategy, string>;
 
 export default function Overview() {
-  const { filtered, hasData, costSettings, reservedQtyMap } = useInventory();
+  const { filtered, hasData, costSettings, reservedQtyMap, fxRates } = useInventory();
 
   const [overridesLoaded, setOverridesLoaded] = useState<Record<string, ReorderStrategy>>({});
 
@@ -111,6 +113,67 @@ export default function Overview() {
     }
     const completePct = Math.round((tiers.full / filtered.length) * 100);
     return { tiers, missingLeadTime, missingPrice, noSales, noStock, completePct };
+  }, [filtered]);
+
+  // Financial KPI aggregations
+  const financialKpis = useMemo(() => {
+    if (filtered.length === 0) return null;
+    let purchaseValueEur = 0;
+    let sellingValueHuf = 0;
+    let sellingValueEur = 0;
+    let marginWeightedSum = 0;
+    let marginWeightedDenom = 0;
+    let usdExposureEur = 0;
+    let usdExposureUsd = 0;
+    let skusWithPurchase = 0;
+    let skusWithoutPurchase = 0;
+    let skusWithMargin = 0;
+    let skusWithoutMargin = 0;
+    let skusUsd = 0;
+
+    for (const s of filtered) {
+      const pd = s.priceData;
+      if (!pd) continue;
+
+      if (pd.hasPurchasePrice && pd.basePurchasePriceEur !== null) {
+        purchaseValueEur += pd.basePurchasePriceEur * s.stock_qty;
+        skusWithPurchase++;
+      } else {
+        skusWithoutPurchase++;
+      }
+
+      if (pd.hasSellingPrice) {
+        if (pd.sellingPriceHuf !== null) sellingValueHuf += pd.sellingPriceHuf * s.stock_qty;
+        if (pd.sellingPriceEur !== null) sellingValueEur += pd.sellingPriceEur * s.stock_qty;
+      }
+
+      if (pd.hasMarginData && pd.marginPct !== null && pd.sellingPriceEur !== null) {
+        const rev = pd.sellingPriceEur * s.stock_qty;
+        marginWeightedSum += pd.marginPct * rev;
+        marginWeightedDenom += rev;
+        skusWithMargin++;
+      } else {
+        skusWithoutMargin++;
+      }
+
+      if (pd.purchaseCurrency === 'USD' && pd.hasPurchasePrice && pd.basePurchasePriceEur !== null) {
+        usdExposureEur += pd.basePurchasePriceEur * s.stock_qty;
+        const baseUsd = pd.priceBreaks[0]?.price ?? 0;
+        usdExposureUsd += baseUsd * s.stock_qty;
+        skusUsd++;
+      }
+    }
+
+    const avgMarginPct = marginWeightedDenom > 0 ? marginWeightedSum / marginWeightedDenom : null;
+    const hasAnyFinancialData = skusWithPurchase > 0 || skusWithMargin > 0;
+
+    return {
+      purchaseValueEur, sellingValueHuf, sellingValueEur,
+      avgMarginPct, usdExposureEur, usdExposureUsd,
+      skusWithPurchase, skusWithoutPurchase,
+      skusWithMargin, skusWithoutMargin,
+      skusUsd, hasAnyFinancialData,
+    };
   }, [filtered]);
 
   if (!hasData) return <EmptyState />;
@@ -219,6 +282,39 @@ export default function Overview() {
           <KpiCard icon={Lock} label="Reserved Stock Value" value={`€${reservedStockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         )}
       </div>
+
+      {/* Financial KPI cards */}
+      {financialKpis?.hasAnyFinancialData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <KpiCard
+            icon={Coins}
+            label="Készlet beszerz. értéke"
+            value={`€${financialKpis.purchaseValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            subLabel={financialKpis.skusWithoutPurchase > 0 ? `${financialKpis.skusWithoutPurchase} SKU ár nélkül` : undefined}
+          />
+          <KpiCard
+            icon={Euro}
+            label="Készlet eladási értéke"
+            value={`${financialKpis.sellingValueHuf.toLocaleString(undefined, { maximumFractionDigits: 0 })} Ft`}
+            subLabel={`≈ €${financialKpis.sellingValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          />
+          <KpiCard
+            icon={Percent}
+            label="Átlag árrés"
+            value={financialKpis.avgMarginPct !== null ? `${financialKpis.avgMarginPct.toFixed(1)}%` : '—'}
+            accent={financialKpis.avgMarginPct !== null && financialKpis.avgMarginPct < 15 ? 'bg-destructive' : undefined}
+            subLabel={financialKpis.skusWithoutMargin > 0 ? `${financialKpis.skusWithoutMargin} SKU margin-adat nélkül` : undefined}
+          />
+          {financialKpis.skusUsd > 0 && (
+            <KpiCard
+              icon={DollarSign}
+              label="USD kitettség"
+              value={`€${financialKpis.usdExposureEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+              subLabel={`≈ $${financialKpis.usdExposureUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} · ${financialKpis.skusUsd} SKU`}
+            />
+          )}
+        </div>
+      )}
 
       {/* Data Quality Card */}
       {dataQuality && dataQuality.completePct < 100 && (

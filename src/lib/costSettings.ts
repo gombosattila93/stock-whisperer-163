@@ -1,3 +1,12 @@
+export type ServiceLevelKey = '90%' | '95%' | '99%';
+
+export interface ServiceLevelSettings {
+  usePerClassServiceLevel: boolean;
+  classA: ServiceLevelKey;
+  classB: ServiceLevelKey;
+  classC: ServiceLevelKey;
+}
+
 export interface CostSettings {
   // Holding cost
   holdingCostEnabled: boolean;
@@ -39,6 +48,9 @@ export interface CostSettings {
 
   // Lead time variability per supplier
   supplierLeadTimeStats: Record<string, { avgLeadTimeActual: number; stdDevLeadTime: number }>;
+
+  // Per-ABC service levels
+  serviceLevelSettings: ServiceLevelSettings;
 }
 
 export const DEFAULT_COST_SETTINGS: CostSettings = {
@@ -72,4 +84,11 @@ export const DEFAULT_COST_SETTINGS: CostSettings = {
   ewmaAlpha: 0.3,
 
   supplierLeadTimeStats: {},
+
+  serviceLevelSettings: {
+    usePerClassServiceLevel: false,
+    classA: '99%',
+    classB: '95%',
+    classC: '90%',
+  },
 };

@@ -8,6 +8,7 @@ import { DemandSparkline } from "@/components/DemandSparkline";
 import { VirtualizedTable } from "@/components/VirtualizedTable";
 import { EditableCell } from "@/components/EditableCell";
 import { TrendBadge } from "@/components/TrendBadge";
+import { Badge } from "@/components/ui/badge";
 
 export default function CriticalSkus() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings } = useInventory();
@@ -79,7 +80,14 @@ export default function CriticalSkus() {
               {
                 key: 'trend',
                 header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} />,
-                render: (s) => <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />,
+                render: (s) => (
+                  <div className="flex items-center gap-1.5">
+                    <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />
+                    {costSettings.serviceLevelSettings?.usePerClassServiceLevel && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{s.effectiveServiceLevel}</Badge>
+                    )}
+                  </div>
+                ),
               },
               {
                 key: 'days_of_stock',

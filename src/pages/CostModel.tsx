@@ -12,9 +12,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer } from "lucide-react";
-import { CostSettings, DEFAULT_COST_SETTINGS } from "@/lib/costSettings";
+import { HelpCircle, DollarSign, Warehouse, Truck, Tag, AlertTriangle, RotateCcw, Clock, ShieldAlert, Info, TrendingUp, Timer, Target } from "lucide-react";
+import { CostSettings, DEFAULT_COST_SETTINGS, ServiceLevelKey } from "@/lib/costSettings";
 import { useCallback } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function SectionHeader({ icon: Icon, title, enabled, onToggle, tip }: {
   icon: React.ElementType;
@@ -168,9 +175,15 @@ export default function CostModel() {
     costSettings.minOrderValueEnabled,
     costSettings.paymentTermsEnabled,
     costSettings.ewmaEnabled,
+    costSettings.serviceLevelSettings.usePerClassServiceLevel,
   ].filter(Boolean).length;
 
   const hasLeadTimeStats = Object.keys(costSettings.supplierLeadTimeStats).length > 0;
+  const sls = costSettings.serviceLevelSettings;
+
+  const updateSL = useCallback((key: keyof typeof sls, value: unknown) => {
+    update('serviceLevelSettings', { ...sls, [key]: value });
+  }, [sls, update]);
 
   return (
     <div>
@@ -181,7 +194,7 @@ export default function CostModel() {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary" className="text-xs">
-            {enabledCount}/9 modules active
+            {enabledCount}/10 modules active
           </Badge>
           <Button
             variant="outline"
@@ -471,6 +484,43 @@ export default function CostModel() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Per-ABC Service Level */}
+        <div className="bg-card border rounded-lg p-5 space-y-4">
+          <SectionHeader
+            icon={Target}
+            title="Per-ABC Service Levels"
+            enabled={sls.usePerClassServiceLevel}
+            onToggle={(v) => updateSL('usePerClassServiceLevel', v)}
+            tip="Set different service level targets per ABC class. A-items get highest availability, C-items can tolerate lower fill rates to reduce safety stock."
+          />
+          <div className={`space-y-3 ${!sls.usePerClassServiceLevel ? 'opacity-40 pointer-events-none' : ''}`}>
+            {(['A', 'B', 'C'] as const).map(cls => {
+              const key = `class${cls}` as 'classA' | 'classB' | 'classC';
+              const defaults: Record<string, string> = { A: '99%', B: '95%', C: '90%' };
+              return (
+                <div key={cls} className="flex items-center gap-3">
+                  <Label className="text-xs w-20 font-medium">Class {cls}</Label>
+                  <Select
+                    value={sls[key]}
+                    onValueChange={(v) => updateSL(key, v as ServiceLevelKey)}
+                    disabled={!sls.usePerClassServiceLevel}
+                  >
+                    <SelectTrigger className="h-8 w-28 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="90%">90% (Z=1.28)</SelectItem>
+                      <SelectItem value="95%">95% (Z=1.65)</SelectItem>
+                      <SelectItem value="99%">99% (Z=2.33)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-[10px] text-muted-foreground">default: {defaults[cls]}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

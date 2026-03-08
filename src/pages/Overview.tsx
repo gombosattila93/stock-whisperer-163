@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
-import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame } from "lucide-react";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target } from "lucide-react";
 import { AbcClass, XyzClass } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
@@ -57,7 +57,7 @@ const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
 ) as Record<ReorderStrategy, string>;
 
 export default function Overview() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, costSettings } = useInventory();
 
   const [overridesLoaded, setOverridesLoaded] = useState<Record<string, ReorderStrategy>>({});
 
@@ -98,6 +98,14 @@ export default function Overview() {
     .sort((a, b) => b.trendPct - a.trendPct)
     .slice(0, 5);
 
+  // Weighted average service level
+  const totalRev = filtered.reduce((s, a) => s + a.total_revenue, 0);
+  const SERVICE_LEVEL_NUM: Record<string, number> = { '90%': 90, '95%': 95, '99%': 99 };
+  const weightedAvgSL = totalRev > 0
+    ? filtered.reduce((s, a) => s + (SERVICE_LEVEL_NUM[a.effectiveServiceLevel] || 95) * a.total_revenue, 0) / totalRev
+    : 95;
+  const showPerClassSL = costSettings.serviceLevelSettings?.usePerClassServiceLevel;
+
   // Matrix counts
   const matrixCounts: Record<string, number> = {};
   for (const abc of abcLabels) {
@@ -127,11 +135,14 @@ export default function Overview() {
 
       <DashboardAlerts />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <KpiCard icon={Package} label="Total SKUs" value={totalSkus} />
         <KpiCard icon={AlertTriangle} label="Critical SKUs" value={criticalSkus} accent="bg-destructive" />
         <KpiCard icon={ShoppingCart} label="Reorder Needed" value={reorderNeeded} accent="bg-warning" />
         <KpiCard icon={PackageX} label="Overstock Items" value={overstockItems} accent="bg-muted" />
+        {showPerClassSL && (
+          <KpiCard icon={Target} label="Wtd Avg Service Level" value={`${weightedAvgSL.toFixed(1)}%`} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

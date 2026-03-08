@@ -78,6 +78,8 @@ export function analyzeSkus(
   const analyses: SkuAnalysis[] = [];
   const abcACutoff = thresholds.abcA / 100;
   const abcBCutoff = thresholds.abcB / 100;
+  // Determine global service level string from factor
+  const globalServiceLevel = Object.entries(SERVICE_LEVELS).find(([, v]) => Math.abs(v - serviceFactor) < 0.01)?.[0] || '95%';
 
   for (const [, sku] of skuMap) {
     const filteredSales = sku.sales.filter(s => {
@@ -241,6 +243,7 @@ export function analyzeSkus(
       std_dev,
       safety_stock,
       safetyStockFormula,
+      effectiveServiceLevel: globalServiceLevel,
       reorder_point,
       effective_stock,
       days_of_stock,
@@ -276,6 +279,36 @@ export function analyzeSkus(
     else if (pctBefore < abcBCutoff) abc = 'B';
     const target = analyses.find(a => a.sku === item.sku);
     if (target) target.abc_class = abc;
+  }
+
+  // ─── Pass 2: Per-ABC service level recalculation ────────────────
+  if (costSettings.serviceLevelSettings.usePerClassServiceLevel) {
+    const slMap: Record<string, string> = {
+      A: costSettings.serviceLevelSettings.classA,
+      B: costSettings.serviceLevelSettings.classB,
+      C: costSettings.serviceLevelSettings.classC,
+    };
+
+    for (const item of analyses) {
+      const slKey = slMap[item.abc_class] || '95%';
+      const z = SERVICE_LEVELS[slKey] ?? 1.65;
+      item.effectiveServiceLevel = slKey;
+
+      const effectiveDemand = costSettings.ewmaEnabled ? item.avg_daily_demand_ewma : item.avg_daily_demand;
+      const supplierStats = costSettings.supplierLeadTimeStats[item.supplier];
+
+      if (supplierStats && supplierStats.stdDevLeadTime > 0) {
+        const lt = supplierStats.avgLeadTimeActual || item.lead_time_days;
+        item.safety_stock = z * Math.sqrt(lt * item.std_dev ** 2 + effectiveDemand ** 2 * supplierStats.stdDevLeadTime ** 2);
+        item.safetyStockFormula = 'full';
+      } else {
+        item.safety_stock = z * item.std_dev * Math.sqrt(item.lead_time_days);
+        item.safetyStockFormula = 'simple';
+      }
+
+      const effectiveLeadTime = supplierStats?.avgLeadTimeActual || item.lead_time_days;
+      item.reorder_point = effectiveDemand * effectiveLeadTime + item.safety_stock;
+    }
   }
 
   return analyses;

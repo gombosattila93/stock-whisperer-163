@@ -59,12 +59,13 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
 /** Compute EWMA from daily sales sorted ascending by date */
 export function ewmaDemand(dailySales: { date: string; qty: number }[], alpha: number): number {
   if (dailySales.length === 0) return 0;
+  const safeAlpha = Math.min(1, Math.max(0.01, alpha || 0.3));
   const sorted = [...dailySales].sort((a, b) => a.date.localeCompare(b.date));
   let s = sorted[0].qty;
   for (let i = 1; i < sorted.length; i++) {
-    s = alpha * sorted[i].qty + (1 - alpha) * s;
+    s = safeAlpha * sorted[i].qty + (1 - safeAlpha) * s;
   }
-  return s;
+  return Math.max(0, s);
 }
 
 export function analyzeSkus(

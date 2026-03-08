@@ -1,4 +1,5 @@
 import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass } from './types';
+import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
 
 export const SERVICE_LEVELS: Record<string, number> = {
   '90%': 1.28,
@@ -8,8 +9,6 @@ export const SERVICE_LEVELS: Record<string, number> = {
 
 export function parseRows(rows: RawRow[]): Map<string, SkuData> {
   const map = new Map<string, SkuData>();
-
-  // Sort by date to get most recent static values
   const sorted = [...rows].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   for (const row of sorted) {
@@ -22,7 +21,6 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
     };
 
     if (existing) {
-      // Update static fields with most recent
       const parsedStock = Number(row.stock_qty);
       existing.stock_qty = !isNaN(parsedStock) ? parsedStock : existing.stock_qty;
       const parsedLead = Number(row.lead_time_days);
@@ -56,9 +54,12 @@ export function analyzeSkus(
   startDate: Date,
   endDate: Date,
   demandDays: number,
-  serviceFactor: number = 1.65
+  serviceFactor: number = 1.65,
+  thresholds: ClassificationThresholds = DEFAULT_THRESHOLDS
 ): SkuAnalysis[] {
   const analyses: SkuAnalysis[] = [];
+  const abcACutoff = thresholds.abcA / 100;
+  const abcBCutoff = thresholds.abcB / 100;
 
   for (const [, sku] of skuMap) {
     const filteredSales = sku.sales.filter(s => {
@@ -69,13 +70,11 @@ export function analyzeSkus(
     const totalSold = filteredSales.reduce((sum, s) => sum + s.sold_qty, 0);
     const avg_daily_demand = totalSold / demandDays;
 
-    // Daily demand map for std dev
     const dailyMap = new Map<string, number>();
     filteredSales.forEach(s => {
       dailyMap.set(s.date, (dailyMap.get(s.date) || 0) + s.sold_qty);
     });
     const dailyValues = Array.from(dailyMap.values());
-    // Pad with zeros for days with no sales within the period
     while (dailyValues.length < demandDays) dailyValues.push(0);
 
     const mean = dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length;
@@ -89,7 +88,7 @@ export function analyzeSkus(
     const total_revenue = totalSold * sku.unit_price;
     const cv = mean > 0 ? std_dev / mean : 0;
 
-    const xyz_class: XyzClass = cv < 0.5 ? 'X' : cv <= 1.0 ? 'Y' : 'Z';
+    const xyz_class: XyzClass = cv < thresholds.xyzX ? 'X' : cv <= thresholds.xyzY ? 'Y' : 'Z';
 
     analyses.push({
       ...sku,
@@ -99,14 +98,14 @@ export function analyzeSkus(
       reorder_point,
       effective_stock,
       days_of_stock,
-      abc_class: 'C', // will be set below
+      abc_class: 'C', // set below
       xyz_class,
       total_revenue,
       cv,
     });
   }
 
-  // ABC classification
+  // ABC classification with configurable thresholds
   const sortedByRevenue = [...analyses].sort((a, b) => b.total_revenue - a.total_revenue);
   const totalRevenue = sortedByRevenue.reduce((s, a) => s + a.total_revenue, 0);
   let cumulative = 0;
@@ -115,9 +114,8 @@ export function analyzeSkus(
     const pctBefore = totalRevenue > 0 ? cumulative / totalRevenue : 0;
     cumulative += item.total_revenue;
     let abc: AbcClass = 'C';
-    if (pctBefore < 0.8) abc = 'A';
-    else if (pctBefore < 0.95) abc = 'B';
-    // Update in the analyses array
+    if (pctBefore < abcACutoff) abc = 'A';
+    else if (pctBefore < abcBCutoff) abc = 'B';
     const target = analyses.find(a => a.sku === item.sku);
     if (target) target.abc_class = abc;
   }

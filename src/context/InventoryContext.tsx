@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
-import { RawRow, SkuAnalysis } from '@/lib/types';
+import { RawRow, SkuAnalysis, XyzClass } from '@/lib/types';
 import { parseRows, analyzeSkus, SERVICE_LEVELS } from '@/lib/calculations';
-import { parseCsvFile, parseCsvString } from '@/lib/csvUtils';
+import { parseCsvFile, parseCsvString, parseCsvFileRaw } from '@/lib/csvUtils';
 import { validateCsvRows, CsvValidationError } from '@/lib/csvValidation';
 import { sampleCsv } from '@/lib/sampleData';
 import { saveRows, loadRows, clearRows } from '@/lib/persistence';
+import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/components/ClassificationSettings';
+import { ColumnMapping } from '@/components/ColumnMapper';
 import { toast } from 'sonner';
 
 interface InventoryContextType {
@@ -23,11 +25,18 @@ interface InventoryContextType {
   setServiceLevel: (v: string) => void;
   hasData: boolean;
   loadFile: (file: File) => Promise<void>;
+  loadFileWithMapping: (file: File, mapping: ColumnMapping) => Promise<void>;
   appendFile: (file: File) => Promise<void>;
   loadSample: () => Promise<void>;
   clearData: () => void;
   filtered: SkuAnalysis[];
   validationErrors: CsvValidationError[];
+  thresholds: ClassificationThresholds;
+  setThresholds: (t: ClassificationThresholds) => void;
+  // For column mapping flow
+  pendingFile: File | null;
+  pendingHeaders: string[];
+  setPendingFile: (f: File | null) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
@@ -53,13 +62,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [serviceLevel, setServiceLevel] = useState('95%');
   const [validationErrors, setValidationErrors] = useState<CsvValidationError[]>([]);
   const [persistenceLoaded, setPersistenceLoaded] = useState(false);
+  const [thresholds, setThresholds] = useState<ClassificationThresholds>(DEFAULT_THRESHOLDS);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
 
-  // Clamp demand days on set
   const setDemandDays = useCallback((v: number) => {
     setDemandDaysRaw(clampDemandDays(v));
   }, []);
 
-  // Restore persisted data on mount
   useEffect(() => {
     loadRows().then(rows => {
       if (rows && rows.length > 0) {
@@ -70,7 +80,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Persist data when it changes
   useEffect(() => {
     if (persistenceLoaded && rawRows.length > 0) {
       saveRows(rawRows);
@@ -79,18 +88,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const serviceFactor = SERVICE_LEVELS[serviceLevel] ?? 1.65;
 
-  const processData = useCallback((rows: RawRow[], days: number, factor: number) => {
+  const processData = useCallback((rows: RawRow[], days: number, factor: number, t: ClassificationThresholds) => {
     const skuMap = parseRows(rows);
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    return analyzeSkus(skuMap, startDate, endDate, days, factor);
+    return analyzeSkus(skuMap, startDate, endDate, days, factor, t);
   }, []);
 
   const analysis = useMemo(() => {
     if (rawRows.length === 0) return [];
-    return processData(rawRows, demandDays, serviceFactor);
-  }, [rawRows, demandDays, serviceFactor, processData]);
+    return processData(rawRows, demandDays, serviceFactor, thresholds);
+  }, [rawRows, demandDays, serviceFactor, thresholds, processData]);
 
   const suppliers = useMemo(() => [...new Set(analysis.map(a => a.supplier))].sort(), [analysis]);
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
@@ -131,6 +140,27 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const loadFile = useCallback(async (file: File) => {
     try {
+      // First check if headers match; if not, open column mapper
+      const rawParsed = await parseCsvFileRaw(file);
+      if (rawParsed.length === 0) {
+        toast.error('CSV file contains no data');
+        return;
+      }
+      const headers = Object.keys(rawParsed[0]);
+      const requiredHeaders = ['sku', 'date'];
+      const normalizedHeaders = headers.map(h => h.toLowerCase().replace(/[\s_-]+/g, ''));
+      const missingRequired = requiredHeaders.filter(r =>
+        !normalizedHeaders.some(h => h === r.replace(/_/g, ''))
+      );
+
+      if (missingRequired.length > 0) {
+        // Open column mapper
+        setPendingFile(file);
+        setPendingHeaders(headers);
+        toast.info('Column names don\'t match — please map your columns');
+        return;
+      }
+
       const parsed = await parseCsvFile(file);
       const validated = processAndValidate(parsed);
       if (validated.length > 0) {
@@ -139,6 +169,34 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       toast.error('Failed to parse CSV file', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  }, [processAndValidate]);
+
+  const loadFileWithMapping = useCallback(async (file: File, mapping: ColumnMapping) => {
+    try {
+      const rawParsed = await parseCsvFileRaw(file);
+      // Apply mapping: remap columns
+      const remapped: Record<string, unknown>[] = rawParsed.map(row => {
+        const newRow: Record<string, unknown> = {};
+        for (const [targetField, sourceCol] of Object.entries(mapping)) {
+          if (sourceCol && row[sourceCol] !== undefined) {
+            newRow[targetField] = row[sourceCol];
+          }
+        }
+        return newRow;
+      });
+
+      const validated = processAndValidate(remapped as unknown as RawRow[]);
+      if (validated.length > 0) {
+        setRawRows(validated);
+        toast.success(`Loaded ${validated.length} rows with custom mapping`);
+      }
+      setPendingFile(null);
+      setPendingHeaders([]);
+    } catch (err) {
+      toast.error('Failed to process mapped CSV', {
         description: err instanceof Error ? err.message : 'Unknown error',
       });
     }
@@ -190,11 +248,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setServiceLevel,
       hasData: rawRows.length > 0,
       loadFile,
+      loadFileWithMapping,
       appendFile,
       loadSample,
       clearData,
       filtered,
       validationErrors,
+      thresholds,
+      setThresholds,
+      pendingFile,
+      pendingHeaders,
+      setPendingFile,
     }}>
       {children}
     </InventoryContext.Provider>

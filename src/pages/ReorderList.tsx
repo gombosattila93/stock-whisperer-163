@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, Clock } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 

@@ -117,6 +117,115 @@ const TARGET_FIELDS: FieldDef[] = [
     required: false,
     tip: "When the ordered quantity is expected. ISO 8601 (YYYY-MM-DD). Used for forward-looking stock projections.",
   },
+  // ─── Multi-currency fields ───
+  {
+    key: "selling_price_huf",
+    label: "Selling Price (HUF)",
+    required: false,
+    tip: "Customer selling price in Hungarian Forint. Used for margin calculation. Leave empty to derive from unit_price × EUR/HUF rate.",
+  },
+  {
+    key: "purchase_currency",
+    label: "Purchase Currency",
+    required: false,
+    tip: "USD or EUR. Applies to ALL purchase_price columns for this SKU. Leave empty to default to EUR.",
+  },
+  {
+    key: "purchase_price_1",
+    label: "Purchase Price 1",
+    required: false,
+    tip: "Base purchase price (no minimum). Add price_2/qty_2 columns for volume discounts. Up to 8 price breaks supported.",
+  },
+  {
+    key: "purchase_qty_1",
+    label: "Purchase Qty 1",
+    required: false,
+    tip: "Minimum order quantity for price 1. Defaults to 1 if omitted.",
+  },
+  {
+    key: "purchase_price_2",
+    label: "Purchase Price 2",
+    required: false,
+    tip: "Volume discount price break 2. Must be lower than price 1.",
+  },
+  {
+    key: "purchase_qty_2",
+    label: "Purchase Qty 2",
+    required: false,
+    tip: "Minimum order quantity for price break 2.",
+  },
+  {
+    key: "purchase_price_3",
+    label: "Purchase Price 3",
+    required: false,
+    tip: "Volume discount price break 3.",
+  },
+  {
+    key: "purchase_qty_3",
+    label: "Purchase Qty 3",
+    required: false,
+    tip: "Minimum order quantity for price break 3.",
+  },
+  {
+    key: "purchase_price_4",
+    label: "Purchase Price 4",
+    required: false,
+    tip: "Volume discount price break 4.",
+  },
+  {
+    key: "purchase_qty_4",
+    label: "Purchase Qty 4",
+    required: false,
+    tip: "Minimum order quantity for price break 4.",
+  },
+  {
+    key: "purchase_price_5",
+    label: "Purchase Price 5",
+    required: false,
+    tip: "Volume discount price break 5.",
+  },
+  {
+    key: "purchase_qty_5",
+    label: "Purchase Qty 5",
+    required: false,
+    tip: "Minimum order quantity for price break 5.",
+  },
+  {
+    key: "purchase_price_6",
+    label: "Purchase Price 6",
+    required: false,
+    tip: "Volume discount price break 6.",
+  },
+  {
+    key: "purchase_qty_6",
+    label: "Purchase Qty 6",
+    required: false,
+    tip: "Minimum order quantity for price break 6.",
+  },
+  {
+    key: "purchase_price_7",
+    label: "Purchase Price 7",
+    required: false,
+    tip: "Volume discount price break 7.",
+  },
+  {
+    key: "purchase_qty_7",
+    label: "Purchase Qty 7",
+    required: false,
+    tip: "Minimum order quantity for price break 7.",
+  },
+  {
+    key: "purchase_price_8",
+    label: "Purchase Price 8",
+    required: false,
+    tip: "Best/highest volume price break 8.",
+  },
+  {
+    key: "purchase_qty_8",
+    label: "Purchase Qty 8",
+    required: false,
+    tip: "Minimum order quantity for price break 8.",
+  },
 ];
 
 /** Common aliases for each target field to improve auto-mapping accuracy */

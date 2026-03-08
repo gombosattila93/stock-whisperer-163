@@ -129,7 +129,7 @@ export default function AbcXyzDetail() {
                     </span>
                   </td>
                   <td><DemandSparkline sku={s} /></td>
-                  <td className="text-right">${s.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="text-right">€{s.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   <td className="text-right">{s.cv.toFixed(3)}</td>
                   <td className="text-right">{s.avg_daily_demand.toFixed(2)}</td>
                   <td className="text-right">{s.stock_qty.toLocaleString()}</td>

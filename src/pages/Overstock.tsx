@@ -76,7 +76,7 @@ export default function Overstock() {
                     </td>
                     <td className="text-right">{s.excess_qty.toLocaleString()}</td>
                     <td className="text-right font-semibold">
-                      ${s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      €{s.tied_up_capital.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 ))}

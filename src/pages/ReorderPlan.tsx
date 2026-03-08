@@ -319,7 +319,7 @@ export default function ReorderPlan() {
               value={[whatIfBudget]}
               onValueChange={([v]) => setWhatIfBudget(v)}
               min={0}
-              max={Math.max(totalOrderValue * 1.5, budget * 2, 1000)}
+              max={Math.max(totalOrderValue * 1.5, budget * 2, 1000) || 1000}
               step={100}
               className="w-full"
             />

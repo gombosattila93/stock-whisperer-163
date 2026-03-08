@@ -156,6 +156,7 @@ export default function ReorderList() {
 
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">
+          <EoqSettingsPanel settings={eoqSettings} onChange={handleEoqChange} />
           <Label className="text-xs text-muted-foreground whitespace-nowrap">Default Strategy</Label>
           <Select value={globalStrategy} onValueChange={(v) => setGlobalStrategy(v as ReorderStrategy)}>
             <SelectTrigger className="w-[220px] h-8 text-xs">

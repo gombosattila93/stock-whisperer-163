@@ -317,7 +317,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions(), loadReservations()]).then(([rows, overrides, costs, supplierOpts, resv]) => {
+    Promise.all([loadRows(), loadStockOverrides(), loadCostSettings(), loadSkuSupplierOptions(), loadReservations(), loadFxRates()]).then(([rows, overrides, costs, supplierOpts, resv, fx]) => {
       if (rows && rows.length > 0) {
         setRawRows(rows);
         toast.success(`Restored ${rows.length} rows from previous session`);

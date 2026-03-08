@@ -5,7 +5,8 @@ import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
+const FX_RATES_KEY = 'fxRates';
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';

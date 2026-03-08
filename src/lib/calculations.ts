@@ -1,4 +1,4 @@
-import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass } from './types';
+import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from './classificationTypes';
 import { parseFlexibleDate } from './dateUtils';
 

@@ -2,6 +2,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getUrgency } from "@/lib/calculations";
+import { purchaseToEur } from "@/lib/fxRates";
 import { computeReorder, STRATEGY_OPTIONS, ReorderStrategy, EoqSettings, DEFAULT_EOQ_SETTINGS } from "@/lib/reorderStrategies";
 import { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 import { loadSkuOverrides, saveSkuOverrides, loadEoqSettings, saveEoqSettings } from "@/lib/persistence";

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseRows, analyzeSkus, getSuggestedOrderQty, getUrgency } from "./calculations";
+import { parseRows, analyzeSkus, getSuggestedOrderQty, getUrgency, ewmaDemand } from "./calculations";
 import { RawRow, SkuData } from "./types";
+import { DEFAULT_COST_SETTINGS, CostSettings } from "./costSettings";
 
 const makeRow = (overrides: Partial<RawRow> = {}): RawRow => ({
   sku: "SKU-001",

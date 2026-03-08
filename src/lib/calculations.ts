@@ -241,6 +241,7 @@ export function analyzeSkus(
       std_dev,
       safety_stock,
       safetyStockFormula,
+      effectiveServiceLevel: costSettings.serviceLevelSettings.usePerClassServiceLevel ? '' : '', // set in pass 2 or left as global
       reorder_point,
       effective_stock,
       days_of_stock,

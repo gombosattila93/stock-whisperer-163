@@ -98,6 +98,14 @@ export default function Overview() {
     .sort((a, b) => b.trendPct - a.trendPct)
     .slice(0, 5);
 
+  // Weighted average service level
+  const totalRev = filtered.reduce((s, a) => s + a.total_revenue, 0);
+  const SERVICE_LEVEL_NUM: Record<string, number> = { '90%': 90, '95%': 95, '99%': 99 };
+  const weightedAvgSL = totalRev > 0
+    ? filtered.reduce((s, a) => s + (SERVICE_LEVEL_NUM[a.effectiveServiceLevel] || 95) * a.total_revenue, 0) / totalRev
+    : 95;
+  const showPerClassSL = costSettings.serviceLevelSettings?.usePerClassServiceLevel;
+
   // Matrix counts
   const matrixCounts: Record<string, number> = {};
   for (const abc of abcLabels) {

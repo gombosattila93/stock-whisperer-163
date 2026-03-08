@@ -52,7 +52,7 @@ export default function ReorderPlan() {
   const [optimized, setOptimized] = useState(false);
   const [approvedSkus, setApprovedSkus] = useState<Set<string>>(new Set());
   const [whatIfOpen, setWhatIfOpen] = useState(false);
-  const [whatIfBudget, setWhatIfBudget] = useState<number>(budget);
+
   useEffect(() => {
     loadSkuOverrides().then(setSkuOverrides);
     loadEoqSettings().then(setEoqSettings);
@@ -61,6 +61,9 @@ export default function ReorderPlan() {
   const budgetEnabled = costSettings.budgetEnabled;
   const budget = costSettings.monthlyBudget;
   const supplierBudgets = costSettings.supplierBudgets;
+
+  const [whatIfBudget, setWhatIfBudget] = useState<number>(budget);
+  useEffect(() => { setWhatIfBudget(budget); }, [budget]);
 
   // Build reorder items with priority scores
   const reorderItems = useMemo<ReorderItem[]>(() => {

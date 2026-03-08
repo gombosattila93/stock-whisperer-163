@@ -7,6 +7,8 @@ import { sampleCsv } from '@/lib/sampleData';
 import { saveRows, loadRows, clearRows, StockOverrides, saveStockOverrides, loadStockOverrides } from '@/lib/persistence';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
 import { ColumnMapping } from '@/components/ColumnMapper';
+import { analyzeDuplicates, DuplicateAnalysis, partialFingerprint } from '@/lib/duplicateDetection';
+import type { ConflictResolution } from '@/components/DuplicateDetectionModal';
 import { toast } from 'sonner';
 import type { WorkerRequest, WorkerResponse } from '@/workers/inventoryWorker';
 

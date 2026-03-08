@@ -465,6 +465,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       pendingAppend: pendingAppend ? { analysis: pendingAppend.analysis, fileName: pendingAppend.fileName } : null,
       confirmAppend,
       cancelAppend,
+      costSettings,
+      setCostSettings,
     }}>
       {children}
     </InventoryContext.Provider>

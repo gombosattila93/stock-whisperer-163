@@ -204,6 +204,7 @@ function makeSkuWithSales(
       sold_qty: qty,
       partner_id: "P001",
     })),
+    supplierOptions: [],
   };
 }
 

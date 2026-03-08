@@ -95,6 +95,52 @@ export function analyzeSkus(
 
     const xyz_class: XyzClass = cv < thresholds.xyzX ? 'X' : cv <= thresholds.xyzY ? 'Y' : 'Z';
 
+    // ─── Trend & Seasonality ─────────────────────────────────────
+    const now = endDate.getTime();
+    const ms30 = 30 * 86_400_000;
+
+    // Sum sold_qty in last 30 days and prior 30 days
+    let soldLast30 = 0;
+    let soldPrior30 = 0;
+    let daysLast30 = 0;
+    let daysPrior30 = 0;
+
+    for (const s of filteredSales) {
+      const t = new Date(s.date).getTime();
+      if (t >= now - ms30) {
+        soldLast30 += s.sold_qty;
+      } else if (t >= now - 2 * ms30) {
+        soldPrior30 += s.sold_qty;
+      }
+    }
+    // Count unique dates in each window for better daily averages
+    const last30Dates = new Set<string>();
+    const prior30Dates = new Set<string>();
+    for (const s of filteredSales) {
+      const t = new Date(s.date).getTime();
+      if (t >= now - ms30) last30Dates.add(s.date);
+      else if (t >= now - 2 * ms30) prior30Dates.add(s.date);
+    }
+    daysLast30 = 30; // normalise to 30 days
+    daysPrior30 = 30;
+
+    const avgLast30 = soldLast30 / daysLast30;
+    const avgPrior30 = soldPrior30 / daysPrior30;
+
+    let trendPct = 0;
+    if (avgPrior30 > 0) {
+      trendPct = ((avgLast30 - avgPrior30) / avgPrior30) * 100;
+    } else if (avgLast30 > 0) {
+      trendPct = 100; // went from 0 to something
+    }
+
+    const trend: TrendDirection = trendPct > 15 ? 'rising' : trendPct < -15 ? 'falling' : 'stable';
+
+    const seasonalityPct = avg_daily_demand > 0
+      ? ((avgLast30 / avg_daily_demand) - 1) * 100
+      : 0;
+    const seasonalityFlag = avg_daily_demand > 0 && avgLast30 > avg_daily_demand * 1.5;
+
     analyses.push({
       ...sku,
       avg_daily_demand,
@@ -107,6 +153,10 @@ export function analyzeSkus(
       xyz_class,
       total_revenue,
       cv,
+      trend,
+      trendPct,
+      seasonalityFlag,
+      seasonalityPct,
     });
   }
 

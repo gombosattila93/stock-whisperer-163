@@ -97,6 +97,22 @@ export default function Overview() {
   // 3c) All zero revenue warning
   const allZeroRevenue = filtered.length > 0 && filtered.every(s => s.total_revenue === 0);
 
+  // Data quality stats
+  const dataQuality = useMemo(() => {
+    if (filtered.length === 0) return null;
+    const tiers: Record<SkuCapability['tier'], number> = { full: 0, partial: 0, 'stock-only': 0, 'sales-only': 0, minimal: 0 };
+    let missingLeadTime = 0, missingPrice = 0, noSales = 0, noStock = 0;
+    for (const s of filtered) {
+      tiers[s.capability.tier]++;
+      if (!s.capability.hasLeadTime) missingLeadTime++;
+      if (!s.capability.hasPrice) missingPrice++;
+      if (!s.capability.hasDemandHistory) noSales++;
+      if (!s.capability.hasStockData) noStock++;
+    }
+    const completePct = Math.round((tiers.full / filtered.length) * 100);
+    return { tiers, missingLeadTime, missingPrice, noSales, noStock, completePct };
+  }, [filtered]);
+
   if (!hasData) return <EmptyState />;
 
   const totalSkus = filtered.length;

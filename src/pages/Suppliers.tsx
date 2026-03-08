@@ -91,11 +91,11 @@ export default function Suppliers() {
   const emailSkus = useMemo(() => {
     if (!emailSupplier) return [];
     return filtered
-      .filter(s => s.supplier === emailSupplier && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .filter(s => s.supplier === emailSupplier && s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => ({
         sku: s.sku,
         sku_name: s.sku_name,
-        suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
+        suggested_order_qty: getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock),
         unit_price: s.unit_price,
       }));
   }, [emailSupplier, filtered]);

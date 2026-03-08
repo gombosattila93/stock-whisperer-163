@@ -82,6 +82,7 @@ export default function ReorderList() {
   }, []);
 
   const calculable = filtered.filter(s => s.reorder_point !== null && s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
+  const needsLeadTime = filtered.filter(s => s.capability.hasDemandHistory && s.capability.hasStockData && !s.capability.hasLeadTime);
   const excludedCount = filtered.length - calculable.length;
 
   const reorder = useMemo(() =>

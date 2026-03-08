@@ -88,6 +88,16 @@ export default function Overview() {
   const reorderNeeded = filtered.filter(s => s.effective_stock <= s.reorder_point).length;
   const overstockItems = filtered.filter(s => s.days_of_stock > 180).length;
 
+  // Trend & seasonality
+  const risingCount = filtered.filter(s => s.trend === 'rising').length;
+  const fallingCount = filtered.filter(s => s.trend === 'falling').length;
+  const stableCount = filtered.filter(s => s.trend === 'stable').length;
+  const seasonalCount = filtered.filter(s => s.seasonalityFlag).length;
+  const top5Rising = [...filtered]
+    .filter(s => s.trend === 'rising')
+    .sort((a, b) => b.trendPct - a.trendPct)
+    .slice(0, 5);
+
   // Matrix counts
   const matrixCounts: Record<string, number> = {};
   for (const abc of abcLabels) {

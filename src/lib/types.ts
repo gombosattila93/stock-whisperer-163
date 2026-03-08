@@ -44,8 +44,17 @@ export interface SkuData {
   supplierOptions: SupplierOption[];
 }
 
-export type AbcClass = 'A' | 'B' | 'C';
-export type XyzClass = 'X' | 'Y' | 'Z';
+export type AbcClass = 'A' | 'B' | 'C' | 'N/A';
+export type XyzClass = 'X' | 'Y' | 'Z' | 'N/A';
+
+export interface SkuCapability {
+  hasDemandHistory: boolean;
+  hasStockData: boolean;
+  hasLeadTime: boolean;
+  hasPrice: boolean;
+  hasOrderData: boolean;
+  tier: 'full' | 'partial' | 'stock-only' | 'sales-only' | 'minimal';
+}
 export type Urgency = 'Critical' | 'Warning' | 'Watch';
 
 export type TrendDirection = 'rising' | 'falling' | 'stable';

@@ -9,7 +9,7 @@ interface Alert {
 }
 
 export function DashboardAlerts() {
-  const { filtered, hasData } = useInventory();
+  const { filtered, hasData, costSettings } = useInventory();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const alerts = useMemo<Alert[]>(() => {

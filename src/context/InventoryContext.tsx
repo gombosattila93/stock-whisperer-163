@@ -66,6 +66,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [thresholds, setThresholds] = useState<ClassificationThresholds>(DEFAULT_THRESHOLDS);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingHeaders, setPendingHeaders] = useState<string[]>([]);
+  const [pendingRawData, setPendingRawData] = useState<Record<string, string>[]>([]);
 
   const setDemandDays = useCallback((v: number) => {
     setDemandDaysRaw(clampDemandDays(v));

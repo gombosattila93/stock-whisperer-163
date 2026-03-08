@@ -28,7 +28,9 @@ export function parseRows(rows: RawRow[]): Map<string, SkuData> {
       existing.lead_time_days = !isNaN(parsedLead) ? parsedLead : existing.lead_time_days;
       const parsedOrdered = Number(row.ordered_qty);
       existing.ordered_qty = !isNaN(parsedOrdered) ? parsedOrdered : existing.ordered_qty;
-      existing.expected_delivery_date = row.expected_delivery_date || existing.expected_delivery_date;
+      existing.expected_delivery_date = row.expected_delivery_date
+        ? (parseFlexibleDate(row.expected_delivery_date) ?? row.expected_delivery_date)
+        : existing.expected_delivery_date;
       existing.unit_price = Number(row.unit_price) || existing.unit_price;
       existing.sales.push(sale);
     } else {

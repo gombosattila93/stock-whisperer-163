@@ -85,21 +85,52 @@ export default function ReorderList() {
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
         const result = computeReorder(s, effectiveStrategy, eoqSettings);
+        // Get primary supplier MOQ
+        const supplierOpts = skuSupplierOptions[s.sku] || [];
+        const primaryOpt = supplierOpts.find(o => o.is_primary) || supplierOpts[0];
+        const moq = primaryOpt?.moq || 1;
         // Seasonality-adjusted suggested qty
         const seasonalMultiplier = s.seasonalityFlag ? 1 + (s.seasonalityPct / 200) : 1;
-        const adjustedQty = Math.ceil(result.suggested_order_qty * seasonalMultiplier / 10) * 10;
+        const baseAdjusted = Math.ceil(result.suggested_order_qty * seasonalMultiplier);
+        // Apply MOQ rounding
+        const effectiveMoq = Math.max(1, moq);
+        const moqAdjusted = Math.max(effectiveMoq, Math.ceil(baseAdjusted / effectiveMoq) * effectiveMoq);
+        const moqApplied = moq > 1 && moqAdjusted > baseAdjusted;
+
+        // Price break opportunity from supplier options
+        let pbOpportunityQty = 0;
+        let pbOpportunitySaving = 0;
+        if (primaryOpt && primaryOpt.price_breaks.length > 0) {
+          const sortedBreaks = [...primaryOpt.price_breaks].sort((a, b) => a.minQty - b.minQty);
+          for (const brk of sortedBreaks) {
+            if (moqAdjusted < brk.minQty && brk.minQty <= moqAdjusted * 1.2) {
+              const currentCost = moqAdjusted * (primaryOpt.unit_price || s.unit_price);
+              const breakCost = brk.minQty * brk.unitPrice;
+              if (breakCost < currentCost) {
+                pbOpportunityQty = brk.minQty;
+                pbOpportunitySaving = currentCost - breakCost;
+                break;
+              }
+            }
+          }
+        }
+
         return {
           ...s,
-          suggested_order_qty: adjustedQty,
+          suggested_order_qty: moqAdjusted,
           base_suggested_qty: result.suggested_order_qty,
           urgency: getUrgency(s.days_of_stock, s.lead_time_days),
           strategyLabel: result.strategyLabel,
           reorder_trigger: result.reorder_trigger,
           effectiveStrategy,
           hasOverride: !!skuOverrides[s.sku],
+          moq,
+          moqApplied,
+          pbOpportunityQty,
+          pbOpportunitySaving,
         };
       }),
-    [filtered, globalStrategy, skuOverrides, eoqSettings]
+    [filtered, globalStrategy, skuOverrides, eoqSettings, skuSupplierOptions]
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);

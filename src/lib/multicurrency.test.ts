@@ -38,7 +38,7 @@ describe('FX rate conversions', () => {
 
   test('EUR to HUF conversion', () => {
     expect(eurToHuf(1, rates)).toBeCloseTo(392.5, 1);
-    expect(eurToHuf(29.55, rates)).toBeCloseTo(11591.875, 0);
+    expect(eurToHuf(29.55, rates)).toBeCloseTo(29.55 * 392.5, 0);
   });
 
   test('hufToEur with zero returns 0', () => {

@@ -237,7 +237,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const rows = await parseCsvString(sampleCsv);
     setRawRows(rows);
     setValidationErrors([]);
-    toast.success('Sample data loaded');
+    const dateSamples = rows.map(r => r['date'] || '').filter(Boolean);
+    const fmt = detectDateFormat(dateSamples);
+    const samplePreview = dateSamples.slice(0, 3).join(', ');
+    toast.success('Sample data loaded', {
+      description: samplePreview ? `Date format: ${getDateFormatLabel(fmt)} — samples: ${samplePreview}` : undefined,
+    });
   }, []);
 
   const clearData = useCallback(() => {

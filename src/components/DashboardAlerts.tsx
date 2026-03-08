@@ -18,7 +18,7 @@ export function DashboardAlerts() {
     const result: Alert[] = [];
 
     // Critical: SKUs with < 7 days of stock
-    const criticalCount = filtered.filter(s => s.days_of_stock < 7 && s.avg_daily_demand > 0).length;
+    const criticalCount = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock < 7 && s.avg_daily_demand > 0).length;
     if (criticalCount > 0) {
       result.push({
         id: 'critical-stockout',
@@ -28,7 +28,7 @@ export function DashboardAlerts() {
     }
 
     // Warning: SKUs below reorder point
-    const reorderCount = filtered.filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0).length;
+    const reorderCount = filtered.filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0).length;
     if (reorderCount > 0) {
       result.push({
         id: 'below-reorder',
@@ -38,7 +38,7 @@ export function DashboardAlerts() {
     }
 
     // Warning: High tied-up capital in overstock
-    const overstockItems = filtered.filter(s => s.days_of_stock > 180 && s.avg_daily_demand > 0);
+    const overstockItems = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && s.avg_daily_demand > 0);
     if (overstockItems.length > 0) {
       const tiedUp = overstockItems.reduce((sum, s) => {
         const idealStock = s.avg_daily_demand * 180;

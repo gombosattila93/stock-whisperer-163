@@ -80,9 +80,12 @@ export default function ReorderList() {
     });
   }, []);
 
+  const calculable = filtered.filter(s => s.reorder_point !== null && s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
+  const excludedCount = filtered.length - calculable.length;
+
   const reorder = useMemo(() =>
-    filtered
-      .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+    calculable
+      .filter(s => s.effective_stock <= s.reorder_point! && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
         const result = computeReorder(s, effectiveStrategy, eoqSettings);
@@ -131,7 +134,7 @@ export default function ReorderList() {
           pbOpportunitySaving,
         };
       }),
-    [filtered, globalStrategy, skuOverrides, eoqSettings, skuSupplierOptions]
+    [calculable, globalStrategy, skuOverrides, eoqSettings, skuSupplierOptions]
   );
 
   const { sorted, sort, toggleSort } = useSortableTable(reorder);
@@ -245,6 +248,14 @@ export default function ReorderList() {
         </div>
         <ExportButton data={exportData} filename="reorder-list.csv" />
       </div>
+
+      {excludedCount > 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-4 py-3 mb-4">
+          <span className="text-xs text-muted-foreground">
+            {excludedCount} SKUs excluded — missing stock, lead time, or demand data. See ABC-XYZ Detail for full list.
+          </span>
+        </div>
+      )}
 
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">

@@ -3,8 +3,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { TrendBadge } from "@/components/TrendBadge";
-import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info } from "lucide-react";
-import { AbcClass, XyzClass } from "@/lib/types";
+import { Package, AlertTriangle, ShoppingCart, PackageX, TrendingUp, TrendingDown, Minus, Flame, Target, Lock, Info, BarChart3 } from "lucide-react";
+import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
 import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
 import { Badge } from "@/components/ui/badge";
@@ -97,12 +97,28 @@ export default function Overview() {
   // 3c) All zero revenue warning
   const allZeroRevenue = filtered.length > 0 && filtered.every(s => s.total_revenue === 0);
 
+  // Data quality stats
+  const dataQuality = useMemo(() => {
+    if (filtered.length === 0) return null;
+    const tiers: Record<SkuCapability['tier'], number> = { full: 0, partial: 0, 'stock-only': 0, 'sales-only': 0, minimal: 0 };
+    let missingLeadTime = 0, missingPrice = 0, noSales = 0, noStock = 0;
+    for (const s of filtered) {
+      tiers[s.capability.tier]++;
+      if (!s.capability.hasLeadTime) missingLeadTime++;
+      if (!s.capability.hasPrice) missingPrice++;
+      if (!s.capability.hasDemandHistory) noSales++;
+      if (!s.capability.hasStockData) noStock++;
+    }
+    const completePct = Math.round((tiers.full / filtered.length) * 100);
+    return { tiers, missingLeadTime, missingPrice, noSales, noStock, completePct };
+  }, [filtered]);
+
   if (!hasData) return <EmptyState />;
 
   const totalSkus = filtered.length;
-  const criticalSkus = filtered.filter(s => s.days_of_stock < s.lead_time_days).length;
-  const reorderNeeded = filtered.filter(s => s.effective_stock <= s.reorder_point).length;
-  const overstockItems = filtered.filter(s => s.days_of_stock > 180 && !s.dead_stock).length;
+  const criticalSkus = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock < s.lead_time_days).length;
+  const reorderNeeded = filtered.filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point).length;
+  const overstockItems = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && !s.dead_stock).length;
 
   const risingCount = filtered.filter(s => s.trend === 'rising').length;
   const fallingCount = filtered.filter(s => s.trend === 'falling').length;
@@ -140,7 +156,7 @@ export default function Overview() {
           data={filtered.map(s => ({
             sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
             abc_class: s.abc_class, xyz_class: s.xyz_class,
-            stock_qty: s.stock_qty, days_of_stock: s.days_of_stock === Infinity ? 'Infinity' : Math.round(s.days_of_stock),
+            stock_qty: s.stock_qty, days_of_stock: s.days_of_stock === null ? 'N/A' : s.days_of_stock === Infinity ? 'Infinity' : Math.round(s.days_of_stock),
             dead_stock: s.dead_stock ? 'Yes' : 'No',
             insufficient_data: s.insufficientData ? 'Yes' : 'No',
           }))}
@@ -203,6 +219,53 @@ export default function Overview() {
           <KpiCard icon={Lock} label="Reserved Stock Value" value={`€${reservedStockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         )}
       </div>
+
+      {/* Data Quality Card */}
+      {dataQuality && dataQuality.completePct < 100 && (
+        <div className="bg-card border rounded-lg p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold text-sm">Data Quality</h2>
+            <span className="text-xs text-muted-foreground ml-auto">{dataQuality.completePct}% complete</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2 mb-3">
+            <div
+              className="bg-primary rounded-full h-2 transition-all"
+              style={{ width: `${dataQuality.completePct}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
+            <div className="rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1.5">
+              <span className="font-semibold">{dataQuality.tiers.full}</span>
+              <span className="text-muted-foreground ml-1">Full analysis</span>
+            </div>
+            {dataQuality.missingLeadTime > 0 && (
+              <div className="rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.missingLeadTime}</span>
+                <span className="text-muted-foreground ml-1">Missing lead time</span>
+              </div>
+            )}
+            {dataQuality.missingPrice > 0 && (
+              <div className="rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.missingPrice}</span>
+                <span className="text-muted-foreground ml-1">Missing price</span>
+              </div>
+            )}
+            {dataQuality.noSales > 0 && (
+              <div className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.noSales}</span>
+                <span className="text-muted-foreground ml-1">No sales history</span>
+              </div>
+            )}
+            {dataQuality.noStock > 0 && (
+              <div className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5">
+                <span className="font-semibold">{dataQuality.noStock}</span>
+                <span className="text-muted-foreground ml-1">No stock data</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2 bg-card border rounded-lg p-6">

@@ -29,7 +29,7 @@ interface ReorderItem {
   abc_class: string;
   urgency: string;
   trend: string;
-  days_of_stock: number;
+  days_of_stock: number | null;
   lead_time_days: number;
   suggested_order_qty: number;
   unit_price: number;
@@ -68,7 +68,7 @@ export default function ReorderPlan() {
   // Build reorder items with priority scores
   const reorderItems = useMemo<ReorderItem[]>(() => {
     return filtered
-      .filter(s => s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || 'rop';
         const result = computeReorder(s, effectiveStrategy as ReorderStrategy, eoqSettings);
@@ -449,7 +449,7 @@ export default function ReorderPlan() {
                         {item.urgency}
                       </span>
                     </td>
-                    <td className="text-right">{item.days_of_stock === Infinity ? '∞' : Math.round(item.days_of_stock)}</td>
+                    <td className="text-right">{item.days_of_stock === null ? '—' : item.days_of_stock === Infinity ? '∞' : Math.round(item.days_of_stock)}</td>
                     <td className="text-right font-semibold">{item.suggested_order_qty.toLocaleString()}</td>
                     <td className="text-right">€{item.order_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   </tr>

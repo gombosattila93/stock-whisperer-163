@@ -1,4 +1,4 @@
-import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection } from './types';
+import { RawRow, SkuData, SkuAnalysis, SaleRecord, AbcClass, XyzClass, TrendDirection, SkuCapability } from './types';
 import { ClassificationThresholds, DEFAULT_THRESHOLDS } from './classificationTypes';
 import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 import { parseFlexibleDate } from './dateUtils';
@@ -109,8 +109,23 @@ export function analyzeSkus(
       return d >= startDate && d <= endDate;
     });
 
+    // ─── Capability detection ───
+    const hasDemandHistory = filteredSales.some(s => s.sold_qty > 0);
+    const hasStockData = sku.stock_qty !== undefined && !isNaN(sku.stock_qty);
+    const hasLeadTime = sku.lead_time_days > 0;
+    const hasPrice = sku.unit_price > 0;
+    const hasOrderData = sku.ordered_qty !== undefined && !isNaN(sku.ordered_qty);
+
+    const tier: SkuCapability['tier'] =
+      hasDemandHistory && hasStockData && hasLeadTime && hasPrice ? 'full' :
+      hasDemandHistory && hasStockData && hasLeadTime ? 'partial' :
+      hasStockData && !hasDemandHistory ? 'stock-only' :
+      hasDemandHistory && !hasStockData ? 'sales-only' : 'minimal';
+
+    const capability: SkuCapability = { hasDemandHistory, hasStockData, hasLeadTime, hasPrice, hasOrderData, tier };
+
     // 1g) No stock data detection
-    const noStockData = sku.stock_qty === 0 && sku.sales.every(s => true); // already defaulted to 0
+    const noStockData = !hasStockData || (sku.stock_qty === 0 && !hasDemandHistory);
 
     // 2a) Insufficient data: count actual unique sales days
     const uniqueSalesDays = new Set(filteredSales.map(s => s.date)).size;
@@ -120,7 +135,7 @@ export function analyzeSkus(
     const effectiveDemandDays = insufficientData && uniqueSalesDays > 0 ? Math.max(uniqueSalesDays, 1) : safeDemandDays;
 
     const totalSold = filteredSales.reduce((sum, s) => sum + s.sold_qty, 0);
-    const avg_daily_demand = totalSold / effectiveDemandDays;
+    const avg_daily_demand = hasDemandHistory ? totalSold / effectiveDemandDays : 0;
 
     const dailyMap = new Map<string, number>();
     filteredSales.forEach(s => {
@@ -167,37 +182,57 @@ export function analyzeSkus(
     // Lead time clamping flags
     const leadTimeClamped = sku.lead_time_days <= 0 || sku.lead_time_days > 365;
 
-    // Safety stock with optional lead time variability
+    // ─── Conditional calculations based on capability ───
+
+    // Safety stock: only if hasLeadTime && hasDemandHistory
     const supplierStats = costSettings.supplierLeadTimeStats[sku.supplier];
-    let safety_stock: number;
+    let safety_stock: number | null = null;
     let safetyStockFormula: 'simple' | 'full' = 'simple';
-
-    if (supplierStats && supplierStats.stdDevLeadTime > 0) {
-      const lt = supplierStats.avgLeadTimeActual || sku.lead_time_days;
-      const sigmaD = std_dev;
-      const sigmaLT = supplierStats.stdDevLeadTime;
-      safety_stock = serviceFactor * Math.sqrt(lt * sigmaD ** 2 + effectiveDemand ** 2 * sigmaLT ** 2);
-      safetyStockFormula = 'full';
-    } else {
-      safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
-    }
-
-    // 2f) Safety stock cap: never exceed avg_daily_demand × lead_time_days
     let safetyStockCapped = false;
-    const ssMax = effectiveDemand * sku.lead_time_days;
-    if (ssMax > 0 && safety_stock > ssMax) {
-      safety_stock = ssMax;
-      safetyStockCapped = true;
+
+    if (hasLeadTime && hasDemandHistory) {
+      if (supplierStats && supplierStats.stdDevLeadTime > 0) {
+        const lt = supplierStats.avgLeadTimeActual || sku.lead_time_days;
+        const sigmaD = std_dev;
+        const sigmaLT = supplierStats.stdDevLeadTime;
+        safety_stock = serviceFactor * Math.sqrt(lt * sigmaD ** 2 + effectiveDemand ** 2 * sigmaLT ** 2);
+        safetyStockFormula = 'full';
+      } else {
+        safety_stock = serviceFactor * std_dev * Math.sqrt(sku.lead_time_days);
+      }
+
+      // 2f) Safety stock cap
+      const ssMax = effectiveDemand * sku.lead_time_days;
+      if (ssMax > 0 && safety_stock! > ssMax) {
+        safety_stock = ssMax;
+        safetyStockCapped = true;
+      }
     }
 
-    const effectiveLeadTime = Math.max(0, supplierStats?.avgLeadTimeActual || sku.lead_time_days);
-    const reorder_point = effectiveDemand * effectiveLeadTime + safety_stock;
-    const effective_stock = sku.stock_qty + effectiveOrdered;
-    const days_of_stock = effectiveDemand > 0 ? effective_stock / effectiveDemand : (effective_stock > 0 ? Infinity : 0);
+    // Reorder point: only if hasLeadTime && hasDemandHistory
+    let reorder_point: number | null = null;
+    if (hasLeadTime && hasDemandHistory && safety_stock !== null) {
+      const effectiveLeadTime = Math.max(0, supplierStats?.avgLeadTimeActual || sku.lead_time_days);
+      reorder_point = effectiveDemand * effectiveLeadTime + safety_stock;
+    }
+
+    const effective_stock = (hasStockData ? sku.stock_qty : 0) + effectiveOrdered;
+
+    // Days of stock: only if hasStockData && hasDemandHistory && avg > 0
+    let days_of_stock: number | null = null;
+    if (hasStockData && hasDemandHistory && effectiveDemand > 0) {
+      days_of_stock = effective_stock / effectiveDemand;
+    } else if (hasStockData && effective_stock > 0) {
+      days_of_stock = Infinity;
+    }
+
     const total_revenue = totalSold * sku.unit_price;
     const cv = mean > 0 ? std_dev / mean : 0;
 
-    const xyz_class: XyzClass = cv < thresholds.xyzX ? 'X' : cv <= thresholds.xyzY ? 'Y' : 'Z';
+    // XYZ class: only if hasDemandHistory with >= 3 records
+    const xyz_class: XyzClass = (hasDemandHistory && filteredSales.length >= 3)
+      ? (cv < thresholds.xyzX ? 'X' : cv <= thresholds.xyzY ? 'Y' : 'Z')
+      : 'N/A';
 
     // ─── Trend & Seasonality ─────────────────────────────────────
     const now = endDate.getTime();
@@ -255,7 +290,7 @@ export function analyzeSkus(
       storageCost = pallets * costSettings.storageCostPerPalletPerMonth;
     }
 
-    if (costSettings.stockoutCostEnabled && days_of_stock < sku.lead_time_days) {
+    if (costSettings.stockoutCostEnabled && days_of_stock !== null && days_of_stock !== Infinity && days_of_stock < sku.lead_time_days) {
       const shortfallDays = Math.max(0, sku.lead_time_days - days_of_stock);
       const lostSales = shortfallDays * avg_daily_demand * sku.unit_price;
       stockoutRisk = lostSales * (costSettings.defaultMarginPct / 100);
@@ -278,7 +313,7 @@ export function analyzeSkus(
     // Price break detection — 2h) Cap at 3× calculated reorder qty
     let priceBreakQty = 0;
     let priceBreakSaving = 0;
-    if (costSettings.priceBreaksEnabled) {
+    if (costSettings.priceBreaksEnabled && reorder_point !== null) {
       const breaks = costSettings.priceBreaks[sku.sku];
       if (breaks && breaks.length > 0) {
         const baseQty = reorder_point * 2 - effective_stock;
@@ -299,7 +334,7 @@ export function analyzeSkus(
 
     // Shelf life risk
     let shelfLifeRisk: 'none' | 'warning' | 'critical' = 'none';
-    if (costSettings.shelfLifeEnabled && days_of_stock !== Infinity) {
+    if (costSettings.shelfLifeEnabled && days_of_stock !== null && days_of_stock !== Infinity) {
       if (days_of_stock > shelfLifeDays) shelfLifeRisk = 'critical';
       else if (days_of_stock > shelfLifeDays * 0.75) shelfLifeRisk = 'warning';
     }
@@ -336,6 +371,7 @@ export function analyzeSkus(
       shelfLifeRisk,
       reserved_qty: 0,
       available_qty: sku.stock_qty,
+      capability,
       // Edge case flags
       insufficientData,
       singleRecordEstimate,
@@ -351,19 +387,27 @@ export function analyzeSkus(
   }
 
   // ─── ABC classification ────────────────────────────────────────
-  const sortedByRevenue = [...analyses].sort((a, b) => b.total_revenue - a.total_revenue);
+  // Only classify SKUs that have price AND demand history
+  const classifiable = analyses.filter(a => a.capability.hasPrice && a.capability.hasDemandHistory);
+  const nonClassifiable = analyses.filter(a => !a.capability.hasPrice || !a.capability.hasDemandHistory);
+  for (const item of nonClassifiable) {
+    item.abc_class = 'N/A';
+    item.abcInfo = !item.capability.hasPrice ? 'Price data required for ABC' : 'Demand data required for ABC';
+  }
+
+  const sortedByRevenue = [...classifiable].sort((a, b) => b.total_revenue - a.total_revenue);
   const totalRevenue = sortedByRevenue.reduce((s, a) => s + a.total_revenue, 0);
 
-  // 3c) All SKUs zero revenue
+  // 3c) All classifiable SKUs zero revenue
   if (totalRevenue === 0) {
-    for (const item of analyses) {
+    for (const item of classifiable) {
       item.abc_class = 'C';
       item.abcInfo = 'ABC classification requires unit_price data';
     }
   }
   // 3a) Single SKU → always A
-  else if (analyses.length === 1) {
-    analyses[0].abc_class = 'A';
+  else if (classifiable.length === 1) {
+    classifiable[0].abc_class = 'A';
   }
   // 3b) All SKUs equal revenue → distribute by count
   else if (sortedByRevenue.length > 1 && sortedByRevenue[0].total_revenue === sortedByRevenue[sortedByRevenue.length - 1].total_revenue) {
@@ -410,6 +454,10 @@ export function analyzeSkus(
     };
 
     for (const item of analyses) {
+      // Skip items that can't calculate safety stock
+      if (!item.capability.hasLeadTime || !item.capability.hasDemandHistory) continue;
+      if (item.abc_class === 'N/A') continue;
+
       const slKey = slMap[item.abc_class] || '95%';
       const z = SERVICE_LEVELS[slKey] ?? 1.65;
       item.effectiveServiceLevel = slKey;
@@ -428,13 +476,13 @@ export function analyzeSkus(
 
       // Re-apply safety stock cap
       const ssMax2 = effDemand * item.lead_time_days;
-      if (ssMax2 > 0 && item.safety_stock > ssMax2) {
+      if (ssMax2 > 0 && item.safety_stock! > ssMax2) {
         item.safety_stock = ssMax2;
         item.safetyStockCapped = true;
       }
 
       const effLT = suppStats?.avgLeadTimeActual || item.lead_time_days;
-      item.reorder_point = effDemand * effLT + item.safety_stock;
+      item.reorder_point = effDemand * effLT + item.safety_stock!;
     }
   }
 
@@ -448,8 +496,8 @@ export function getSuggestedOrderQty(reorder_point: number, effective_stock: num
   return Math.max(effectiveMoq, Math.ceil(raw / effectiveMoq) * effectiveMoq);
 }
 
-export function getUrgency(days_of_stock: number, lead_time_days: number): string {
-  if (!Number.isFinite(days_of_stock)) return 'Watch';
+export function getUrgency(days_of_stock: number | null, lead_time_days: number): string {
+  if (days_of_stock === null || !Number.isFinite(days_of_stock)) return 'Watch';
   if (days_of_stock < 7) return 'Critical';
   if (days_of_stock < lead_time_days) return 'Warning';
   return 'Watch';

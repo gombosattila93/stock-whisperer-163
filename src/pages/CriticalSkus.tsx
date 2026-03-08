@@ -22,9 +22,13 @@ export default function CriticalSkus() {
 
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
 
-  const critical = filtered
-    .filter(s => s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
-    .sort((a, b) => a.days_of_stock - b.days_of_stock);
+  // Only show SKUs where critical is calculable
+  const calculable = filtered.filter(s => s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
+  const excludedCount = filtered.length - calculable.length;
+
+  const critical = calculable
+    .filter(s => s.days_of_stock !== null && s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
+    .sort((a, b) => (a.days_of_stock ?? 0) - (b.days_of_stock ?? 0));
 
   // Compute alt supplier suggestions
   const altSupplierMap = useMemo(() => {
@@ -64,7 +68,7 @@ export default function CriticalSkus() {
 
   const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
-    days_of_stock: Math.round(s.days_of_stock), reorder_point: Math.round(s.reorder_point),
+    days_of_stock: s.days_of_stock !== null ? Math.round(s.days_of_stock) : 'N/A', reorder_point: s.reorder_point !== null ? Math.round(s.reorder_point) : 'N/A',
     stock_qty: s.stock_qty, ordered_qty: s.ordered_qty,
     expected_delivery_date: s.expected_delivery_date,
     overdue_delivery: s.overdueDelivery ? 'Yes' : 'No',
@@ -82,11 +86,19 @@ export default function CriticalSkus() {
         <ExportButton data={exportData} filename="critical-skus.csv" />
       </div>
 
+      {excludedCount > 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-4 py-3 mb-4">
+          <span className="text-xs text-muted-foreground">
+            {excludedCount} SKUs excluded — missing stock or lead time data. See ABC-XYZ Detail for full list.
+          </span>
+        </div>
+      )}
+
       <div className="bg-card border rounded-lg overflow-hidden">
         <VirtualizedTable
           data={paginatedData}
           rowKey={(s) => s.sku}
-          rowClassName={(s) => s.days_of_stock < 7 ? 'row-critical' : ''}
+          rowClassName={(s) => (s.days_of_stock ?? Infinity) < 7 ? 'row-critical' : ''}
           columns={[
             {
               key: 'sku',
@@ -153,15 +165,15 @@ export default function CriticalSkus() {
               key: 'days_of_stock',
               header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => (
-                <span className={`text-right font-semibold ${s.days_of_stock < 7 ? 'text-destructive' : 'text-warning'}`}>
-                  {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
+                <span className={`text-right font-semibold ${(s.days_of_stock ?? Infinity) < 7 ? 'text-destructive' : 'text-warning'}`}>
+                  {s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
                 </span>
               ),
             },
             {
               key: 'reorder_point',
               header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" />,
-              render: (s) => <span className="text-right">{Math.round(s.reorder_point)}</span>,
+              render: (s) => <span className="text-right">{s.reorder_point !== null ? Math.round(s.reorder_point) : '—'}</span>,
             },
             {
               key: 'stock_qty',

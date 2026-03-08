@@ -25,12 +25,13 @@ export interface ReorderResult {
  * Order qty = 2 × ROP − effective_stock, rounded up to nearest 10.
  */
 export function ropStrategy(sku: SkuAnalysis): ReorderResult {
-  const raw = sku.reorder_point * 2 - sku.effective_stock;
+  const rp = sku.reorder_point ?? 0;
+  const raw = rp * 2 - sku.effective_stock;
   return {
     strategy: 'rop',
     strategyLabel: 'Reorder Point',
     suggested_order_qty: raw > 0 ? Math.ceil(raw / 10) * 10 : 0,
-    reorder_trigger: `Stock ≤ ${Math.round(sku.reorder_point)} units`,
+    reorder_trigger: `Stock ≤ ${Math.round(rp)} units`,
   };
 }
 
@@ -39,6 +40,7 @@ export function ropStrategy(sku: SkuAnalysis): ReorderResult {
  * Uses configurable ordering cost and holding cost percentage.
  */
 export function eoqStrategy(sku: SkuAnalysis, settings: EoqSettings = DEFAULT_EOQ_SETTINGS): ReorderResult {
+  const rp = sku.reorder_point ?? 0;
   const annualDemand = sku.avg_daily_demand * 365;
   const holdingCost = sku.unit_price * settings.holdingPct;
 
@@ -52,7 +54,7 @@ export function eoqStrategy(sku: SkuAnalysis, settings: EoqSettings = DEFAULT_EO
     strategy: 'eoq',
     strategyLabel: 'EOQ (Economic Order Qty)',
     suggested_order_qty: qty,
-    reorder_trigger: `Stock ≤ ${Math.round(sku.reorder_point)} units, order EOQ batch`,
+    reorder_trigger: `Stock ≤ ${Math.round(rp)} units, order EOQ batch`,
   };
 }
 
@@ -61,8 +63,8 @@ export function eoqStrategy(sku: SkuAnalysis, settings: EoqSettings = DEFAULT_EO
  * Order qty = max - effective_stock.
  */
 export function minMaxStrategy(sku: SkuAnalysis): ReorderResult {
-  const min = sku.reorder_point;
-  const max = sku.reorder_point * 2;
+  const min = sku.reorder_point ?? 0;
+  const max = min * 2;
   const qty = Math.max(0, Math.ceil((max - sku.effective_stock) / 10) * 10);
 
   return {
@@ -78,7 +80,8 @@ export function minMaxStrategy(sku: SkuAnalysis): ReorderResult {
  * Target = avg demand × (review period + lead time) + safety stock.
  */
 export function periodicStrategy(sku: SkuAnalysis, reviewPeriodDays: number = 14): ReorderResult {
-  const target = sku.avg_daily_demand * (reviewPeriodDays + sku.lead_time_days) + sku.safety_stock;
+  const ss = sku.safety_stock ?? 0;
+  const target = sku.avg_daily_demand * (reviewPeriodDays + sku.lead_time_days) + ss;
   const qty = Math.max(0, Math.ceil((target - sku.effective_stock) / 10) * 10);
 
   return {

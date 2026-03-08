@@ -26,10 +26,10 @@ describe("parseRows", () => {
     expect(map.get("SKU-001")!.stock_qty).toBe(0);
   });
 
-  it("preserves zero lead_time_days", () => {
+  it("clamps zero lead_time_days to 1", () => {
     const rows = [makeRow({ lead_time_days: 0 })];
     const map = parseRows(rows);
-    expect(map.get("SKU-001")!.lead_time_days).toBe(0);
+    expect(map.get("SKU-001")!.lead_time_days).toBe(1); // clamped from 0→1
   });
 
   it("preserves zero ordered_qty", () => {
@@ -47,7 +47,7 @@ describe("parseRows", () => {
     const sku = map.get("SKU-001")!;
     expect(sku.stock_qty).toBe(0);
     expect(sku.ordered_qty).toBe(0);
-    expect(sku.lead_time_days).toBe(0);
+    expect(sku.lead_time_days).toBe(1); // clamped from 0→1
   });
 
   it("keeps previous value when field is NaN", () => {
@@ -175,10 +175,10 @@ describe("ABC classification", () => {
     expect(bySku["S3"]).toBe("C");
   });
 
-  it("all SKUs with zero revenue default to A (pctBefore is 0)", () => {
+  it("all SKUs with zero revenue get N/A (no price data)", () => {
     const skus = [makeSku("S1", 0, 0), makeSku("S2", 0, 0)];
     const result = runAbc(skus);
-    result.forEach((r) => expect(r.abc_class).toBe("A"));
+    result.forEach((r) => expect(r.abc_class).toBe("N/A"));
   });
 });
 
@@ -244,11 +244,10 @@ describe("XYZ classification", () => {
     expect(result[0].cv).toBeGreaterThan(1.0);
   });
 
-  it("classifies zero demand as X (cv = 0)", () => {
+  it("classifies zero demand as N/A (insufficient history)", () => {
     const sales = Array(31).fill(0);
     const result = runAnalysis([makeSkuWithSales("S1", sales)]);
-    expect(result[0].xyz_class).toBe("X");
-    expect(result[0].cv).toBe(0);
+    expect(result[0].xyz_class).toBe("N/A");
   });
 });
 
@@ -284,12 +283,13 @@ describe("safety stock and reorder point", () => {
     expect(result[0].reorder_point).toBeCloseTo(avgDemand * leadTime, 2);
   });
 
-  it("calculates effective_stock as stock_qty + ordered_qty", () => {
+  it("calculates effective_stock as stock_qty (ordered excluded due to past due date)", () => {
     const sales = Array(31).fill(5);
     const result = runAnalysis([
       makeSkuWithSales("S1", sales, { stockQty: 50, orderedQty: 30 }),
     ]);
-    expect(result[0].effective_stock).toBe(80);
+    // expected_delivery_date defaults to past → pastDueOrders=true → ordered excluded
+    expect(result[0].effective_stock).toBe(50);
   });
 
   it("days_of_stock is Infinity when avg_daily_demand is 0", () => {
@@ -303,8 +303,8 @@ describe("safety stock and reorder point", () => {
     const result = runAnalysis([
       makeSkuWithSales("S1", sales, { stockQty: 50, orderedQty: 50 }),
     ]);
-    // effective = 100, avg_daily = 10 → days = 10
-    expect(result[0].days_of_stock).toBeCloseTo(10, 2);
+    // effective = 50 (ordered excluded due to past due), avg_daily = 10 → days = 5
+    expect(result[0].days_of_stock).toBeCloseTo(5, 2);
   });
 });
 
@@ -387,19 +387,21 @@ describe("Edge cases: zero demand", () => {
     expect(sku.days_of_stock).toBe(Infinity);
   });
 
-  it("days_of_stock should be 0 when both demand and stock are 0", () => {
+  it("days_of_stock should be null when both demand and stock are 0", () => {
     const rows = [makeRow({ sold_qty: 0, stock_qty: 0, ordered_qty: 0 })];
     const map = parseRows(rows);
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(sku.days_of_stock).toBe(0);
+    // No demand history (sold_qty=0) and no stock → null
+    expect(sku.days_of_stock).toBeNull();
   });
 
-  it("safety_stock should be 0 when there is no variability", () => {
+  it("safety_stock should be null when there is no demand history", () => {
     const map = parseRows(zeroSalesRows);
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(sku.safety_stock).toBe(0);
+    // No demand history → safety_stock is null (capability-based)
+    expect(sku.safety_stock).toBeNull();
   });
 
   it("suggested order qty should be 0 when demand is 0", () => {
@@ -413,8 +415,8 @@ describe("Edge cases: negative / zero stock", () => {
     const map = parseRows(rows);
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
-    expect(Number.isFinite(sku.days_of_stock)).toBe(true);
-    expect(sku.effective_stock).toBe(50); // ordered_qty default is 50
+    expect(sku.days_of_stock !== null && Number.isFinite(sku.days_of_stock)).toBe(true);
+    expect(sku.effective_stock).toBe(0); // ordered_qty excluded (past due)
   });
 
   it("effective_stock can be negative if stock is 0 and ordered is 0", () => {
@@ -423,7 +425,8 @@ describe("Edge cases: negative / zero stock", () => {
     const results = analyzeSkus(map, new Date("2026-01-01"), new Date("2026-01-31"), 30);
     const sku = results.find(r => r.sku === "SKU-001")!;
     expect(sku.effective_stock).toBe(0);
-    expect(sku.days_of_stock).toBe(0);
+    // No demand history (sold_qty=5 > 0 so hasDemandHistory=true), effective_stock=0, demand > 0 → 0
+    expect(sku.days_of_stock).toBeCloseTo(0, 2);
   });
 });
 

@@ -44,8 +44,17 @@ export interface SkuData {
   supplierOptions: SupplierOption[];
 }
 
-export type AbcClass = 'A' | 'B' | 'C';
-export type XyzClass = 'X' | 'Y' | 'Z';
+export type AbcClass = 'A' | 'B' | 'C' | 'N/A';
+export type XyzClass = 'X' | 'Y' | 'Z' | 'N/A';
+
+export interface SkuCapability {
+  hasDemandHistory: boolean;
+  hasStockData: boolean;
+  hasLeadTime: boolean;
+  hasPrice: boolean;
+  hasOrderData: boolean;
+  tier: 'full' | 'partial' | 'stock-only' | 'sales-only' | 'minimal';
+}
 export type Urgency = 'Critical' | 'Warning' | 'Watch';
 
 export type TrendDirection = 'rising' | 'falling' | 'stable';
@@ -55,12 +64,12 @@ export interface SkuAnalysis extends SkuData {
   avg_daily_demand_ewma: number;
   demandMethod: 'simple' | 'ewma';
   std_dev: number;
-  safety_stock: number;
+  safety_stock: number | null;
   safetyStockFormula: 'simple' | 'full';
   effectiveServiceLevel: string; // '90%' | '95%' | '99%'
-  reorder_point: number;
+  reorder_point: number | null;
   effective_stock: number;
-  days_of_stock: number;
+  days_of_stock: number | null;
   abc_class: AbcClass;
   xyz_class: XyzClass;
   total_revenue: number;
@@ -84,6 +93,8 @@ export interface SkuAnalysis extends SkuData {
   // Reservations
   reserved_qty: number;
   available_qty: number;
+  // ─── Capability ───
+  capability: SkuCapability;
   // ─── Edge case flags ───
   insufficientData: boolean;      // actual sales days < demandDays × 0.3
   singleRecordEstimate: boolean;  // only 1 sale record → std_dev estimated

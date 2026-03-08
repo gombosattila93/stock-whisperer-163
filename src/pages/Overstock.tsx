@@ -19,7 +19,7 @@ export default function Overstock() {
 
   const overstock = useMemo(() =>
     filtered
-      .filter(s => s.days_of_stock > 180 && !s.dead_stock)
+      .filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && !s.dead_stock)
       .map(s => {
         const idealStock = s.avg_daily_demand * 180;
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
@@ -31,6 +31,12 @@ export default function Overstock() {
         if (b.shelfLifeRisk === 'critical' && a.shelfLifeRisk !== 'critical') return 1;
         return b.tied_up_capital - a.tied_up_capital;
       }),
+    [filtered]
+  );
+
+  // Stock-only SKUs: have stock but no demand data — unknown if overstock
+  const stockOnlySkus = useMemo(() =>
+    filtered.filter(s => s.capability.tier === 'stock-only' && s.stock_qty > 0 && !s.dead_stock),
     [filtered]
   );
 
@@ -94,6 +100,43 @@ export default function Overstock() {
               </thead>
               <tbody>
                 {deadStock.map(s => (
+                  <tr key={s.sku}>
+                    <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
+                    <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
+                    <td className="px-3 py-1.5">{s.supplier}</td>
+                    <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
+                    <td className="px-3 py-1.5 text-right">€{(s.stock_qty * s.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Stock-only: no demand data section */}
+      {stockOnlySkus.length > 0 && (
+        <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="font-semibold">No Demand Data</h2>
+            <Badge variant="secondary" className="text-xs">{stockOnlySkus.length} SKUs</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            These SKUs have stock but no sales history — unable to determine if overstock. Consider verifying demand data.
+          </p>
+          <div className="overflow-auto max-h-[300px]">
+            <table className="data-table text-xs">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">SKU</th>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Name</th>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Supplier</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Stock</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockOnlySkus.map(s => (
                   <tr key={s.sku}>
                     <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
                     <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>

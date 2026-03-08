@@ -7,6 +7,13 @@ import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { DemandSparkline } from "@/components/DemandSparkline";
 import { SupplierOptionsEditor } from "@/components/SupplierOptionsEditor";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -14,8 +21,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AbcClass, XyzClass } from "@/lib/types";
+import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
+
+const TIER_BADGE: Record<SkuCapability['tier'], { label: string; className: string }> = {
+  full: { label: 'Complete', className: 'bg-primary/10 text-primary border-primary/30' },
+  partial: { label: 'Partial', className: 'bg-warning/10 text-warning-foreground border-warning/30' },
+  'stock-only': { label: 'Stock only', className: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
+  'sales-only': { label: 'Sales only', className: 'bg-orange-500/10 text-orange-600 border-orange-500/30' },
+  minimal: { label: 'Minimal', className: 'bg-muted text-muted-foreground border-border' },
+};
+
+function getMissingList(cap: SkuCapability): string[] {
+  const missing: string[] = [];
+  if (!cap.hasPrice) missing.push('unit_price (ABC disabled)');
+  if (!cap.hasLeadTime) missing.push('lead_time_days (reorder disabled)');
+  if (!cap.hasStockData) missing.push('stock_qty (stock analysis disabled)');
+  if (!cap.hasDemandHistory) missing.push('sales data (demand analysis disabled)');
+  if (!cap.hasOrderData) missing.push('ordered_qty');
+  return missing;
+}
 
 export default function AbcXyzDetail() {
   const { filtered, hasData, costSettings, suppliers, skuSupplierOptions, setSkuSupplierOptions } = useInventory();
@@ -49,13 +74,15 @@ export default function AbcXyzDetail() {
   const exportData = sorted.map(s => ({
     sku: s.sku, name: s.sku_name, supplier: s.supplier, category: s.category,
     abc_class: s.abc_class, xyz_class: s.xyz_class,
+    data_tier: s.capability.tier,
     total_revenue: s.total_revenue.toFixed(2), cv: s.cv.toFixed(3),
     avg_daily_demand: s.avg_daily_demand.toFixed(2),
-    stock_qty: s.stock_qty, days_of_stock: Math.round(s.days_of_stock),
+    stock_qty: s.stock_qty,
+    days_of_stock: s.days_of_stock === null ? 'N/A' : s.days_of_stock === Infinity ? 'Infinity' : Math.round(s.days_of_stock),
   }));
 
   // Count total columns for colSpan
-  let colCount = 12; // base columns
+  let colCount = 14; // base columns + data quality
   if (costSettings.holdingCostEnabled) colCount++;
   if (costSettings.obsolescenceCostEnabled) colCount++;
 
@@ -78,7 +105,7 @@ export default function AbcXyzDetail() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {(['A', 'B', 'C'] as AbcClass[]).map(c => (
+              {(['A', 'B', 'C', 'N/A'] as AbcClass[]).map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
@@ -92,7 +119,7 @@ export default function AbcXyzDetail() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {(['X', 'Y', 'Z'] as XyzClass[]).map(c => (
+              {(['X', 'Y', 'Z', 'N/A'] as XyzClass[]).map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
@@ -113,6 +140,7 @@ export default function AbcXyzDetail() {
                 <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
                 <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
                 <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} />
+                <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Data Quality</th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
                 <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" />
                 <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" />
@@ -131,6 +159,8 @@ export default function AbcXyzDetail() {
               {paginatedData.map(s => {
                 const isExpanded = expandedSkus.has(s.sku);
                 const opts = skuSupplierOptions[s.sku] || [];
+                const tierInfo = TIER_BADGE[s.capability.tier];
+                const missingList = getMissingList(s.capability);
                 return (
                   <>
                     <tr key={s.sku} className="cursor-pointer hover:bg-muted/20" onClick={() => toggleExpand(s.sku)}>
@@ -146,22 +176,51 @@ export default function AbcXyzDetail() {
                       <td><HighlightText text={s.supplier} /></td>
                       <td><HighlightText text={s.category} /></td>
                       <td>
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                          s.abc_class === 'A' ? 'bg-primary/10 text-primary' :
-                          s.abc_class === 'B' ? 'bg-warning/10 text-warning-foreground' :
-                          'bg-muted text-muted-foreground'
-                        }`}>
-                          {s.abc_class}
-                        </span>
+                        {s.abc_class === 'N/A' ? (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                            <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground cursor-help">N/A</span>
+                          </TooltipTrigger><TooltipContent><p className="text-xs">{s.abcInfo || 'Price data required for ABC'}</p></TooltipContent></Tooltip></TooltipProvider>
+                        ) : (
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
+                            s.abc_class === 'A' ? 'bg-primary/10 text-primary' :
+                            s.abc_class === 'B' ? 'bg-warning/10 text-warning-foreground' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {s.abc_class}
+                          </span>
+                        )}
                       </td>
                       <td>
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                          s.xyz_class === 'X' ? 'bg-success/10 text-success' :
-                          s.xyz_class === 'Y' ? 'bg-warning/10 text-warning-foreground' :
-                          'bg-destructive/10 text-destructive'
-                        }`}>
-                          {s.xyz_class}
-                        </span>
+                        {s.xyz_class === 'N/A' ? (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                            <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground cursor-help">N/A</span>
+                          </TooltipTrigger><TooltipContent><p className="text-xs">Insufficient sales history (need 3+ records)</p></TooltipContent></Tooltip></TooltipProvider>
+                        ) : (
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
+                            s.xyz_class === 'X' ? 'bg-success/10 text-success' :
+                            s.xyz_class === 'Y' ? 'bg-warning/10 text-warning-foreground' :
+                            'bg-destructive/10 text-destructive'
+                          }`}>
+                            {s.xyz_class}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className={`text-[10px] cursor-help ${tierInfo.className}`}>
+                                {tierInfo.label}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs font-medium mb-1">Data tier: {s.capability.tier}</p>
+                              {missingList.length > 0 && (
+                                <p className="text-xs text-muted-foreground">Missing: {missingList.join(', ')}</p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </td>
                       <td><DemandSparkline sku={s} /></td>
                       <td className="text-right">€{s.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -169,7 +228,11 @@ export default function AbcXyzDetail() {
                       <td className="text-right">{s.avg_daily_demand.toFixed(2)}</td>
                       <td className="text-right">{s.stock_qty.toLocaleString()}</td>
                       <td className="text-right">
-                        {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
+                        {s.days_of_stock === null ? (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                            <span className="text-muted-foreground cursor-help">—</span>
+                          </TooltipTrigger><TooltipContent><p className="text-xs">Stock or demand data required</p></TooltipContent></Tooltip></TooltipProvider>
+                        ) : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
                       </td>
                       {costSettings.holdingCostEnabled && (
                         <td className="text-right">€{s.tco.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>

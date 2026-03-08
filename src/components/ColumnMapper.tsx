@@ -277,6 +277,32 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
           </div>
         </TooltipProvider>
 
+        {/* Feature impact preview */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1">
+          <p className="font-semibold text-foreground mb-1">With this mapping you will get:</p>
+          {mapping['sold_qty'] && mapping['date'] ? (
+            <p className="text-primary">✅ Demand analysis (sold_qty + date mapped)</p>
+          ) : (
+            <p className="text-warning-foreground">⚠️ Demand analysis disabled (need sold_qty + date)</p>
+          )}
+          {mapping['unit_price'] ? (
+            <p className="text-primary">✅ ABC classification (unit_price mapped)</p>
+          ) : (
+            <p className="text-warning-foreground">⚠️ ABC classification disabled (unit_price not mapped)</p>
+          )}
+          {mapping['lead_time_days'] ? (
+            <p className="text-primary">✅ Reorder point calculation (lead_time_days mapped)</p>
+          ) : (
+            <p className="text-warning-foreground">⚠️ Reorder point disabled (lead_time_days not mapped)</p>
+          )}
+          {mapping['stock_qty'] ? (
+            <p className="text-primary">✅ Stock analysis (stock_qty mapped)</p>
+          ) : (
+            <p className="text-warning-foreground">⚠️ Stock analysis disabled (stock_qty not mapped)</p>
+          )}
+          <p className="text-muted-foreground mt-1">ℹ️ You can add missing data manually per SKU later</p>
+        </div>
+
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

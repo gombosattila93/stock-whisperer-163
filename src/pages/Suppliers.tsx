@@ -30,13 +30,13 @@ export default function Suppliers() {
     const map = new Map<string, SupplierRow>();
     for (const s of filtered) {
       const existing = map.get(s.supplier);
-      const isCritical = s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0;
-      const needsReorder = s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0;
-      const excessQty = s.days_of_stock > 180 && s.avg_daily_demand > 0
+      const isCritical = s.days_of_stock !== null && s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0;
+      const needsReorder = s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0;
+      const excessQty = s.days_of_stock !== null && s.days_of_stock > 180 && s.avg_daily_demand > 0
         ? s.effective_stock - s.avg_daily_demand * 180
         : 0;
       const tiedUp = excessQty > 0 ? excessQty * s.unit_price : 0;
-      const orderQty = needsReorder ? getSuggestedOrderQty(s.reorder_point, s.effective_stock) : 0;
+      const orderQty = needsReorder ? getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock) : 0;
       const orderVal = orderQty * s.unit_price;
 
       if (existing) {
@@ -72,7 +72,7 @@ export default function Suppliers() {
   const expandedSkus = useMemo(() => {
     if (!expandedSupplier) return [];
     return filtered
-      .filter(s => s.supplier === expandedSupplier && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .filter(s => s.supplier === expandedSupplier && s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => ({
         sku: s.sku,
         sku_name: s.sku_name,
@@ -81,8 +81,8 @@ export default function Suppliers() {
         ordered_qty: s.ordered_qty,
         days_of_stock: s.days_of_stock,
         unit_price: s.unit_price,
-        suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
-        order_value: getSuggestedOrderQty(s.reorder_point, s.effective_stock) * s.unit_price,
+        suggested_order_qty: getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock),
+        order_value: getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock) * s.unit_price,
         overdueDelivery: s.overdueDelivery,
         expected_delivery_date: s.expected_delivery_date,
       }));
@@ -91,11 +91,11 @@ export default function Suppliers() {
   const emailSkus = useMemo(() => {
     if (!emailSupplier) return [];
     return filtered
-      .filter(s => s.supplier === emailSupplier && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
+      .filter(s => s.supplier === emailSupplier && s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => ({
         sku: s.sku,
         sku_name: s.sku_name,
-        suggested_order_qty: getSuggestedOrderQty(s.reorder_point, s.effective_stock),
+        suggested_order_qty: getSuggestedOrderQty(s.reorder_point ?? 0, s.effective_stock),
         unit_price: s.unit_price,
       }));
   }, [emailSupplier, filtered]);
@@ -223,7 +223,7 @@ export default function Suppliers() {
                                     <td className="py-1.5 px-2">{s.category}</td>
                                     <td className="py-1.5 px-2 text-right">{s.stock_qty.toLocaleString()}</td>
                                     <td className="py-1.5 px-2 text-right">{s.ordered_qty.toLocaleString()}</td>
-                                    <td className="py-1.5 px-2 text-right">{s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}</td>
+                                    <td className="py-1.5 px-2 text-right">{s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}</td>
                                     <td className="py-1.5 px-2 text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
                                     <td className="py-1.5 px-2 text-right">€{s.order_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className="py-1.5 px-2">

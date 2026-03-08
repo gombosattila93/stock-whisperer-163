@@ -68,9 +68,9 @@ export default function Overstock() {
               <tbody>
                 {paginatedData.map(s => (
                   <tr key={s.sku}>
-                    <td className="font-mono font-medium">{s.sku}</td>
-                    <td>{s.sku_name}</td>
-                    <td>{s.supplier}</td>
+                    <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
+                    <td><HighlightText text={s.sku_name} /></td>
+                    <td><HighlightText text={s.supplier} /></td>
                     <td className="text-right">
                       {s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
                     </td>

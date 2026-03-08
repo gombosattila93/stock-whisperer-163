@@ -6,20 +6,26 @@ import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
+import { PackageX } from "lucide-react";
 
 export default function Overstock() {
   const { filtered, hasData, costSettings } = useInventory();
 
+  // 2c) Separate dead stock from overstock
+  const deadStock = useMemo(() =>
+    filtered.filter(s => s.dead_stock),
+    [filtered]
+  );
+
   const overstock = useMemo(() =>
     filtered
-      .filter(s => s.days_of_stock > 180)
+      .filter(s => s.days_of_stock > 180 && !s.dead_stock)
       .map(s => {
         const idealStock = s.avg_daily_demand * 180;
         const excess_qty = Math.max(0, s.effective_stock - idealStock);
         const tied_up_capital = excess_qty * s.unit_price;
         return { ...s, excess_qty: Math.round(excess_qty), tied_up_capital };
       })
-      // Sort critical shelf life items to top
       .sort((a, b) => {
         if (a.shelfLifeRisk === 'critical' && b.shelfLifeRisk !== 'critical') return -1;
         if (b.shelfLifeRisk === 'critical' && a.shelfLifeRisk !== 'critical') return 1;
@@ -34,6 +40,7 @@ export default function Overstock() {
   if (!hasData) return <EmptyState />;
 
   const totalTiedUp = overstock.reduce((s, o) => s + o.tied_up_capital, 0);
+  const deadStockValue = deadStock.reduce((s, d) => s + d.stock_qty * d.unit_price, 0);
   const showHolding = costSettings.holdingCostEnabled;
   const showStorage = costSettings.storageCostEnabled;
   const showShelfLife = costSettings.shelfLifeEnabled;
@@ -59,6 +66,47 @@ export default function Overstock() {
         </div>
         <ExportButton data={exportData} filename="overstock.csv" />
       </div>
+
+      {/* 2c) Dead stock section */}
+      {deadStock.length > 0 && (
+        <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <PackageX className="h-5 w-5 text-muted-foreground" />
+            <h2 className="font-semibold">Dead Stock</h2>
+            <Badge variant="secondary" className="text-xs">{deadStock.length} SKUs</Badge>
+            <span className="text-sm text-muted-foreground ml-auto">
+              Value: €{deadStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Items with zero demand but positive stock — consider liquidation or write-off.
+          </p>
+          <div className="overflow-auto max-h-[300px]">
+            <table className="data-table text-xs">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">SKU</th>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Name</th>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Supplier</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Stock</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deadStock.map(s => (
+                  <tr key={s.sku}>
+                    <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
+                    <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
+                    <td className="px-3 py-1.5">{s.supplier}</td>
+                    <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
+                    <td className="px-3 py-1.5 text-right">€{(s.stock_qty * s.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">

@@ -1,12 +1,14 @@
 import { RawRow } from './types';
 import { SkuStrategyOverrides } from './skuStrategyOverrides';
 import { EoqSettings, DEFAULT_EOQ_SETTINGS } from './reorderStrategies';
+import { CostSettings, DEFAULT_COST_SETTINGS } from './costSettings';
 
 const DB_NAME = 'inventory-dashboard';
-const DB_VERSION = 3; // Bumped for stock-overrides store
+const DB_VERSION = 4; // Bumped for cost-settings store
 const DATA_STORE = 'data';
 const SETTINGS_STORE = 'settings';
 const STOCK_OVERRIDES_STORE = 'stock-overrides';
+const COST_SETTINGS_STORE = 'cost-settings';
 const DATA_KEY = 'rawRows';
 const OVERRIDES_KEY = 'strategyOverrides';
 const EOQ_SETTINGS_KEY = 'eoqSettings';

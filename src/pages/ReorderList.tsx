@@ -246,7 +246,10 @@ export default function ReorderList() {
   const grandTotal = useMemo(() => ({
     skuCount: supplierSummary.reduce((s, r) => s + r.skuCount, 0),
     totalQty: supplierSummary.reduce((s, r) => s + r.totalQty, 0),
-    totalValue: supplierSummary.reduce((s, r) => s + r.totalValue, 0),
+    totalValueEur: supplierSummary.reduce((s, r) => s + r.totalValueEur, 0),
+    totalUsdRaw: supplierSummary.reduce((s, r) => s + r.totalValueUsdRaw, 0),
+    totalUsdAsEur: supplierSummary.reduce((s, r) => s + r.totalValueUsdAsEur, 0),
+    hasAnyUsd: supplierSummary.some(r => r.hasUsd),
   }), [supplierSummary]);
 
   if (!hasData) return <EmptyState />;

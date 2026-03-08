@@ -3,8 +3,12 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { GlobalFilters } from "@/components/GlobalFilters";
 import { DataActions } from "@/components/EmptyState";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ColumnMapper } from "@/components/ColumnMapper";
+import { useInventory } from "@/context/InventoryContext";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { pendingFile, pendingHeaders, setPendingFile, loadFileWithMapping } = useInventory();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -22,6 +26,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+
+      {pendingFile && (
+        <ColumnMapper
+          open={!!pendingFile}
+          onOpenChange={(open) => { if (!open) setPendingFile(null); }}
+          sourceColumns={pendingHeaders}
+          onConfirm={(mapping) => {
+            if (pendingFile) loadFileWithMapping(pendingFile, mapping);
+          }}
+        />
+      )}
     </SidebarProvider>
   );
 }

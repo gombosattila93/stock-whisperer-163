@@ -25,6 +25,19 @@ export function parseCsvFile(file: File): Promise<RawRow[]> {
   });
 }
 
+/** Parse CSV without type coercion — returns raw string records for column mapping */
+export function parseCsvFileRaw(file: File): Promise<Record<string, string>[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h) => h.trim(),
+      complete: (results) => resolve(results.data),
+      error: (err: Error) => reject(err),
+    });
+  });
+}
+
 export function exportToCsv(data: Record<string, unknown>[], filename: string) {
   const csv = Papa.unparse(data);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

@@ -8,8 +8,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Settings2 } from "lucide-react";
 import { SERVICE_LEVELS } from "@/lib/calculations";
+import { FilterPresets } from "@/components/FilterPresets";
+import { ClassificationSettings } from "@/components/ClassificationSettings";
+import { useState } from "react";
 
 export function GlobalFilters() {
   const {
@@ -28,84 +32,109 @@ export function GlobalFilters() {
     hasData,
     filtered,
     analysis,
+    thresholds,
+    setThresholds,
   } = useInventory();
+
+  const [showClassification, setShowClassification] = useState(false);
 
   if (!hasData) return null;
 
   return (
-    <div className="flex items-center gap-3 ml-auto flex-wrap">
-      <div className="flex items-center gap-1.5 relative">
-        <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
-        <Input
-          type="text"
-          placeholder="Search SKUs…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-[180px] h-8 text-xs pl-8"
-        />
-        {searchQuery && (
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {filtered.length}/{analysis.length}
-          </span>
-        )}
+    <>
+      <div className="flex items-center gap-3 ml-auto flex-wrap">
+        <div className="flex items-center gap-1.5 relative">
+          <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Search SKUs…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-[180px] h-8 text-xs pl-8"
+          />
+          {searchQuery && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {filtered.length}/{analysis.length}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">Supplier</Label>
+          <Select value={filterSupplier} onValueChange={(v) => setFilterSupplier(v === "all" ? "" : v)}>
+            <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {suppliers.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">Category</Label>
+          <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
+            <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">Service level</Label>
+          <Select value={serviceLevel} onValueChange={setServiceLevel}>
+            <SelectTrigger className="w-[80px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(SERVICE_LEVELS).map((level) => (
+                <SelectItem key={level} value={level}>{level}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">Demand window</Label>
+          <Input
+            type="number"
+            value={demandDays}
+            onChange={(e) => setDemandDays(Number(e.target.value) || 90)}
+            className="w-[70px] h-8 text-xs"
+            min={7}
+            max={365}
+          />
+          <span className="text-xs text-muted-foreground">days</span>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5"
+          onClick={() => setShowClassification(true)}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          ABC/XYZ
+        </Button>
+
+        <FilterPresets />
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <Label className="text-xs text-muted-foreground whitespace-nowrap">Supplier</Label>
-        <Select value={filterSupplier} onValueChange={(v) => setFilterSupplier(v === "all" ? "" : v)}>
-          <SelectTrigger className="w-[140px] h-8 text-xs">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {suppliers.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <Label className="text-xs text-muted-foreground whitespace-nowrap">Category</Label>
-        <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
-          <SelectTrigger className="w-[140px] h-8 text-xs">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <Label className="text-xs text-muted-foreground whitespace-nowrap">Service level</Label>
-        <Select value={serviceLevel} onValueChange={setServiceLevel}>
-          <SelectTrigger className="w-[80px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.keys(SERVICE_LEVELS).map((level) => (
-              <SelectItem key={level} value={level}>{level}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <Label className="text-xs text-muted-foreground whitespace-nowrap">Demand window</Label>
-        <Input
-          type="number"
-          value={demandDays}
-          onChange={(e) => setDemandDays(Number(e.target.value) || 90)}
-          className="w-[70px] h-8 text-xs"
-          min={7}
-          max={365}
-        />
-        <span className="text-xs text-muted-foreground">days</span>
-      </div>
-    </div>
+      <ClassificationSettings
+        open={showClassification}
+        onOpenChange={setShowClassification}
+        thresholds={thresholds}
+        onApply={setThresholds}
+      />
+    </>
   );
 }

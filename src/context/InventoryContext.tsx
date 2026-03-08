@@ -124,6 +124,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [stockOverrides, setStockOverrides] = useState<StockOverrides>({});
   const [costSettings, setCostSettingsRaw] = useState<CostSettings>(DEFAULT_COST_SETTINGS);
   const [skuSupplierOptions, setSkuSupplierOptionsRaw] = useState<SkuSupplierOptionsMap>({});
+  const [reservations, setReservations] = useState<ProjectReservation[]>([]);
 
   const workerRef = useRef<Worker | null>(null);
 

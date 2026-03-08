@@ -14,6 +14,8 @@ interface InventoryContextType {
   setFilterCategory: (v: string) => void;
   demandDays: number;
   setDemandDays: (v: number) => void;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
   hasData: boolean;
   loadFile: (file: File) => Promise<void>;
   loadSample: () => Promise<void>;
@@ -33,6 +35,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [filterSupplier, setFilterSupplier] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [demandDays, setDemandDays] = useState(90);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const processData = useCallback((rows: RawRow[], days: number) => {
     const skuMap = parseRows(rows);
@@ -51,12 +54,20 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const categories = useMemo(() => [...new Set(analysis.map(a => a.category))].sort(), [analysis]);
 
   const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
     return analysis.filter(a => {
       if (filterSupplier && a.supplier !== filterSupplier) return false;
       if (filterCategory && a.category !== filterCategory) return false;
+      if (q) {
+        const match = a.sku.toLowerCase().includes(q) ||
+          a.sku_name.toLowerCase().includes(q) ||
+          a.supplier.toLowerCase().includes(q) ||
+          a.category.toLowerCase().includes(q);
+        if (!match) return false;
+      }
       return true;
     });
-  }, [analysis, filterSupplier, filterCategory]);
+  }, [analysis, filterSupplier, filterCategory, searchQuery]);
 
   const loadFile = useCallback(async (file: File) => {
     const rows = await parseCsvFile(file);
@@ -79,6 +90,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setFilterCategory,
       demandDays,
       setDemandDays,
+      searchQuery,
+      setSearchQuery,
       hasData: rawRows.length > 0,
       loadFile,
       loadSample,

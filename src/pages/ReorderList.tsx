@@ -4,6 +4,8 @@ import { ExportButton } from "@/components/ExportButton";
 import { getSuggestedOrderQty, getUrgency } from "@/lib/calculations";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
+import { HighlightText } from "@/components/HighlightText";
+import { DemandSparkline } from "@/components/DemandSparkline";
 import { useMemo } from "react";
 
 export default function ReorderList() {
@@ -59,6 +61,7 @@ export default function ReorderList() {
                   <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
                   <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
+                  <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
                   <SortableHeader column="suggested_order_qty" label="Suggested Order Qty" sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} />
                 </tr>
@@ -66,9 +69,10 @@ export default function ReorderList() {
               <tbody>
                 {paginatedData.map(s => (
                   <tr key={s.sku}>
-                    <td className="font-mono font-medium">{s.sku}</td>
-                    <td>{s.sku_name}</td>
-                    <td>{s.supplier}</td>
+                    <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
+                    <td><HighlightText text={s.sku_name} /></td>
+                    <td><HighlightText text={s.supplier} /></td>
+                    <td><DemandSparkline sku={s} /></td>
                     <td className="text-right font-semibold">{s.suggested_order_qty.toLocaleString()}</td>
                     <td>
                       <span className={`inline-block px-2.5 py-1 rounded-md text-xs ${urgencyClass[s.urgency]}`}>

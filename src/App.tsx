@@ -10,6 +10,7 @@ import CriticalSkus from "./pages/CriticalSkus";
 import ReorderList from "./pages/ReorderList";
 import Overstock from "./pages/Overstock";
 import AbcXyzDetail from "./pages/AbcXyzDetail";
+import Suppliers from "./pages/Suppliers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/reorder" element={<ReorderList />} />
               <Route path="/overstock" element={<Overstock />} />
               <Route path="/abc-xyz" element={<AbcXyzDetail />} />
+              <Route path="/suppliers" element={<Suppliers />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

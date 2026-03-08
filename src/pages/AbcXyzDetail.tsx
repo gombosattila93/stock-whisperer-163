@@ -4,6 +4,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
+import { HighlightText } from "@/components/HighlightText";
+import { DemandSparkline } from "@/components/DemandSparkline";
 import {
   Select,
   SelectContent,
@@ -93,6 +95,7 @@ export default function AbcXyzDetail() {
                 <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />
                 <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
                 <SortableHeader column="xyz_class" label="XYZ" sort={sort} onSort={toggleSort} />
+                <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trend</th>
                 <SortableHeader column="total_revenue" label="Revenue" sort={sort} onSort={toggleSort} align="right" />
                 <SortableHeader column="cv" label="CV" sort={sort} onSort={toggleSort} align="right" />
                 <SortableHeader column="avg_daily_demand" label="Avg Daily Demand" sort={sort} onSort={toggleSort} align="right" />
@@ -103,10 +106,10 @@ export default function AbcXyzDetail() {
             <tbody>
               {paginatedData.map(s => (
                 <tr key={s.sku}>
-                  <td className="font-mono font-medium">{s.sku}</td>
-                  <td>{s.sku_name}</td>
-                  <td>{s.supplier}</td>
-                  <td>{s.category}</td>
+                  <td className="font-mono font-medium"><HighlightText text={s.sku} /></td>
+                  <td><HighlightText text={s.sku_name} /></td>
+                  <td><HighlightText text={s.supplier} /></td>
+                  <td><HighlightText text={s.category} /></td>
                   <td>
                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
                       s.abc_class === 'A' ? 'bg-primary/10 text-primary' :
@@ -125,6 +128,7 @@ export default function AbcXyzDetail() {
                       {s.xyz_class}
                     </span>
                   </td>
+                  <td><DemandSparkline sku={s} /></td>
                   <td className="text-right">${s.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   <td className="text-right">{s.cv.toFixed(3)}</td>
                   <td className="text-right">{s.avg_daily_demand.toFixed(2)}</td>

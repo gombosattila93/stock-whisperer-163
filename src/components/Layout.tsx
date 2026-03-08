@@ -32,6 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           open={!!pendingFile}
           onOpenChange={(open) => { if (!open) setPendingFile(null); }}
           sourceColumns={pendingHeaders}
+          rawData={pendingRawData}
           onConfirm={(mapping) => {
             if (pendingFile) loadFileWithMapping(pendingFile, mapping);
           }}

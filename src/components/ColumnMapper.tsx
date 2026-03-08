@@ -214,6 +214,22 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
           )}
         </div>
 
+        {dateFormatInfo && (
+          <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3 text-xs">
+            <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground">
+                Date format detected: <span className="text-primary">{dateFormatInfo.label}</span>
+              </p>
+              <p className="text-muted-foreground mt-0.5">
+                Samples: {dateFormatInfo.sampleValues.map((v, i) => (
+                  <code key={i} className="mx-0.5 rounded bg-background px-1 py-0.5">{v}</code>
+                ))}
+              </p>
+            </div>
+          </div>
+        )}
+
         <TooltipProvider>
           <div className="space-y-2">
             {TARGET_FIELDS.map((field) => (

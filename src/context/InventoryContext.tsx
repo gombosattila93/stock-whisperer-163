@@ -132,6 +132,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const stockOverrideCount = useMemo(() => Object.keys(stockOverrides).length, [stockOverrides]);
 
+  const setCostSettings = useCallback((s: CostSettings) => {
+    setCostSettingsRaw(s);
+    saveCostSettings(s);
+  }, []);
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {

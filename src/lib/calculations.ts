@@ -276,6 +276,8 @@ export function analyzeSkus(
       priceBreakSaving,
       shelfLifeDays,
       shelfLifeRisk,
+      reserved_qty: 0,
+      available_qty: sku.stock_qty,
     });
   }
 

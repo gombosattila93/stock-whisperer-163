@@ -4,7 +4,7 @@ import {
   BookOpen, Upload, LayoutDashboard, AlertTriangle, ShoppingCart,
   PackageX, Grid3X3, Truck, Calculator, Wallet, ChevronDown, ChevronRight,
   Target, TrendingUp, Lightbulb, FileText, Settings, ArrowRight, Zap,
-  BarChart3, DollarSign, Shield, Clock,
+  BarChart3, DollarSign, Shield, Clock, GitMerge, Columns, Activity, FolderOpen,
 } from "lucide-react";
 
 interface SectionProps {
@@ -59,6 +59,9 @@ function KeyValue({ label, children }: { label: string; children: React.ReactNod
 const tocItems = [
   { id: "getting-started", label: "Getting Started" },
   { id: "csv-format", label: "CSV Format" },
+  { id: "column-mapping", label: "Column Mapping" },
+  { id: "append-dedup", label: "Append & Deduplication" },
+  { id: "extreme-values", label: "Extreme Value Detection" },
   { id: "overview", label: "Overview Dashboard" },
   { id: "critical-skus", label: "Critical SKUs" },
   { id: "reorder-list", label: "Reorder List" },
@@ -68,6 +71,7 @@ const tocItems = [
   { id: "suppliers", label: "Suppliers" },
   { id: "cost-model", label: "Cost Model" },
   { id: "multicurrency", label: "Multi-Currency" },
+  { id: "projects", label: "Project Reservations" },
   { id: "best-practices", label: "Best Practices" },
   { id: "glossary", label: "Glossary" },
 ];
@@ -123,7 +127,7 @@ export default function Guide() {
           <Tip>Your data stays in-browser — nothing is sent to any server. Refresh the page to clear all data, or use Projects to save/load snapshots.</Tip>
           <div className="space-y-1">
             <p className="font-medium text-foreground">Data Persistence:</p>
-            <p>InventoryPRO stores your last import in browser local storage. Cost Model settings, EOQ parameters, and SKU strategy overrides are also persisted across sessions. Use the <strong>Projects</strong> page to save named snapshots for different product lines or time periods.</p>
+            <p>InventoryPRO stores your last import in IndexedDB (browser storage). Cost Model settings, EOQ parameters, stock overrides, and FX rates are also persisted across sessions. Use the <strong>Projects</strong> page to reserve stock for customer orders and track fulfillment status.</p>
           </div>
         </Section>
 
@@ -170,6 +174,68 @@ export default function Guide() {
           <Tip>If your ERP exports Hungarian column names (e.g., "elad_ar" for selling price, "beszerzesi_ar" for purchase price), the system recognizes these automatically.</Tip>
         </Section>
 
+        {/* Column Mapping */}
+        <Section id="column-mapping" icon={Columns} title="Column Mapping">
+          <p>If your CSV uses non-standard column names (e.g. your ERP exports "Item Code" instead of "sku"), the system automatically opens the Column Mapping dialog instead of rejecting the file.</p>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">How It Works:</p>
+            <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
+              <li>Upload your CSV — the system checks for required columns (<code className="bg-muted px-1 rounded">sku</code>, <code className="bg-muted px-1 rounded">date</code>).</li>
+              <li>If columns are missing or named differently, the Column Mapper dialog opens automatically.</li>
+              <li>Use the dropdowns to map each target field to the matching column in your file.</li>
+              <li>Required fields (<code className="bg-muted px-1 rounded">sku</code>, <code className="bg-muted px-1 rounded">date</code>) must be mapped before confirming.</li>
+              <li>Click <strong>Confirm Mapping</strong> to import with the remapped columns.</li>
+            </ol>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Auto-detected Aliases:</p>
+            <p className="text-xs">The system recognises many common aliases automatically and will pre-fill mappings where it can. Hungarian ERP field names (e.g. <code className="bg-muted px-1 rounded">cikkkod</code>, <code className="bg-muted px-1 rounded">elad_ar</code>) are included in the alias list.</p>
+          </div>
+          <Tip>You can skip optional fields (like supplier or category) in the mapper — the system will use default values and still import successfully.</Tip>
+        </Section>
+
+        {/* Append & Deduplication */}
+        <Section id="append-dedup" icon={GitMerge} title="Append Files & Duplicate Detection">
+          <p>Use <strong>Append File</strong> (available after initial load) to merge a new export into your existing dataset — for example, adding this month's sales to last month's data.</p>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">What Happens on Append:</p>
+            <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
+              <li>The new file is parsed and validated.</li>
+              <li>Each incoming row is compared to existing rows using a partial fingerprint (SKU + date).</li>
+              <li><strong>Exact duplicates</strong> are silently skipped.</li>
+              <li><strong>Conflicts</strong> (same SKU + date but different values) are shown in a resolution dialog.</li>
+              <li><strong>Genuine new rows</strong> are appended automatically.</li>
+            </ol>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Conflict Resolution Options:</p>
+            <div className="space-y-0.5 text-xs">
+              <KeyValue label="Use New">Replace the existing row with the incoming row</KeyValue>
+              <KeyValue label="Keep Old">Discard the incoming row, keep existing data</KeyValue>
+              <KeyValue label="Keep Both">Add the incoming row alongside the existing one</KeyValue>
+            </div>
+          </div>
+          <Tip>Use "Keep Both" when the same SKU has multiple transactions on the same date (e.g., two separate shipments to different customers). Use "Use New" when re-exporting corrected data.</Tip>
+        </Section>
+
+        {/* Extreme Value Detection */}
+        <Section id="extreme-values" icon={Activity} title="Extreme Value Detection">
+          <p>During import, the system automatically scans for rows with unusually high <code className="bg-muted px-1 rounded">sold_qty</code> values — defined as more than 4 standard deviations above the mean across all rows.</p>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Why This Matters:</p>
+            <p className="text-xs">A single data entry error (e.g., sold_qty = 10,000 when it should be 10) can severely distort demand averages, safety stock calculations, and ABC classifications for all SKUs.</p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">When Extreme Values Are Found:</p>
+            <p className="text-xs">A prompt appears listing the affected SKUs and asking what to do:</p>
+            <div className="space-y-0.5 text-xs">
+              <KeyValue label="Include Anyway">Import all rows including the extreme values — use this if the high quantities are genuine (e.g., a bulk order)</KeyValue>
+              <KeyValue label="Exclude Extremes">Strip only the extreme-quantity rows, keep all other rows for the same SKUs — use this if the values look like data errors</KeyValue>
+            </div>
+          </div>
+          <Tip>If you see extreme values flagged, check your source data first. A common cause is a unit-of-measure mismatch (e.g., selling in boxes vs. units). Fixing the source data and re-importing gives the most accurate results.</Tip>
+        </Section>
+
         {/* Overview Dashboard */}
         <Section id="overview" icon={LayoutDashboard} title="Overview Dashboard">
           <p>The dashboard provides a bird's-eye view of your inventory health with real-time KPI cards, classification matrix, and data quality indicators.</p>
@@ -203,7 +269,7 @@ export default function Guide() {
               <KeyValue label="Effective Stock">current stock + ordered qty − reserved qty</KeyValue>
               <KeyValue label="Reorder Point">safety stock + (avg daily demand × lead time)</KeyValue>
               <KeyValue label="Days of Stock">current stock ÷ avg daily demand</KeyValue>
-              <KeyValue label="Urgency">CRITICAL (≤3 days), LOW (≤7 days), or MEDIUM</KeyValue>
+              <KeyValue label="Urgency">Critical (&lt;7 days of stock), Warning (stock &lt; lead time), Watch (all others)</KeyValue>
               <KeyValue label="Trend">↑ Rising, → Stable, or ↓ Declining demand trend</KeyValue>
             </div>
           </div>
@@ -341,6 +407,10 @@ export default function Guide() {
             <p className="font-medium text-foreground">Service Level Settings:</p>
             <p>Controls the safety stock multiplier (z-score). Options: 90% (z=1.28), 95% (z=1.65), 99% (z=2.33). Higher service levels mean more safety stock but lower stockout risk. Can be set per ABC class.</p>
           </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">EWMA Demand Smoothing:</p>
+            <p>When enabled, replaces the simple average daily demand with an Exponentially Weighted Moving Average (EWMA). Recent sales are weighted more heavily than older ones, making the model more responsive to genuine demand shifts. The alpha (α) parameter controls how fast the model reacts — higher α = more weight on recent data. Falls back to simple average if fewer than 3 data points exist.</p>
+          </div>
           <Tip>Start with defaults and fine-tune gradually. The biggest impact usually comes from accurate lead times (data) rather than cost model parameters. Set Class A items to 99% service level and Class C to 90% for a good balance.</Tip>
         </Section>
 
@@ -365,6 +435,33 @@ export default function Guide() {
             <p>Current rates are shown in the FX banner at the top. You can override rates manually if you have contracted rates with your suppliers. The override persists until cleared.</p>
           </div>
           <Tip>Watch for negative margins (shown in red) — these often indicate stale pricing data or unfavorable FX movements. Review these SKUs before placing orders.</Tip>
+        </Section>
+
+        {/* Projects */}
+        <Section id="projects" icon={FolderOpen} title="Project Reservations">
+          <p>The Projects page lets you reserve stock for specific customer orders or projects before they ship. Reserved quantities are deducted from <strong>available_qty</strong> in all calculations, preventing double-allocation.</p>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Creating a Reservation:</p>
+            <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
+              <li>Click <strong>New Reservation</strong> and enter a project name and optional customer / due date.</li>
+              <li>Search for SKUs by code or name and add them as line items.</li>
+              <li>Set the reserved quantity for each line item.</li>
+              <li>Click <strong>Create Reservation</strong> — available stock updates immediately across all views.</li>
+            </ol>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Reservation Statuses:</p>
+            <div className="space-y-0.5 text-xs">
+              <KeyValue label="Active">Stock is currently reserved — deducted from available_qty</KeyValue>
+              <KeyValue label="Fulfilled">Order has shipped — reservation closed, stock no longer held</KeyValue>
+              <KeyValue label="Cancelled">Reservation voided — stock returned to available pool</KeyValue>
+            </div>
+          </div>
+          <Tip>If a reservation would cause negative available stock, a warning is shown but the reservation is still allowed — useful when you plan to reorder to cover the shortfall. Check Critical SKUs after creating large reservations.</Tip>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Export:</p>
+            <p className="text-xs">Use the Export button to download a CSV of all reservations (filtered by status) for use in your ERP or logistics system.</p>
+          </div>
         </Section>
 
         {/* Best Practices */}

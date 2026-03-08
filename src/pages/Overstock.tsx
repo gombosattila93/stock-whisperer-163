@@ -114,6 +114,43 @@ export default function Overstock() {
         </div>
       )}
 
+      {/* Stock-only: no demand data section */}
+      {stockOnlySkus.length > 0 && (
+        <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="font-semibold">No Demand Data</h2>
+            <Badge variant="secondary" className="text-xs">{stockOnlySkus.length} SKUs</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            These SKUs have stock but no sales history — unable to determine if overstock. Consider verifying demand data.
+          </p>
+          <div className="overflow-auto max-h-[300px]">
+            <table className="data-table text-xs">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">SKU</th>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Name</th>
+                  <th className="px-3 py-2 bg-muted/50 text-left text-muted-foreground uppercase tracking-wider font-semibold">Supplier</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Stock</th>
+                  <th className="px-3 py-2 bg-muted/50 text-right text-muted-foreground uppercase tracking-wider font-semibold">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockOnlySkus.map(s => (
+                  <tr key={s.sku}>
+                    <td className="px-3 py-1.5 font-mono"><HighlightText text={s.sku} /></td>
+                    <td className="px-3 py-1.5"><HighlightText text={s.sku_name} /></td>
+                    <td className="px-3 py-1.5">{s.supplier}</td>
+                    <td className="px-3 py-1.5 text-right">{s.stock_qty.toLocaleString()}</td>
+                    <td className="px-3 py-1.5 text-right">€{(s.stock_qty * s.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
           No overstock items found with current filters.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRows, analyzeSkus } from "./calculations";
+import { parseRows, analyzeSkus, getSuggestedOrderQty, getUrgency } from "./calculations";
 import { RawRow, SkuData } from "./types";
 
 const makeRow = (overrides: Partial<RawRow> = {}): RawRow => ({

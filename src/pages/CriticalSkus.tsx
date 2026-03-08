@@ -17,6 +17,34 @@ import {
 } from "@/components/ui/tooltip";
 import { useMemo } from "react";
 
+function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[9px] px-1.5 py-0 ${currency === 'USD' ? 'border-blue-500/40 text-blue-600 dark:text-blue-400' : 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400'}`}
+    >
+      {currency}
+    </Badge>
+  );
+}
+
+function MarginCell({ marginPct, marginEur }: { marginPct: number | null; marginEur: number | null }) {
+  if (marginPct === null) return <span className="text-muted-foreground">—</span>;
+  const color = marginPct < 0 ? 'text-destructive font-semibold' : marginPct < 15 ? 'text-warning-foreground' : 'text-foreground';
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`text-right ${color}`}>{marginPct.toFixed(1)}%</span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs">Margin: €{marginEur?.toFixed(2) ?? '—'}/unit</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export default function CriticalSkus() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
 
@@ -29,6 +57,9 @@ export default function CriticalSkus() {
   const critical = calculable
     .filter(s => s.days_of_stock !== null && s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
     .sort((a, b) => (a.days_of_stock ?? 0) - (b.days_of_stock ?? 0));
+
+  // Check if any SKU has pricing data
+  const hasPricingData = critical.some(s => s.priceData?.hasMarginData);
 
   // Compute alt supplier suggestions
   const altSupplierMap = useMemo(() => {
@@ -72,6 +103,11 @@ export default function CriticalSkus() {
     stock_qty: s.stock_qty, ordered_qty: s.ordered_qty,
     expected_delivery_date: s.expected_delivery_date,
     overdue_delivery: s.overdueDelivery ? 'Yes' : 'No',
+    ...(hasPricingData ? {
+      purchase_currency: s.priceData?.purchaseCurrency ?? '',
+      margin_pct: s.priceData?.marginPct?.toFixed(1) ?? '',
+      margin_eur: s.priceData?.marginEur?.toFixed(2) ?? '',
+    } : {}),
   }));
 
   const thClass = "px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50";
@@ -221,13 +257,28 @@ export default function CriticalSkus() {
                 />
               ),
             },
+            ...(hasPricingData ? [{
+              key: 'currency',
+              header: <span className={thClass}>Currency</span>,
+              render: (s: typeof paginatedData[0]) => (
+                s.priceData?.hasPurchasePrice
+                  ? <CurrencyBadge currency={s.priceData.purchaseCurrency} />
+                  : <span className="text-muted-foreground">—</span>
+              ),
+            }] : []),
+            ...(hasPricingData ? [{
+              key: 'margin',
+              header: <SortableHeader column="marginPct" label="Margin %" sort={sort} onSort={toggleSort} align="right" />,
+              render: (s: typeof paginatedData[0]) => (
+                <MarginCell marginPct={s.priceData?.marginPct ?? null} marginEur={s.priceData?.marginEur ?? null} />
+              ),
+            }] : []),
             {
               key: 'expected_delivery_date',
               header: <SortableHeader column="expected_delivery_date" label="Expected Delivery" sort={sort} onSort={toggleSort} />,
               render: (s) => (
                 <div>
                   <span>{s.expected_delivery_date || '—'}</span>
-                  {/* 1h) Overdue delivery flag */}
                   {s.overdueDelivery && (
                     <Badge variant="outline" className="text-[9px] ml-1.5 border-warning/50 bg-warning/10 text-warning-foreground">
                       Overdue

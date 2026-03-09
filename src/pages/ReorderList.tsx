@@ -759,6 +759,11 @@ export default function ReorderList() {
           )}
         </>
       )}
+      <PurchaseOrderGenerator
+        open={showPO}
+        onOpenChange={setShowPO}
+        items={poItems}
+      />
     </div>
   );
 }

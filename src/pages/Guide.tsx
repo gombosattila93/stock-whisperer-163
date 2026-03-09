@@ -4,7 +4,7 @@ import {
   BookOpen, Upload, LayoutDashboard, AlertTriangle, ShoppingCart,
   PackageX, Grid3X3, Truck, Calculator, Wallet, ChevronDown, ChevronRight,
   Target, TrendingUp, Lightbulb, FileText, Settings, ArrowRight, Zap,
-  BarChart3, DollarSign, Shield, Clock, GitMerge, Columns, Activity, FolderOpen,
+  BarChart3, DollarSign, Shield, Clock, GitMerge, Columns, Activity, FolderOpen, CalendarDays,
 } from "lucide-react";
 
 interface SectionProps {
@@ -66,6 +66,7 @@ const tocItems = [
   { id: "critical-skus", label: "Critical SKUs" },
   { id: "reorder-list", label: "Reorder List" },
   { id: "reorder-plan", label: "Reorder Plan" },
+  { id: "reorder-calendar", label: "Reorder Calendar" },
   { id: "overstock", label: "Overstock Analysis" },
   { id: "abc-xyz", label: "ABC-XYZ Classification" },
   { id: "suppliers", label: "Suppliers" },
@@ -124,7 +125,7 @@ export default function Guide() {
               <li><strong>Act on Reorders</strong> — Go to Reorder List, approve suggestions, and export your purchase order.</li>
             </ol>
           </div>
-          <Tip>Your data stays in-browser — nothing is sent to any server. Refresh the page to clear all data, or use Projects to save/load snapshots.</Tip>
+          <Tip>Your data stays in-browser — nothing is sent to any server. To clear all data, delete site data in your browser settings (or use DevTools → Application → IndexedDB → Delete database).</Tip>
           <div className="space-y-1">
             <p className="font-medium text-foreground">Data Persistence:</p>
             <p>InventoryPRO stores your last import in IndexedDB (browser storage). Cost Model settings, EOQ parameters, stock overrides, and FX rates are also persisted across sessions. Use the <strong>Projects</strong> page to reserve stock for customer orders and track fulfillment status.</p>
@@ -141,7 +142,7 @@ export default function Guide() {
               <KeyValue label="sku_name">Human-readable product name</KeyValue>
               <KeyValue label="supplier">Supplier/vendor name</KeyValue>
               <KeyValue label="category">Product category</KeyValue>
-              <KeyValue label="date">Transaction date (YYYY-MM-DD or DD/MM/YYYY)</KeyValue>
+              <KeyValue label="date">Transaction date — auto-detected. Supports: YYYY-MM-DD, DD.MM.YYYY, YYYY.MM.DD, DD/MM/YYYY, and MM/DD/YYYY (disambiguated automatically by analyzing all dates in the file)</KeyValue>
               <KeyValue label="partner_id">Customer/partner identifier</KeyValue>
               <KeyValue label="sold_qty">Quantity sold in this transaction</KeyValue>
               <KeyValue label="unit_price">Selling price per unit (€)</KeyValue>
@@ -287,8 +288,8 @@ export default function Guide() {
             <p className="font-medium text-foreground">Reorder Strategies:</p>
             <div className="space-y-0.5 text-xs">
               <KeyValue label="Reorder Point (ROP)">Order when stock drops below safety stock + lead time demand. Default strategy. Order qty = 2×ROP − effective stock, rounded to nearest 10.</KeyValue>
-              <KeyValue label="EOQ (Wilson)">Economic Order Quantity — minimizes total cost of ordering + holding. Requires ordering cost and holding cost % settings.</KeyValue>
-              <KeyValue label="Min/Max">Maintains stock between minimum (ROP) and maximum (3×ROP) levels. Order qty = max level − effective stock.</KeyValue>
+              <KeyValue label="EOQ (Wilson)">Economic Order Quantity — minimizes total cost of ordering + holding. Requires ordering cost and holding cost % settings. Only triggers when effective stock ≤ reorder point.</KeyValue>
+              <KeyValue label="Min/Max">Maintains stock between minimum (ROP) and maximum (2×ROP) levels. Order qty = max level − effective stock.</KeyValue>
               <KeyValue label="Periodic Review">Time-based ordering. Calculates quantity needed to cover the review period plus lead time.</KeyValue>
             </div>
           </div>
@@ -321,6 +322,34 @@ export default function Guide() {
               <KeyValue label="Remaining Budget">Available budget after approved items</KeyValue>
             </div>
           </div>
+        </Section>
+
+        {/* Reorder Calendar */}
+        <Section id="reorder-calendar" icon={CalendarDays} title="Reorder Calendar">
+          <p>A monthly calendar view that shows <em>when</em> purchase orders need to be placed, based on current stock levels, average daily demand, and supplier lead times. Only SKUs that currently need reordering (effective stock ≤ reorder point, with demand history and lead time data) appear on the calendar.</p>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">How Order Dates Are Calculated:</p>
+            <p className="text-xs">
+              For each SKU, the system calculates how many days of stock remain (<code className="bg-muted px-1 rounded">days_of_stock</code>) and subtracts the lead time to find the latest safe order date:
+              <br />
+              <code className="bg-muted px-1 rounded">order_by = today + max(0, days_of_stock − lead_time_days)</code>
+              <br />
+              If days of stock is already less than lead time, the order date is today. The estimated delivery date is <code className="bg-muted px-1 rounded">order_date + lead_time_days</code>.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Color Coding:</p>
+            <div className="space-y-0.5 text-xs">
+              <KeyValue label="Red — Critical">Order must be placed today (stock will run out before the order arrives)</KeyValue>
+              <KeyValue label="Yellow — Warning">Order needed soon — stock is below lead time demand</KeyValue>
+              <KeyValue label="Blue — Watch">Order coming up — stock still covers lead time but reorder point is breached</KeyValue>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Detail Panel:</p>
+            <p className="text-xs">Click any day with orders to expand a detail table showing SKU, name, supplier, suggested order quantity (using the per-SKU strategy override if set), lead time, and estimated delivery date.</p>
+          </div>
+          <Tip>Use the calendar at the start of each week to identify Critical and Warning orders that must be placed immediately. Hover over a SKU chip to see a quick summary without clicking.</Tip>
         </Section>
 
         {/* Overstock */}
@@ -481,7 +510,7 @@ export default function Guide() {
               <ul className="list-disc list-inside space-y-0.5 ml-2 text-xs">
                 <li>Run weekly: upload fresh data → review Critical SKUs → approve reorders → export PO</li>
                 <li>Run monthly: review Overstock → adjust Cost Model → analyze ABC shifts</li>
-                <li>Use Projects to save snapshots before and after major purchasing decisions</li>
+                <li>Use the Projects page to reserve stock for customer orders before approving reorders</li>
                 <li>Filter by supplier when preparing individual POs</li>
               </ul>
             </div>

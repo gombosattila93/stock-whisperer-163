@@ -78,6 +78,8 @@ export default function ReorderList() {
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
   const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
+  const [showPO, setShowPO] = useState(false);
+  const [bulkLeadTime, setBulkLeadTime] = useState('');
 
   // Load persisted state from IndexedDB on mount
   useEffect(() => {

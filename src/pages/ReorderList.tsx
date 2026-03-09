@@ -30,8 +30,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, Clock } from "lucide-react";
+import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, Clock, FileText } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { PurchaseOrderGenerator } from "@/components/PurchaseOrderGenerator";
+import { getUrgency } from "@/lib/calculations";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 

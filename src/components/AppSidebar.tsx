@@ -9,6 +9,7 @@ import {
   Calculator,
   ClipboardList,
   Wallet,
+  CalendarDays,
   BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";

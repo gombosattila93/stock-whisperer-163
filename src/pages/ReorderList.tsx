@@ -213,6 +213,32 @@ export default function ReorderList() {
     setSelectedSkus(new Set());
   }, [selectedSkus]);
 
+  const applyBulkLeadTime = useCallback(() => {
+    const num = parseInt(bulkLeadTime, 10);
+    if (isNaN(num) || num < 1 || num > 365) return;
+    selectedSkus.forEach(sku => {
+      setStockOverride(sku, 'lead_time_days', num);
+    });
+    setBulkLeadTime('');
+    setSelectedSkus(new Set());
+  }, [selectedSkus, bulkLeadTime, setStockOverride]);
+
+  // PO items from selected or all sorted
+  const poItems = useMemo(() => {
+    const source = selectedSkus.size > 0
+      ? sorted.filter(s => selectedSkus.has(s.sku))
+      : sorted;
+    return source.map(s => ({
+      sku: s.sku,
+      sku_name: s.sku_name,
+      supplier: s.supplier,
+      suggested_order_qty: s.suggested_order_qty,
+      unit_price: s.priceData?.effectivePurchasePriceEur ?? s.unit_price,
+      lead_time_days: s.lead_time_days,
+      urgency: s.urgency,
+    }));
+  }, [sorted, selectedSkus]);
+
   // ─── Supplier summary ─────────────────────────────────────────────────
   const supplierSummary = useMemo(() => {
     const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValueEur: number; totalValueUsdRaw: number; totalValueUsdAsEur: number; hasUsd: boolean; urgencies: string[] }>();

@@ -43,6 +43,9 @@ interface SupplierGroup {
   maxLeadTime: number;
 }
 
+// Session-scoped monotonic counter for PO numbers (survives re-renders, resets per session)
+let _poCounter = 0;
+
 export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName = "InventoryPro" }: PurchaseOrderGeneratorProps) {
   const [buyerName, setBuyerName] = useState("");
   const [notes, setNotes] = useState("");
@@ -50,7 +53,11 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
 
   const poNumber = useMemo(() => {
     const d = new Date();
-    return `PO-${format(d, 'yyyyMMdd')}-${String(Math.floor(Math.random() * 900) + 100)}`;
+    // Collision-safe: timestamp (ms precision) + session monotonic counter
+    _poCounter++;
+    const ts = d.getTime().toString(36).toUpperCase().slice(-4);
+    const seq = String(_poCounter).padStart(3, '0');
+    return `PO-${format(d, 'yyyyMMdd')}-${ts}${seq}`;
   }, [open]); // regenerate when opened
 
   const supplierGroups = useMemo(() => {

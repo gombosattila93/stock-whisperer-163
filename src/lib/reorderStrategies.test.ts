@@ -68,24 +68,45 @@ const makeSku = (overrides: Partial<SkuAnalysis> = {}): SkuAnalysis => ({
 
 describe("eoqStrategy", () => {
   it("returns 0 for zero demand", () => {
-    const sku = makeSku({ avg_daily_demand: 0 });
+    const sku = makeSku({ avg_daily_demand: 0, effective_stock: 0, reorder_point: 0 });
     const result = eoqStrategy(sku);
     expect(result.suggested_order_qty).toBe(0);
   });
 
   it("returns 0 for zero unit_price (holding cost = 0)", () => {
-    const sku = makeSku({ unit_price: 0 });
+    const sku = makeSku({ unit_price: 0, effective_stock: 0, reorder_point: 10 });
     const result = eoqStrategy(sku);
     expect(result.suggested_order_qty).toBe(0);
   });
 
-  it("calculates correct EOQ for normal case", () => {
-    const sku = makeSku({ avg_daily_demand: 10, unit_price: 5 });
+  it("calculates correct EOQ when stock is below reorder point", () => {
+    // effective_stock (50) <= reorder_point (90) → trigger fires
+    const sku = makeSku({ avg_daily_demand: 10, unit_price: 5, effective_stock: 50, reorder_point: 90 });
     const result = eoqStrategy(sku, { orderingCost: 50, holdingPct: 0.2 });
     // annual = 3650, holding = 1, eoq = sqrt(2*3650*50/1) = sqrt(365000) ≈ 604.15
     // ceil(604.15/10)*10 = 610
     expect(result.suggested_order_qty).toBe(610);
     expect(result.strategy).toBe("eoq");
+  });
+
+  it("returns 0 when stock is above reorder point (no trigger)", () => {
+    // effective_stock (200) > reorder_point (90) → no order needed
+    const sku = makeSku({ avg_daily_demand: 10, unit_price: 5, effective_stock: 200, reorder_point: 90 });
+    const result = eoqStrategy(sku, { orderingCost: 50, holdingPct: 0.2 });
+    expect(result.suggested_order_qty).toBe(0);
+  });
+
+  it("triggers EOQ when stock equals reorder point exactly", () => {
+    const sku = makeSku({ avg_daily_demand: 10, unit_price: 5, effective_stock: 90, reorder_point: 90 });
+    const result = eoqStrategy(sku, { orderingCost: 50, holdingPct: 0.2 });
+    expect(result.suggested_order_qty).toBe(610);
+  });
+
+  it("allows EOQ when reorder_point is 0 (no gate)", () => {
+    // rp = 0 means gating is skipped (no meaningful reorder point)
+    const sku = makeSku({ avg_daily_demand: 10, unit_price: 5, effective_stock: 50, reorder_point: 0 });
+    const result = eoqStrategy(sku, { orderingCost: 50, holdingPct: 0.2 });
+    expect(result.suggested_order_qty).toBe(610);
   });
 });
 

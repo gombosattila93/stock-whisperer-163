@@ -468,7 +468,7 @@ export function analyzeSkus(
       ewmaFallback,
       pastDueOrders,
       safetyStockCapped,
-      noStockData: sku.stock_qty === 0,
+      noStockData,
       leadTimeClamped,
       shelfLifeLtWarning,
       overdueDelivery,

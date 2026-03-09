@@ -38,9 +38,21 @@ export function ropStrategy(sku: SkuAnalysis): ReorderResult {
 /**
  * Economic Order Quantity (EOQ) — Wilson formula.
  * Uses configurable ordering cost and holding cost percentage.
+ * Only suggests an order when effective_stock ≤ reorder_point (actual trigger).
  */
 export function eoqStrategy(sku: SkuAnalysis, settings: EoqSettings = DEFAULT_EOQ_SETTINGS): ReorderResult {
   const rp = sku.reorder_point ?? 0;
+
+  // Gate: only suggest EOQ batch if stock is actually at/below reorder point
+  if (sku.effective_stock > rp && rp > 0) {
+    return {
+      strategy: 'eoq',
+      strategyLabel: 'EOQ (Economic Order Qty)',
+      suggested_order_qty: 0,
+      reorder_trigger: `Stock ≤ ${Math.round(rp)} units, order EOQ batch`,
+    };
+  }
+
   const annualDemand = sku.avg_daily_demand * 365;
   const holdingCost = sku.unit_price * settings.holdingPct;
 

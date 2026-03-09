@@ -85,6 +85,12 @@ describe('detectDateFormat', () => {
     expect(detectDateFormat(['05/03/2025', '08/06/2025', '01/12/2025'])).toBe('EU-slash-DMY');
   });
 
+  it('defaults to EU-slash-DMY for contradictory slash dates (some first>12, some second>12)', () => {
+    // 25/03/2025 → first=25>12 implies DMY; 06/15/2025 → second=15>12 implies MDY
+    // Both signals present — impossible to resolve, falls back to European
+    expect(detectDateFormat(['25/03/2025', '06/15/2025'])).toBe('EU-slash-DMY');
+  });
+
   it('returns unknown for empty input', () => {
     expect(detectDateFormat([])).toBe('unknown');
   });

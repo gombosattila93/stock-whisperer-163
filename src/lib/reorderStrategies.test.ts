@@ -108,6 +108,13 @@ describe("eoqStrategy", () => {
     const result = eoqStrategy(sku, { orderingCost: 50, holdingPct: 0.2 });
     expect(result.suggested_order_qty).toBe(610);
   });
+
+  it("fires EOQ even when heavily overstocked if reorder_point is 0", () => {
+    // rp=0 bypasses the gate entirely regardless of stock level — document this behaviour
+    const sku = makeSku({ avg_daily_demand: 10, unit_price: 5, effective_stock: 10000, reorder_point: 0 });
+    const result = eoqStrategy(sku, { orderingCost: 50, holdingPct: 0.2 });
+    expect(result.suggested_order_qty).toBe(610);
+  });
 });
 
 describe("minMaxStrategy", () => {

@@ -606,6 +606,29 @@ describe("SkuCapability tier calculation", () => {
     expect(sku.capability.hasStockData).toBe(true);
   });
 
+  it("noStockData is false when stock_qty=0 but demand history exists", () => {
+    // stock_qty=0 is valid stock data (legitimately out of stock), not a data quality problem
+    const rows = [
+      makeRow({ sold_qty: 10, stock_qty: 0, lead_time_days: 7, unit_price: 5 }),
+      makeRow({ date: "2026-02-01", sold_qty: 8, stock_qty: 0, unit_price: 5 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.noStockData).toBe(false);
+    expect(sku.capability.hasStockData).toBe(true);
+  });
+
+  it("noStockData is true when stock_qty=0 and no demand history", () => {
+    const rows = [
+      makeRow({ sold_qty: 0, date: "", stock_qty: 0, lead_time_days: 0, unit_price: 0 }),
+    ];
+    const map = parseRows(rows);
+    const results = analyzeSkus(map, startDate, endDate, 90, 1.65);
+    const sku = results.find(r => r.sku === "SKU-001")!;
+    expect(sku.noStockData).toBe(true);
+  });
+
   it("stock_qty=NaN normalizes to 0 in parseRows, so hasStockData is true", () => {
     const rows = [
       makeRow({ sold_qty: 20, unit_price: 3, stock_qty: NaN, lead_time_days: 0 }),

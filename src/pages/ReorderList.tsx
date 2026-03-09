@@ -426,10 +426,10 @@ export default function ReorderList() {
       {/* Bulk action bar */}
       {someSelected && (
         <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
-          <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+           <CheckSquare className="h-4 w-4 text-primary shrink-0" />
           <span className="text-sm font-medium">{selectedSkus.size} selected</span>
           <div className="flex items-center gap-2 ml-2">
-            <Label className="text-xs text-muted-foreground">Apply strategy:</Label>
+            <Label className="text-xs text-muted-foreground">Strategy:</Label>
             <Select onValueChange={(v) => applyBulkStrategy(v as ReorderStrategy | '__global__')}>
               <SelectTrigger className="h-7 w-[160px] text-xs">
                 <SelectValue placeholder="Choose…" />
@@ -446,6 +446,26 @@ export default function ReorderList() {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Lead time:</Label>
+            <Input
+              type="number"
+              min={1}
+              max={365}
+              placeholder="days"
+              value={bulkLeadTime}
+              onChange={e => setBulkLeadTime(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && applyBulkLeadTime()}
+              className="h-7 w-20 text-xs"
+            />
+            <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={applyBulkLeadTime} disabled={!bulkLeadTime}>
+              Apply
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowPO(true)} className="text-xs gap-1 ml-2">
+            <FileText className="h-3.5 w-3.5" />
+            PO for selected
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedSkus(new Set())} className="text-xs text-muted-foreground ml-auto">
             Clear selection
           </Button>

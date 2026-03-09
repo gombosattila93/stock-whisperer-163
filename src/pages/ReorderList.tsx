@@ -330,7 +330,13 @@ export default function ReorderList() {
           </div>
           <p className="page-subtitle">Items where effective stock ≤ reorder point</p>
         </div>
-        <ExportButton data={exportData} filename="reorder-list.csv" />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPO(true)} disabled={sorted.length === 0} className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            Generate PO
+          </Button>
+          <ExportButton data={exportData} filename="reorder-list.csv" />
+        </div>
       </div>
 
       {excludedCount > 0 && (

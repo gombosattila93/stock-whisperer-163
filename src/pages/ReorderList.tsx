@@ -30,8 +30,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, Clock } from "lucide-react";
+import { RotateCcw, CheckSquare, Download, AlertTriangle as AlertTriangleIcon, Clock, FileText } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { PurchaseOrderGenerator } from "@/components/PurchaseOrderGenerator";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 
@@ -77,6 +78,8 @@ export default function ReorderList() {
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
   const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
+  const [showPO, setShowPO] = useState(false);
+  const [bulkLeadTime, setBulkLeadTime] = useState('');
 
   // Load persisted state from IndexedDB on mount
   useEffect(() => {
@@ -210,6 +213,32 @@ export default function ReorderList() {
     setSelectedSkus(new Set());
   }, [selectedSkus]);
 
+  const applyBulkLeadTime = useCallback(() => {
+    const num = parseInt(bulkLeadTime, 10);
+    if (isNaN(num) || num < 1 || num > 365) return;
+    selectedSkus.forEach(sku => {
+      setStockOverride(sku, 'lead_time_days', num);
+    });
+    setBulkLeadTime('');
+    setSelectedSkus(new Set());
+  }, [selectedSkus, bulkLeadTime, setStockOverride]);
+
+  // PO items from selected or all sorted
+  const poItems = useMemo(() => {
+    const source = selectedSkus.size > 0
+      ? sorted.filter(s => selectedSkus.has(s.sku))
+      : sorted;
+    return source.map(s => ({
+      sku: s.sku,
+      sku_name: s.sku_name,
+      supplier: s.supplier,
+      suggested_order_qty: s.suggested_order_qty,
+      unit_price: s.priceData?.effectivePurchasePriceEur ?? s.unit_price,
+      lead_time_days: s.lead_time_days,
+      urgency: s.urgency,
+    }));
+  }, [sorted, selectedSkus]);
+
   // ─── Supplier summary ─────────────────────────────────────────────────
   const supplierSummary = useMemo(() => {
     const map = new Map<string, { supplier: string; skuCount: number; totalQty: number; totalValueEur: number; totalValueUsdRaw: number; totalValueUsdAsEur: number; hasUsd: boolean; urgencies: string[] }>();
@@ -301,7 +330,13 @@ export default function ReorderList() {
           </div>
           <p className="page-subtitle">Items where effective stock ≤ reorder point</p>
         </div>
-        <ExportButton data={exportData} filename="reorder-list.csv" />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPO(true)} disabled={sorted.length === 0} className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            Generate PO
+          </Button>
+          <ExportButton data={exportData} filename="reorder-list.csv" />
+        </div>
       </div>
 
       {excludedCount > 0 && (
@@ -391,10 +426,10 @@ export default function ReorderList() {
       {/* Bulk action bar */}
       {someSelected && (
         <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
-          <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+           <CheckSquare className="h-4 w-4 text-primary shrink-0" />
           <span className="text-sm font-medium">{selectedSkus.size} selected</span>
           <div className="flex items-center gap-2 ml-2">
-            <Label className="text-xs text-muted-foreground">Apply strategy:</Label>
+            <Label className="text-xs text-muted-foreground">Strategy:</Label>
             <Select onValueChange={(v) => applyBulkStrategy(v as ReorderStrategy | '__global__')}>
               <SelectTrigger className="h-7 w-[160px] text-xs">
                 <SelectValue placeholder="Choose…" />
@@ -411,6 +446,26 @@ export default function ReorderList() {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Lead time:</Label>
+            <Input
+              type="number"
+              min={1}
+              max={365}
+              placeholder="days"
+              value={bulkLeadTime}
+              onChange={e => setBulkLeadTime(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && applyBulkLeadTime()}
+              className="h-7 w-20 text-xs"
+            />
+            <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={applyBulkLeadTime} disabled={!bulkLeadTime}>
+              Apply
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowPO(true)} className="text-xs gap-1 ml-2">
+            <FileText className="h-3.5 w-3.5" />
+            PO for selected
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedSkus(new Set())} className="text-xs text-muted-foreground ml-auto">
             Clear selection
           </Button>
@@ -704,6 +759,11 @@ export default function ReorderList() {
           )}
         </>
       )}
+      <PurchaseOrderGenerator
+        open={showPO}
+        onOpenChange={setShowPO}
+        items={poItems}
+      />
     </div>
   );
 }

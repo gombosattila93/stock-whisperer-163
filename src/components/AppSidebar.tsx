@@ -9,6 +9,7 @@ import {
   Calculator,
   ClipboardList,
   Wallet,
+  CalendarDays,
   BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -31,6 +32,7 @@ const navItems = [
   { title: "Critical SKUs", url: "/critical", icon: AlertTriangle },
   { title: "Reorder List", url: "/reorder", icon: ShoppingCart },
   { title: "Reorder Plan", url: "/reorder-plan", icon: Wallet },
+  { title: "Reorder Calendar", url: "/reorder-calendar", icon: CalendarDays },
   { title: "Overstock", url: "/overstock", icon: PackageX },
   { title: "ABC-XYZ Detail", url: "/abc-xyz", icon: Grid3X3 },
   { title: "Projects", url: "/projects", icon: ClipboardList },

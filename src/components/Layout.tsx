@@ -117,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-warning" />
-                Unusual Quantities Detected
+                {t('extreme.title')}
               </DialogTitle>
               <DialogDescription>
                 {pendingExtremeValues.rows.length} rows have quantities &gt; 4× standard deviation.

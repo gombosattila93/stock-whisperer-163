@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {!indexedDBAvailable && (
             <div className="bg-warning/15 border-b border-warning/30 px-4 py-2 flex items-center gap-2 text-xs text-warning-foreground shrink-0">
               <Info className="h-3.5 w-3.5 shrink-0" />
-              Private browsing detected — settings won't be saved between sessions
+              {t('header.privateBrowsing')}
             </div>
           )}
 

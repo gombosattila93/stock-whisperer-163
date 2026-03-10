@@ -57,12 +57,12 @@ export function EmptyState() {
         <div className="rounded-full bg-primary/10 p-6 mb-6">
           <FileSpreadsheet className="h-12 w-12 text-primary" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">No inventory data loaded</h2>
+        <h2 className="text-xl font-semibold mb-2">{t('empty.title')}</h2>
         <p className="text-muted-foreground mb-2 max-w-md">
-          Upload a CSV file with your inventory and sales data, or load sample data to explore the dashboard.
+          {t('empty.subtitle')}
         </p>
         <p className="text-xs text-muted-foreground mb-8">
-          {isDragging ? "Drop your CSV file here…" : "Drag & drop a CSV file here, or use the buttons below"}
+          {isDragging ? t('empty.dropHint') : t('empty.dragHint')}
         </p>
         <div className="flex gap-3">
           <Button onClick={() => inputRef.current?.click()} size="lg">

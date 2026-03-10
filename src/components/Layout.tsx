@@ -122,7 +122,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <DialogDescription>
                 {pendingExtremeValues.rows.length} {t('extreme.description')}
               </DialogDescription>
-              </DialogDescription>
             </DialogHeader>
             <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
               <p className="font-medium">{t('extreme.affectedSkus')}</p>

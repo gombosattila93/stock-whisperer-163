@@ -9,6 +9,8 @@ import { ImportSummaryModal } from "@/components/ImportSummaryModal";
 import { FxBanner } from "@/components/FxBanner";
 import { FxSettingsPanel } from "@/components/FxSettingsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/lib/i18n";
 import { useInventory } from "@/context/InventoryContext";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, Info } from "lucide-react";
@@ -31,6 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     pendingExtremeValues, confirmExtremeInclude, confirmExtremeExclude,
     indexedDBAvailable,
   } = useInventory();
+  const { t } = useLanguage();
 
   return (
     <SidebarProvider>
@@ -41,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {!indexedDBAvailable && (
             <div className="bg-warning/15 border-b border-warning/30 px-4 py-2 flex items-center gap-2 text-xs text-warning-foreground shrink-0">
               <Info className="h-3.5 w-3.5 shrink-0" />
-              Private browsing detected — settings won't be saved between sessions
+              {t('header.privateBrowsing')}
             </div>
           )}
 
@@ -53,6 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <GlobalFilters />
             <div className="ml-auto flex items-center gap-1">
               <FxSettingsPanel />
+              <LanguageToggle />
               <ThemeToggle />
             </div>
           </header>
@@ -113,25 +117,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-warning" />
-                Unusual Quantities Detected
+                {t('extreme.title')}
               </DialogTitle>
               <DialogDescription>
-                {pendingExtremeValues.rows.length} rows have quantities &gt; 4× standard deviation.
-                These may be data entry errors.
+                {pendingExtremeValues.rows.length} {t('extreme.description')}
               </DialogDescription>
             </DialogHeader>
             <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
-              <p className="font-medium">Affected SKUs:</p>
+              <p className="font-medium">{t('extreme.affectedSkus')}</p>
               {pendingExtremeValues.skus.slice(0, 10).map(sku => (
                 <span key={sku} className="inline-block bg-muted rounded px-2 py-0.5 mr-1.5 mb-1 font-mono">{sku}</span>
               ))}
               {pendingExtremeValues.skus.length > 10 && (
-                <span className="text-muted-foreground">+{pendingExtremeValues.skus.length - 10} more</span>
+                <span className="text-muted-foreground">+{pendingExtremeValues.skus.length - 10} {t('extreme.more')}</span>
               )}
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={confirmExtremeExclude}>Exclude these rows</Button>
-              <Button onClick={confirmExtremeInclude}>Include all</Button>
+              <Button variant="outline" onClick={confirmExtremeExclude}>{t('extreme.excludeRows')}</Button>
+              <Button onClick={confirmExtremeInclude}>{t('extreme.includeAll')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

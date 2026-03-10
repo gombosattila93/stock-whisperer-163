@@ -3,9 +3,11 @@ import { Upload, FileSpreadsheet, Sparkles, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInventory } from "@/context/InventoryContext";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 export function EmptyState() {
   const { loadFile, loadSample } = useInventory();
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -55,21 +57,21 @@ export function EmptyState() {
         <div className="rounded-full bg-primary/10 p-6 mb-6">
           <FileSpreadsheet className="h-12 w-12 text-primary" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">No inventory data loaded</h2>
+        <h2 className="text-xl font-semibold mb-2">{t('empty.title')}</h2>
         <p className="text-muted-foreground mb-2 max-w-md">
-          Upload a CSV file with your inventory and sales data, or load sample data to explore the dashboard.
+          {t('empty.subtitle')}
         </p>
         <p className="text-xs text-muted-foreground mb-8">
-          {isDragging ? "Drop your CSV file here…" : "Drag & drop a CSV file here, or use the buttons below"}
+          {isDragging ? t('empty.dropHint') : t('empty.dragHint')}
         </p>
         <div className="flex gap-3">
           <Button onClick={() => inputRef.current?.click()} size="lg">
             <Upload className="h-4 w-4 mr-2" />
-            Upload CSV
+            {t('empty.uploadCsv')}
           </Button>
           <Button variant="outline" size="lg" onClick={loadSample}>
             <Sparkles className="h-4 w-4 mr-2" />
-            Load Sample Data
+            {t('empty.loadSample')}
           </Button>
         </div>
         <input
@@ -81,7 +83,7 @@ export function EmptyState() {
         />
       </div>
       <div className="mt-8 text-xs text-muted-foreground max-w-lg">
-        <p className="font-medium mb-1">Expected CSV columns:</p>
+        <p className="font-medium mb-1">{t('empty.expectedColumns')}</p>
         <code className="font-mono text-xs">
           sku, sku_name, supplier, category, date, partner_id, sold_qty, unit_price, stock_qty, lead_time_days, ordered_qty, expected_delivery_date
         </code>
@@ -92,6 +94,7 @@ export function EmptyState() {
 
 export function DataActions() {
   const { hasData, loadFile, appendFile, clearData } = useInventory();
+  const { t } = useLanguage();
   const replaceRef = useRef<HTMLInputElement>(null);
   const appendRef = useRef<HTMLInputElement>(null);
 
@@ -101,14 +104,14 @@ export function DataActions() {
     <div className="flex items-center gap-2">
       <Button variant="outline" size="sm" onClick={() => appendRef.current?.click()}>
         <Plus className="h-3.5 w-3.5 mr-1.5" />
-        Append CSV
+        {t('header.appendCsv')}
       </Button>
       <Button variant="outline" size="sm" onClick={() => replaceRef.current?.click()}>
         <Upload className="h-3.5 w-3.5 mr-1.5" />
-        Replace
+        {t('header.replace')}
       </Button>
       <Button variant="ghost" size="sm" onClick={clearData} className="text-muted-foreground">
-        Clear
+        {t('header.clear')}
       </Button>
       <input
         ref={replaceRef}

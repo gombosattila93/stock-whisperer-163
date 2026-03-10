@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useLanguage, TranslationKey } from "@/lib/i18n";
 import {
   Sidebar,
   SidebarContent,
@@ -27,24 +28,25 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-  { title: "Overview", url: "/overview", icon: LayoutDashboard },
-  { title: "Critical SKUs", url: "/critical", icon: AlertTriangle },
-  { title: "Reorder List", url: "/reorder", icon: ShoppingCart },
-  { title: "Reorder Plan", url: "/reorder-plan", icon: Wallet },
-  { title: "Reorder Calendar", url: "/reorder-calendar", icon: CalendarDays },
-  { title: "Overstock", url: "/overstock", icon: PackageX },
-  { title: "ABC-XYZ Detail", url: "/abc-xyz", icon: Grid3X3 },
-  { title: "Projects", url: "/projects", icon: ClipboardList },
-  { title: "Suppliers", url: "/suppliers", icon: Truck },
-  { title: "Cost Model", url: "/cost-model", icon: Calculator },
-  { title: "Guide", url: "/guide", icon: BookOpen },
+const navItems: { titleKey: TranslationKey; url: string; icon: React.ElementType }[] = [
+  { titleKey: "nav.overview", url: "/overview", icon: LayoutDashboard },
+  { titleKey: "nav.critical", url: "/critical", icon: AlertTriangle },
+  { titleKey: "nav.reorder", url: "/reorder", icon: ShoppingCart },
+  { titleKey: "nav.reorderPlan", url: "/reorder-plan", icon: Wallet },
+  { titleKey: "nav.reorderCalendar", url: "/reorder-calendar", icon: CalendarDays },
+  { titleKey: "nav.overstock", url: "/overstock", icon: PackageX },
+  { titleKey: "nav.abcXyz", url: "/abc-xyz", icon: Grid3X3 },
+  { titleKey: "nav.projects", url: "/projects", icon: ClipboardList },
+  { titleKey: "nav.suppliers", url: "/suppliers", icon: Truck },
+  { titleKey: "nav.costModel", url: "/cost-model", icon: Calculator },
+  { titleKey: "nav.guide", url: "/guide", icon: BookOpen },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { t } = useLanguage();
 
   return (
     <Sidebar collapsible="icon">
@@ -62,12 +64,12 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">
-            {!collapsed && "Navigation"}
+            {!collapsed && t("nav.navigation")}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
@@ -76,7 +78,7 @@ export function AppSidebar() {
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
                       <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span>{t(item.titleKey)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

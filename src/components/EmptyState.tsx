@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n";
 
 export function EmptyState() {
   const { loadFile, loadSample } = useInventory();
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 

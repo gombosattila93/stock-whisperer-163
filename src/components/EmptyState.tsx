@@ -67,11 +67,11 @@ export function EmptyState() {
         <div className="flex gap-3">
           <Button onClick={() => inputRef.current?.click()} size="lg">
             <Upload className="h-4 w-4 mr-2" />
-            Upload CSV
+            {t('empty.uploadCsv')}
           </Button>
           <Button variant="outline" size="lg" onClick={loadSample}>
             <Sparkles className="h-4 w-4 mr-2" />
-            Load Sample Data
+            {t('empty.loadSample')}
           </Button>
         </div>
         <input

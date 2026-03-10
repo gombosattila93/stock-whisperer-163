@@ -94,6 +94,7 @@ export function EmptyState() {
 
 export function DataActions() {
   const { hasData, loadFile, appendFile, clearData } = useInventory();
+  const { t } = useLanguage();
   const replaceRef = useRef<HTMLInputElement>(null);
   const appendRef = useRef<HTMLInputElement>(null);
 

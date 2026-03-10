@@ -125,7 +125,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </DialogDescription>
             </DialogHeader>
             <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
-              <p className="font-medium">Affected SKUs:</p>
+              <p className="font-medium">{t('extreme.affectedSkus')}</p>
               {pendingExtremeValues.skus.slice(0, 10).map(sku => (
                 <span key={sku} className="inline-block bg-muted rounded px-2 py-0.5 mr-1.5 mb-1 font-mono">{sku}</span>
               ))}

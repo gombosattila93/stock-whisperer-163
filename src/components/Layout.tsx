@@ -33,6 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     pendingExtremeValues, confirmExtremeInclude, confirmExtremeExclude,
     indexedDBAvailable,
   } = useInventory();
+  const { t } = useLanguage();
 
   return (
     <SidebarProvider>

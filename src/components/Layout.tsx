@@ -134,8 +134,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={confirmExtremeExclude}>Exclude these rows</Button>
-              <Button onClick={confirmExtremeInclude}>Include all</Button>
+              <Button variant="outline" onClick={confirmExtremeExclude}>{t('extreme.excludeRows')}</Button>
+              <Button onClick={confirmExtremeInclude}>{t('extreme.includeAll')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

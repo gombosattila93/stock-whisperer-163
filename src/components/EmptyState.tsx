@@ -83,7 +83,7 @@ export function EmptyState() {
         />
       </div>
       <div className="mt-8 text-xs text-muted-foreground max-w-lg">
-        <p className="font-medium mb-1">Expected CSV columns:</p>
+        <p className="font-medium mb-1">{t('empty.expectedColumns')}</p>
         <code className="font-mono text-xs">
           sku, sku_name, supplier, category, date, partner_id, sold_qty, unit_price, stock_qty, lead_time_days, ordered_qty, expected_delivery_date
         </code>

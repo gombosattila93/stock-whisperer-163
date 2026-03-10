@@ -3,6 +3,7 @@ import { Upload, FileSpreadsheet, Sparkles, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInventory } from "@/context/InventoryContext";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 export function EmptyState() {
   const { loadFile, loadSample } = useInventory();

@@ -130,7 +130,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span key={sku} className="inline-block bg-muted rounded px-2 py-0.5 mr-1.5 mb-1 font-mono">{sku}</span>
               ))}
               {pendingExtremeValues.skus.length > 10 && (
-                <span className="text-muted-foreground">+{pendingExtremeValues.skus.length - 10} more</span>
+                <span className="text-muted-foreground">+{pendingExtremeValues.skus.length - 10} {t('extreme.more')}</span>
               )}
             </div>
             <DialogFooter className="gap-2">

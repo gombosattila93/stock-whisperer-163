@@ -120,8 +120,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {t('extreme.title')}
               </DialogTitle>
               <DialogDescription>
-                {pendingExtremeValues.rows.length} rows have quantities &gt; 4× standard deviation.
-                These may be data entry errors.
+                {pendingExtremeValues.rows.length} {t('extreme.description')}
+              </DialogDescription>
               </DialogDescription>
             </DialogHeader>
             <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">

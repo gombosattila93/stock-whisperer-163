@@ -56,6 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <GlobalFilters />
             <div className="ml-auto flex items-center gap-1">
               <FxSettingsPanel />
+              <LanguageToggle />
               <ThemeToggle />
             </div>
           </header>

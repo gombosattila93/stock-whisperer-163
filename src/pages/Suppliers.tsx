@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ChevronDown, ChevronRight, Mail } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
   return (

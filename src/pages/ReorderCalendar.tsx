@@ -17,6 +17,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameMonth, isToday, getDay, subMonths, addMonths } from "date-fns";
 import type { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 import type { EoqSettings } from "@/lib/reorderStrategies";
+import { useLanguage } from "@/lib/i18n";
 
 interface CalendarOrder {
   sku: string;

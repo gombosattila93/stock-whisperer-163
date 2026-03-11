@@ -142,7 +142,7 @@ export default function Projects() {
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5">
                 <Plus className="h-4 w-4" />
-                New Reservation
+                {t('projects.newReservation')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">

@@ -168,13 +168,13 @@ export default function Suppliers() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Supplier Summary</h1>
+            <h1 className="page-title">{t('suppliers.title')}</h1>
             <HelpTooltip
-              text="Aggregated view of inventory and purchasing metrics per supplier."
-              tip="Click a row to expand the detailed SKU list. Use this to prepare supplier-specific POs and compare lead times across vendors."
+              text={t('suppliers.helpText')}
+              tip={t('suppliers.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Aggregated metrics per supplier — click a row to see its reorder list</p>
+          <p className="page-subtitle">{t('suppliers.subtitle')}</p>
         </div>
         <ExportButton data={exportData} filename="supplier-summary.csv" />
       </div>

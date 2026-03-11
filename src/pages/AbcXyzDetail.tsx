@@ -24,6 +24,7 @@ import {
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { useLanguage } from "@/lib/i18n";
 
 const TIER_BADGE: Record<SkuCapability['tier'], { label: string; className: string }> = {
   full: { label: 'Complete', className: 'bg-primary/10 text-primary border-primary/30' },

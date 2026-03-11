@@ -210,7 +210,7 @@ export default function Projects() {
                   </div>
                 )}
                 <Button onClick={handleCreate} disabled={!projectName.trim() || items.length === 0} className="w-full">
-                  Create Reservation
+                  {t('projects.createBtn')}
                 </Button>
               </div>
             </DialogContent>

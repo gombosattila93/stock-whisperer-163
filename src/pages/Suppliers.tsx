@@ -336,7 +336,7 @@ export default function Suppliers() {
                       <tr key={`${row.supplier}-empty`}>
                         <td colSpan={colSpan} className="p-0">
                           <div className="bg-muted/30 px-8 py-4 text-xs text-muted-foreground">
-                            No SKUs need reordering for this supplier.
+                            {t('reorder.noItems')}
                           </div>
                         </td>
                       </tr>

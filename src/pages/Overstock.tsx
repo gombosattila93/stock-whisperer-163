@@ -199,7 +199,7 @@ export default function Overstock() {
 
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No overstock items found with current filters.
+          {t('overstock.noItems')}
         </div>
       ) : (
         <div className="bg-card border rounded-lg overflow-hidden">

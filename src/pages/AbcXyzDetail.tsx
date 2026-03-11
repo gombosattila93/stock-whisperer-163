@@ -46,6 +46,7 @@ function getMissingList(cap: SkuCapability): string[] {
 
 export default function AbcXyzDetail() {
   const { filtered, hasData, costSettings, suppliers, skuSupplierOptions, setSkuSupplierOptions } = useInventory();
+  const { t } = useLanguage();
   const [abcFilter, setAbcFilter] = useState<string>("");
   const [xyzFilter, setXyzFilter] = useState<string>("");
   const [expandedSkus, setExpandedSkus] = useState<Set<string>>(new Set());

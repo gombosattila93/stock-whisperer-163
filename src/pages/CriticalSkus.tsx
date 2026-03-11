@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMemo } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
   return (
@@ -48,10 +49,10 @@ function MarginCell({ marginPct, marginEur }: { marginPct: number | null; margin
 
 export default function CriticalSkus() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap } = useInventory();
+  const { t } = useLanguage();
 
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
 
-  // Only show SKUs where critical is calculable
   const calculable = filtered.filter(s => s.capability.hasStockData && s.capability.hasLeadTime && s.capability.hasDemandHistory);
   const excludedCount = filtered.length - calculable.length;
 
@@ -59,10 +60,8 @@ export default function CriticalSkus() {
     .filter(s => s.days_of_stock !== null && s.days_of_stock < s.lead_time_days && s.avg_daily_demand > 0)
     .sort((a, b) => (a.days_of_stock ?? 0) - (b.days_of_stock ?? 0));
 
-  // Check if any SKU has pricing data
   const hasPricingData = critical.some(s => s.priceData?.hasMarginData);
 
-  // Compute alt supplier suggestions
   const altSupplierMap = useMemo(() => {
     const map: Record<string, { supplier: string; lead_time_days: number }> = {};
     for (const s of critical) {
@@ -83,16 +82,15 @@ export default function CriticalSkus() {
 
   if (!hasData) return <EmptyState />;
 
-  // 4b) Empty state after filter
   if (sorted.length === 0) {
     return (
       <div>
         <div className="page-header">
-          <h1 className="page-title">Critical SKUs</h1>
-          <p className="page-subtitle">Items where days of stock &lt; lead time — risk of stockout</p>
+          <h1 className="page-title">{t('critical.title')}</h1>
+          <p className="page-subtitle">{t('critical.subtitle')}</p>
         </div>
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No critical SKUs found with current filters.
+          {t('critical.noItems')}
         </div>
       </div>
     );
@@ -118,13 +116,13 @@ export default function CriticalSkus() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Critical SKUs</h1>
+            <h1 className="page-title">{t('critical.title')}</h1>
             <HelpTooltip
-              text="Items where days of stock < lead time — at risk of stockout."
-              tip="Focus on CRITICAL urgency + Rising trend first. Click cells to edit stock or lead time in-place. Rows turn red when days of stock < 7."
+              text={t('critical.helpText')}
+              tip={t('critical.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Items where days of stock &lt; lead time — risk of stockout</p>
+          <p className="page-subtitle">{t('critical.subtitle')}</p>
         </div>
         <ExportButton data={exportData} filename="critical-skus.csv" />
       </div>
@@ -132,7 +130,7 @@ export default function CriticalSkus() {
       {excludedCount > 0 && (
         <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-4 py-3 mb-4">
           <span className="text-xs text-muted-foreground">
-            {excludedCount} SKUs excluded — missing stock or lead time data. See ABC-XYZ Detail for full list.
+            {excludedCount} {t('critical.excluded')}
           </span>
         </div>
       )}
@@ -151,7 +149,7 @@ export default function CriticalSkus() {
                   <span className="font-mono font-medium"><HighlightText text={s.sku} /></span>
                   {s.insufficientData && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-[9px] ml-1.5 border-warning/50 text-warning-foreground">Limited data</Badge>
+                      <Badge variant="outline" className="text-[9px] ml-1.5 border-warning/50 text-warning-foreground">{t('critical.limitedData')}</Badge>
                     </TooltipTrigger><TooltipContent><p className="text-xs">Less than 30% of the demand window has sales data</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.singleRecordEstimate && (
@@ -161,7 +159,7 @@ export default function CriticalSkus() {
                   )}
                   {s.safetyStockCapped && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-[9px] ml-1 border-destructive/30 text-destructive">SS capped</Badge>
+                      <Badge variant="outline" className="text-[9px] ml-1 border-destructive/30 text-destructive">{t('critical.ssCapped')}</Badge>
                     </TooltipTrigger><TooltipContent><p className="text-xs">Safety stock capped — highly erratic demand</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.shelfLifeLtWarning && (
@@ -174,27 +172,27 @@ export default function CriticalSkus() {
             },
             {
               key: 'sku_name',
-              header: <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />,
+              header: <SortableHeader column="sku_name" label={t('common.name')} sort={sort} onSort={toggleSort} />,
               render: (s) => <HighlightText text={s.sku_name} />,
             },
             {
               key: 'supplier',
-              header: <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />,
+              header: <SortableHeader column="supplier" label={t('common.supplier')} sort={sort} onSort={toggleSort} />,
               render: (s) => <HighlightText text={s.supplier} />,
             },
             {
               key: 'category',
-              header: <SortableHeader column="category" label="Category" sort={sort} onSort={toggleSort} />,
+              header: <SortableHeader column="category" label={t('common.category')} sort={sort} onSort={toggleSort} />,
               render: (s) => <HighlightText text={s.category} />,
             },
             {
               key: 'sparkline',
-              header: <span className={thClass}>Trend</span>,
+              header: <span className={thClass}>{t('common.trend')}</span>,
               render: (s) => <DemandSparkline sku={s} />,
             },
             {
               key: 'trend',
-              header: <SortableHeader column="trendPct" label="Direction" sort={sort} onSort={toggleSort} tooltip="Rising = recent demand > historical avg. Falling = opposite. Based on linear regression of daily sales." />,
+              header: <SortableHeader column="trendPct" label={t('common.direction')} sort={sort} onSort={toggleSort} />,
               render: (s) => (
                 <div className="flex items-center gap-1.5">
                   <TrendBadge trend={s.trend} trendPct={s.trendPct} seasonalityFlag={s.seasonalityFlag} seasonalityPct={s.seasonalityPct} />
@@ -206,7 +204,7 @@ export default function CriticalSkus() {
             },
             {
               key: 'days_of_stock',
-              header: <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" tooltip="Current stock ÷ avg daily demand. Red if < 7 days. Shows how long stock will last at current consumption rate." />,
+              header: <SortableHeader column="days_of_stock" label={t('critical.daysOfStock')} sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => (
                 <span className={`text-right font-semibold ${(s.days_of_stock ?? Infinity) < 7 ? 'text-destructive' : 'text-warning'}`}>
                   {s.days_of_stock === null ? '—' : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock)}
@@ -215,37 +213,25 @@ export default function CriticalSkus() {
             },
             {
               key: 'reorder_point',
-              header: <SortableHeader column="reorder_point" label="Reorder Point" sort={sort} onSort={toggleSort} align="right" tooltip="ROP = (avg daily demand × lead time) + safety stock. When effective stock falls below this, a reorder is triggered." />,
+              header: <SortableHeader column="reorder_point" label={t('critical.reorderPoint')} sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => <span className="text-right">{s.reorder_point !== null ? Math.round(s.reorder_point) : '—'}</span>,
             },
             {
               key: 'stock_qty',
-              header: <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="stock_qty" label={t('critical.stockQty')} sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => (
-                <EditableCell
-                  value={s.stock_qty}
-                  sku={s.sku}
-                  field="stock_qty"
-                  isOverridden={stockOverrides[s.sku]?.stock_qty !== undefined}
-                  onSave={setStockOverride}
-                />
+                <EditableCell value={s.stock_qty} sku={s.sku} field="stock_qty" isOverridden={stockOverrides[s.sku]?.stock_qty !== undefined} onSave={setStockOverride} />
               ),
             },
             {
               key: 'ordered_qty',
-              header: <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="ordered_qty" label={t('critical.orderedQty')} sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => (
                 <div>
-                  <EditableCell
-                    value={s.ordered_qty}
-                    sku={s.sku}
-                    field="ordered_qty"
-                    isOverridden={stockOverrides[s.sku]?.ordered_qty !== undefined}
-                    onSave={setStockOverride}
-                  />
+                  <EditableCell value={s.ordered_qty} sku={s.sku} field="ordered_qty" isOverridden={stockOverrides[s.sku]?.ordered_qty !== undefined} onSave={setStockOverride} />
                   {s.pastDueOrders && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-[9px] border-warning/50 text-warning-foreground mt-0.5">Past due</Badge>
+                      <Badge variant="outline" className="text-[9px] border-warning/50 text-warning-foreground mt-0.5">{t('critical.pastDue')}</Badge>
                     </TooltipTrigger><TooltipContent><p className="text-xs">Order excluded from effective stock — delivery likely already arrived</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                 </div>
@@ -253,20 +239,14 @@ export default function CriticalSkus() {
             },
             {
               key: 'lead_time_days',
-              header: <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Supplier lead time in days. Click the cell to override. Shorter lead time = less safety stock needed." />,
+              header: <SortableHeader column="lead_time_days" label={t('critical.leadTime')} sort={sort} onSort={toggleSort} align="right" />,
               render: (s) => (
-                <EditableCell
-                  value={s.lead_time_days}
-                  sku={s.sku}
-                  field="lead_time_days"
-                  isOverridden={stockOverrides[s.sku]?.lead_time_days !== undefined}
-                  onSave={setStockOverride}
-                />
+                <EditableCell value={s.lead_time_days} sku={s.sku} field="lead_time_days" isOverridden={stockOverrides[s.sku]?.lead_time_days !== undefined} onSave={setStockOverride} />
               ),
             },
             ...(hasPricingData ? [{
               key: 'currency',
-              header: <span className={thClass}>Currency</span>,
+              header: <span className={thClass}>{t('common.currency')}</span>,
               render: (s: typeof paginatedData[0]) => (
                 s.priceData?.hasPurchasePrice
                   ? <CurrencyBadge currency={s.priceData.purchaseCurrency} />
@@ -275,20 +255,20 @@ export default function CriticalSkus() {
             }] : []),
             ...(hasPricingData ? [{
               key: 'margin',
-              header: <SortableHeader column="marginPct" label="Margin %" sort={sort} onSort={toggleSort} align="right" />,
+              header: <SortableHeader column="marginPct" label={`${t('common.margin')} %`} sort={sort} onSort={toggleSort} align="right" />,
               render: (s: typeof paginatedData[0]) => (
                 <MarginCell marginPct={s.priceData?.marginPct ?? null} marginEur={s.priceData?.marginEur ?? null} />
               ),
             }] : []),
             {
               key: 'expected_delivery_date',
-              header: <SortableHeader column="expected_delivery_date" label="Expected Delivery" sort={sort} onSort={toggleSort} />,
+              header: <SortableHeader column="expected_delivery_date" label={t('critical.expectedDelivery')} sort={sort} onSort={toggleSort} />,
               render: (s) => (
                 <div>
                   <span>{s.expected_delivery_date || '—'}</span>
                   {s.overdueDelivery && (
                     <Badge variant="outline" className="text-[9px] ml-1.5 border-warning/50 bg-warning/10 text-warning-foreground">
-                      Overdue
+                      {t('common.overdue')}
                     </Badge>
                   )}
                 </div>
@@ -296,7 +276,7 @@ export default function CriticalSkus() {
             },
             ...(costSettings.stockoutCostEnabled ? [{
               key: 'stockoutRisk',
-              header: <SortableHeader column="stockoutRisk" label="Stockout Risk €" sort={sort} onSort={toggleSort} align="right" tooltip="Estimated revenue loss if this item goes out of stock during the lead time period. Based on avg daily demand × unit price × lead time." />,
+              header: <SortableHeader column="stockoutRisk" label={t('critical.stockoutRisk')} sort={sort} onSort={toggleSort} align="right" />,
               render: (s: typeof paginatedData[0]) => (
                 <span className="text-right text-destructive font-medium">
                   {s.stockoutRisk > 0 ? `€${s.stockoutRisk.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
@@ -305,7 +285,7 @@ export default function CriticalSkus() {
             }] : []),
             ...(hasReservations ? [{
               key: 'reserved_qty',
-              header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Reserved</span>,
+              header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('critical.reserved')}</span>,
               render: (s: typeof paginatedData[0]) => (
                 <div className="text-right">
                   {s.reserved_qty > 0 ? (
@@ -315,7 +295,7 @@ export default function CriticalSkus() {
                         avail: {s.available_qty}
                       </div>
                       {s.available_qty < 0 && (
-                        <Badge variant="destructive" className="text-[9px] mt-0.5">Deficit</Badge>
+                        <Badge variant="destructive" className="text-[9px] mt-0.5">{t('critical.deficit')}</Badge>
                       )}
                     </div>
                   ) : <span className="text-muted-foreground">—</span>}
@@ -324,7 +304,7 @@ export default function CriticalSkus() {
             }] : []),
             {
               key: 'altSupplier',
-              header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Alt Supplier</span>,
+              header: <span className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('critical.altSupplier')}</span>,
               render: (s) => {
                 const alt = altSupplierMap[s.sku];
                 if (!alt) return <span className="text-muted-foreground">—</span>;

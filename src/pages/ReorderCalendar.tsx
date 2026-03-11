@@ -142,9 +142,9 @@ export default function ReorderCalendar() {
           </Button>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-destructive inline-block" /> Critical</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-warning/50 inline-block" /> Warning</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary/30 inline-block" /> Watch</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-destructive inline-block" /> {t('common.critical')}</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-warning/50 inline-block" /> {t('common.warning')}</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary/30 inline-block" /> {t('common.watch')}</span>
         </div>
       </div>
 

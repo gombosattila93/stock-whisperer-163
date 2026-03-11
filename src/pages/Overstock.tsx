@@ -112,14 +112,14 @@ export default function Overstock() {
         <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <PackageX className="h-5 w-5 text-muted-foreground" />
-            <h2 className="font-semibold">Dead Stock</h2>
+            <h2 className="font-semibold">{t('overstock.deadStock')}</h2>
             <Badge variant="secondary" className="text-xs">{deadStock.length} SKUs</Badge>
             <span className="text-sm text-muted-foreground ml-auto">
-              Value: €{deadStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {t('common.value')}: €{deadStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            Items with zero demand but positive stock — consider liquidation or write-off.
+            {t('overstock.deadStockDesc')}
           </p>
           <div className="overflow-auto max-h-[300px]">
             <table className="data-table text-xs">

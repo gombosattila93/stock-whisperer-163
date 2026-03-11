@@ -161,11 +161,11 @@ export default function Overstock() {
       {stockOnlySkus.length > 0 && (
         <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="font-semibold">No Demand Data</h2>
+            <h2 className="font-semibold">{t('overstock.noDemandData')}</h2>
             <Badge variant="secondary" className="text-xs">{stockOnlySkus.length} SKUs</Badge>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            These SKUs have stock but no sales history — unable to determine if overstock. Consider verifying demand data.
+            {t('overstock.noDemandDataDesc')}
           </p>
           <div className="overflow-auto max-h-[300px]">
             <table className="data-table text-xs">

@@ -29,6 +29,7 @@ function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
 
 export default function Overstock() {
   const { filtered, hasData, costSettings } = useInventory();
+  const { t } = useLanguage();
 
   // 2c) Separate dead stock from overstock
   const deadStock = useMemo(() =>

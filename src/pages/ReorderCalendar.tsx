@@ -226,7 +226,7 @@ export default function ReorderCalendar() {
           <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
             <span className="font-semibold text-sm">
-              Orders for {format(new Date(selectedDay), 'EEEE, MMMM d, yyyy')}
+              {t('calendar.ordersFor')} {format(new Date(selectedDay), 'EEEE, MMMM d, yyyy')}
             </span>
             <Badge variant="secondary" className="ml-2">{selectedOrders.length} items</Badge>
           </div>

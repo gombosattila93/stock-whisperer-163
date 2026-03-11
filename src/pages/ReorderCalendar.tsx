@@ -32,6 +32,7 @@ interface CalendarOrder {
 
 export default function ReorderCalendar() {
   const { filtered, hasData, skuSupplierOptions, costSettings } = useInventory();
+  const { t } = useLanguage();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);

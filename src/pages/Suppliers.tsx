@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ChevronDown, ChevronRight, Mail } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
   return (
@@ -43,6 +44,7 @@ interface SupplierRow {
 
 export default function Suppliers() {
   const { filtered, hasData } = useInventory();
+  const { t } = useLanguage();
   const [expandedSupplier, setExpandedSupplier] = useState<string | null>(null);
   const [emailSupplier, setEmailSupplier] = useState<string | null>(null);
 
@@ -166,20 +168,20 @@ export default function Suppliers() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Supplier Summary</h1>
+            <h1 className="page-title">{t('suppliers.title')}</h1>
             <HelpTooltip
-              text="Aggregated view of inventory and purchasing metrics per supplier."
-              tip="Click a row to expand the detailed SKU list. Use this to prepare supplier-specific POs and compare lead times across vendors."
+              text={t('suppliers.helpText')}
+              tip={t('suppliers.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Aggregated metrics per supplier — click a row to see its reorder list</p>
+          <p className="page-subtitle">{t('suppliers.subtitle')}</p>
         </div>
         <ExportButton data={exportData} filename="supplier-summary.csv" />
       </div>
 
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No suppliers found with current filters.
+          {t('suppliers.noSuppliers')}
         </div>
       ) : (
         <div className="bg-card border rounded-lg overflow-hidden">
@@ -334,7 +336,7 @@ export default function Suppliers() {
                       <tr key={`${row.supplier}-empty`}>
                         <td colSpan={colSpan} className="p-0">
                           <div className="bg-muted/30 px-8 py-4 text-xs text-muted-foreground">
-                            No SKUs need reordering for this supplier.
+                            {t('reorder.noItems')}
                           </div>
                         </td>
                       </tr>

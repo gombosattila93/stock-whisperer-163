@@ -17,6 +17,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameMonth, isToday, getDay, subMonths, addMonths } from "date-fns";
 import type { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 import type { EoqSettings } from "@/lib/reorderStrategies";
+import { useLanguage } from "@/lib/i18n";
 
 interface CalendarOrder {
   sku: string;
@@ -31,6 +32,7 @@ interface CalendarOrder {
 
 export default function ReorderCalendar() {
   const { filtered, hasData, skuSupplierOptions, costSettings } = useInventory();
+  const { t } = useLanguage();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
@@ -113,13 +115,13 @@ export default function ReorderCalendar() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Reorder Calendar</h1>
+            <h1 className="page-title">{t('calendar.title')}</h1>
             <HelpTooltip
-              text="Monthly view of when purchase orders need to be placed based on current stock levels, demand rates, and lead times."
-              tip="Each cell shows SKUs that need ordering on that date. Click a day to see details. Red = Critical (order today), Yellow = Warning, Blue = Watch."
+              text={t('calendar.helpText')}
+              tip={t('calendar.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Plan your purchasing week — see when orders must be placed</p>
+          <p className="page-subtitle">{t('calendar.subtitle')}</p>
         </div>
       </div>
 
@@ -136,13 +138,13 @@ export default function ReorderCalendar() {
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" className="text-xs ml-2" onClick={goToday}>
-            Today
+            {t('common.today')}
           </Button>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-destructive inline-block" /> Critical</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-warning/50 inline-block" /> Warning</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary/30 inline-block" /> Watch</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-destructive inline-block" /> {t('common.critical')}</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-warning/50 inline-block" /> {t('common.warning')}</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary/30 inline-block" /> {t('common.watch')}</span>
         </div>
       </div>
 
@@ -150,7 +152,7 @@ export default function ReorderCalendar() {
       <div className="bg-card border rounded-lg overflow-hidden">
         {/* Day headers */}
         <div className="grid grid-cols-7 border-b border-border">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+          {[t('calendar.mon'), t('calendar.tue'), t('calendar.wed'), t('calendar.thu'), t('calendar.fri'), t('calendar.sat'), t('calendar.sun')].map(d => (
             <div key={d} className="px-2 py-2 text-xs font-semibold text-muted-foreground text-center bg-muted/50">
               {d}
             </div>
@@ -183,7 +185,7 @@ export default function ReorderCalendar() {
               >
                 <div className={`text-xs font-medium mb-1 ${today ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                   {format(day, 'd')}
-                  {today && <span className="ml-1 text-[10px]">today</span>}
+                  {today && <span className="ml-1 text-[10px]">{t('calendar.today')}</span>}
                 </div>
 
                 {dayOrders.length > 0 && (
@@ -224,7 +226,7 @@ export default function ReorderCalendar() {
           <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
             <span className="font-semibold text-sm">
-              Orders for {format(new Date(selectedDay), 'EEEE, MMMM d, yyyy')}
+              {t('calendar.ordersFor')} {format(new Date(selectedDay), 'EEEE, MMMM d, yyyy')}
             </span>
             <Badge variant="secondary" className="ml-2">{selectedOrders.length} items</Badge>
           </div>
@@ -233,12 +235,12 @@ export default function ReorderCalendar() {
               <thead>
                 <tr>
                   <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">SKU</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Name</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Order Qty</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Lead Time</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Est. Delivery</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Urgency</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.name')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.supplier')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('calendar.orderQty')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('critical.leadTime')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('calendar.estDelivery')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.urgency')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,7 +270,7 @@ export default function ReorderCalendar() {
 
       {calendarOrders.length === 0 && (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground mt-4">
-          No items need reordering with current filters.
+          {t('calendar.noItemsNeedReordering')}
         </div>
       )}
     </div>

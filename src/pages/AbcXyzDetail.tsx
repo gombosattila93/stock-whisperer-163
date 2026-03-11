@@ -24,6 +24,7 @@ import {
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { useLanguage } from "@/lib/i18n";
 
 const TIER_BADGE: Record<SkuCapability['tier'], { label: string; className: string }> = {
   full: { label: 'Complete', className: 'bg-primary/10 text-primary border-primary/30' },
@@ -45,6 +46,7 @@ function getMissingList(cap: SkuCapability): string[] {
 
 export default function AbcXyzDetail() {
   const { filtered, hasData, costSettings, suppliers, skuSupplierOptions, setSkuSupplierOptions } = useInventory();
+  const { t } = useLanguage();
   const [abcFilter, setAbcFilter] = useState<string>("");
   const [xyzFilter, setXyzFilter] = useState<string>("");
   const [expandedSkus, setExpandedSkus] = useState<Set<string>>(new Set());
@@ -92,20 +94,20 @@ export default function AbcXyzDetail() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">ABC-XYZ Detail</h1>
+            <h1 className="page-title">{t('abcxyz.title')}</h1>
             <HelpTooltip
-              text="Dual classification: ABC (revenue importance) × XYZ (demand variability)."
-              tip="A = top 80% revenue, X = CV < 0.5 (stable). AX items deserve tight management; CZ items may be candidates for make-to-order. Adjust thresholds in Classification Settings."
+              text={t('abcxyz.helpText')}
+              tip={t('abcxyz.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Full SKU analysis with classification filters</p>
+          <p className="page-subtitle">{t('abcxyz.subtitle')}</p>
         </div>
         <ExportButton data={exportData} filename="abc-xyz-detail.csv" />
       </div>
 
       <div className="filter-bar">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">ABC Class</span>
+          <span className="text-xs text-muted-foreground">{t('abcxyz.abcClass')}</span>
           <Select value={abcFilter} onValueChange={(v) => { setAbcFilter(v === "all" ? "" : v); setCurrentPage(1); }}>
             <SelectTrigger className="w-[100px] h-8 text-xs">
               <SelectValue placeholder="All" />
@@ -119,7 +121,7 @@ export default function AbcXyzDetail() {
           </Select>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">XYZ Class</span>
+          <span className="text-xs text-muted-foreground">{t('abcxyz.xyzClass')}</span>
           <Select value={xyzFilter} onValueChange={(v) => { setXyzFilter(v === "all" ? "" : v); setCurrentPage(1); }}>
             <SelectTrigger className="w-[100px] h-8 text-xs">
               <SelectValue placeholder="All" />

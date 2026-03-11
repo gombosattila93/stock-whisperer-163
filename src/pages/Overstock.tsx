@@ -14,6 +14,7 @@ import {
 import { useMemo } from "react";
 import { PackageX } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { useLanguage } from "@/lib/i18n";
 
 function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
   return (
@@ -28,6 +29,7 @@ function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
 
 export default function Overstock() {
   const { filtered, hasData, costSettings } = useInventory();
+  const { t } = useLanguage();
 
   // 2c) Separate dead stock from overstock
   const deadStock = useMemo(() =>
@@ -91,14 +93,14 @@ export default function Overstock() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Overstock Analysis</h1>
+            <h1 className="page-title">{t('overstock.title')}</h1>
             <HelpTooltip
-              text="Items with >180 days of stock coverage, plus dead stock (zero sales)."
-              tip="Tied-up capital = excess qty × purchase price. Dead stock items are the best candidates for liquidation or returns. Review this page monthly."
+              text={t('overstock.helpText')}
+              tip={t('overstock.helpTip')}
             />
           </div>
           <p className="page-subtitle">
-            Items with &gt;180 days of stock — Total tied-up capital:{' '}
+            {t('overstock.subtitle')}{' '}
             <span className="font-semibold text-foreground">€{totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
@@ -110,14 +112,14 @@ export default function Overstock() {
         <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <PackageX className="h-5 w-5 text-muted-foreground" />
-            <h2 className="font-semibold">Dead Stock</h2>
+            <h2 className="font-semibold">{t('overstock.deadStock')}</h2>
             <Badge variant="secondary" className="text-xs">{deadStock.length} SKUs</Badge>
             <span className="text-sm text-muted-foreground ml-auto">
-              Value: €{deadStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {t('common.value')}: €{deadStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            Items with zero demand but positive stock — consider liquidation or write-off.
+            {t('overstock.deadStockDesc')}
           </p>
           <div className="overflow-auto max-h-[300px]">
             <table className="data-table text-xs">
@@ -159,11 +161,11 @@ export default function Overstock() {
       {stockOnlySkus.length > 0 && (
         <div className="bg-card border border-muted-foreground/20 rounded-lg p-5 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="font-semibold">No Demand Data</h2>
+            <h2 className="font-semibold">{t('overstock.noDemandData')}</h2>
             <Badge variant="secondary" className="text-xs">{stockOnlySkus.length} SKUs</Badge>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            These SKUs have stock but no sales history — unable to determine if overstock. Consider verifying demand data.
+            {t('overstock.noDemandDataDesc')}
           </p>
           <div className="overflow-auto max-h-[300px]">
             <table className="data-table text-xs">
@@ -197,7 +199,7 @@ export default function Overstock() {
 
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No overstock items found with current filters.
+          {t('overstock.noItems')}
         </div>
       ) : (
         <div className="bg-card border rounded-lg overflow-hidden">

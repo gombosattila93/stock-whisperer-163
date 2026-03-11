@@ -20,29 +20,21 @@ import { SERVICE_LEVELS } from "@/lib/calculations";
 import { FilterPresets } from "@/components/FilterPresets";
 import { ClassificationSettings } from "@/components/ClassificationSettings";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 export function GlobalFilters() {
   const {
-    suppliers,
-    categories,
-    filterSupplier,
-    setFilterSupplier,
-    filterCategory,
-    setFilterCategory,
-    demandDays,
-    setDemandDays,
-    searchQuery,
-    setSearchQuery,
-    serviceLevel,
-    setServiceLevel,
-    hasData,
-    filtered,
-    analysis,
-    thresholds,
-    setThresholds,
-    stockOverrideCount,
-    clearStockOverrides,
+    suppliers, categories,
+    filterSupplier, setFilterSupplier,
+    filterCategory, setFilterCategory,
+    demandDays, setDemandDays,
+    searchQuery, setSearchQuery,
+    serviceLevel, setServiceLevel,
+    hasData, filtered, analysis,
+    thresholds, setThresholds,
+    stockOverrideCount, clearStockOverrides,
   } = useInventory();
+  const { t } = useLanguage();
 
   const [showClassification, setShowClassification] = useState(false);
 
@@ -55,7 +47,7 @@ export function GlobalFilters() {
           <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
           <Input
             type="text"
-            placeholder="Search SKUs…"
+            placeholder={t('header.searchSkus')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-[180px] h-8 text-xs pl-8"
@@ -68,13 +60,13 @@ export function GlobalFilters() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Supplier</Label>
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">{t('common.supplier')}</Label>
           <Select value={filterSupplier} onValueChange={(v) => setFilterSupplier(v === "all" ? "" : v)}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={t('common.all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
               {suppliers.map((s) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
@@ -83,13 +75,13 @@ export function GlobalFilters() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Category</Label>
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">{t('common.category')}</Label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={t('common.all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
@@ -98,7 +90,7 @@ export function GlobalFilters() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Service level</Label>
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">{t('header.serviceLevel')}</Label>
           <Select value={serviceLevel} onValueChange={setServiceLevel}>
             <SelectTrigger className="w-[80px] h-8 text-xs">
               <SelectValue />
@@ -112,7 +104,7 @@ export function GlobalFilters() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Demand window</Label>
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">{t('header.demandWindow')}</Label>
           <Input
             type="number"
             value={demandDays}
@@ -121,7 +113,7 @@ export function GlobalFilters() {
             min={7}
             max={365}
           />
-          <span className="text-xs text-muted-foreground">days</span>
+          <span className="text-xs text-muted-foreground">{t('common.days')}</span>
         </div>
 
         <Button
@@ -146,10 +138,10 @@ export function GlobalFilters() {
                 >
                   <Pencil className="h-3 w-3 text-primary" />
                   <RotateCcw className="h-3 w-3" />
-                  {stockOverrideCount} stock override{stockOverrideCount !== 1 ? 's' : ''}
+                  {stockOverrideCount} {stockOverrideCount !== 1 ? t('header.stockOverridesPlural') : t('header.stockOverrides')}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Clear all manual stock overrides</TooltipContent>
+              <TooltipContent>{t('common.clear')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}

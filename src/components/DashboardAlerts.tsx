@@ -1,6 +1,7 @@
 import { AlertCircle, Bell, X } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { useMemo, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 interface Alert {
   id: string;
@@ -10,6 +11,7 @@ interface Alert {
 
 export function DashboardAlerts() {
   const { filtered, hasData, costSettings } = useInventory();
+  const { t } = useLanguage();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const alerts = useMemo<Alert[]>(() => {
@@ -17,27 +19,24 @@ export function DashboardAlerts() {
 
     const result: Alert[] = [];
 
-    // Critical: SKUs with < 7 days of stock
     const criticalCount = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock < 7 && s.avg_daily_demand > 0).length;
     if (criticalCount > 0) {
       result.push({
         id: 'critical-stockout',
         severity: 'critical',
-        message: `${criticalCount} SKU${criticalCount > 1 ? 's' : ''} with less than 7 days of stock — immediate action required`,
+        message: `${criticalCount} SKU${criticalCount > 1 ? 's' : ''} ${t('alert.criticalStockout')}`,
       });
     }
 
-    // Warning: SKUs below reorder point
     const reorderCount = filtered.filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0).length;
     if (reorderCount > 0) {
       result.push({
         id: 'below-reorder',
         severity: 'warning',
-        message: `${reorderCount} SKU${reorderCount > 1 ? 's' : ''} below reorder point — consider placing orders`,
+        message: `${reorderCount} SKU${reorderCount > 1 ? 's' : ''} ${t('alert.belowReorder')}`,
       });
     }
 
-    // Warning: High tied-up capital in overstock
     const overstockItems = filtered.filter(s => s.days_of_stock !== null && s.days_of_stock > 180 && s.avg_daily_demand > 0);
     if (overstockItems.length > 0) {
       const tiedUp = overstockItems.reduce((sum, s) => {
@@ -49,25 +48,24 @@ export function DashboardAlerts() {
         result.push({
           id: 'overstock-capital',
           severity: 'warning',
-          message: `€${tiedUp.toLocaleString(undefined, { maximumFractionDigits: 0 })} tied up in ${overstockItems.length} overstocked SKUs`,
+          message: `€${tiedUp.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${t('alert.overstockCapital')} ${overstockItems.length} ${t('alert.overstockSkus')}`,
         });
       }
     }
 
-    // Shelf life critical
     if (costSettings.shelfLifeEnabled) {
       const shelfCriticalCount = filtered.filter(s => s.shelfLifeRisk === 'critical').length;
       if (shelfCriticalCount > 0) {
         result.push({
           id: 'shelf-life-critical',
           severity: 'critical',
-          message: `${shelfCriticalCount} SKU${shelfCriticalCount > 1 ? 's' : ''} exceed shelf life threshold — risk of write-off`,
+          message: `${shelfCriticalCount} SKU${shelfCriticalCount > 1 ? 's' : ''} ${t('alert.shelfLifeCritical')}`,
         });
       }
     }
 
     return result;
-  }, [filtered, hasData, costSettings]);
+  }, [filtered, hasData, costSettings, t]);
 
   const visibleAlerts = alerts.filter(a => !dismissed.has(a.id));
 

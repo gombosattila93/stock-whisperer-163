@@ -17,6 +17,7 @@ import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
 import { Badge } from "@/components/ui/badge";
 import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { useLanguage } from "@/lib/i18n";
 
 function KpiCard({ icon: Icon, label, value, accent, subLabel }: {
   icon: React.ElementType;
@@ -68,6 +69,7 @@ const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
 
 export default function Overview() {
   const { filtered, hasData, costSettings, reservedQtyMap, fxRates } = useInventory();
+  const { t } = useLanguage();
 
   const [overridesLoaded, setOverridesLoaded] = useState<Record<string, ReorderStrategy>>({});
 
@@ -97,16 +99,13 @@ export default function Overview() {
     [filtered]
   );
 
-  // Edge case info badges
   const deadStockCount = filtered.filter(s => s.dead_stock).length;
   const insufficientDataCount = filtered.filter(s => s.insufficientData).length;
   const overdueCount = filtered.filter(s => s.overdueDelivery).length;
   const abcInfo = filtered.find(s => s.abcInfo)?.abcInfo;
   const xyzInfo = filtered.find(s => s.xyzInfo)?.xyzInfo;
-  // 3c) All zero revenue warning
   const allZeroRevenue = filtered.length > 0 && filtered.every(s => s.total_revenue === 0);
 
-  // Data quality stats
   const dataQuality = useMemo(() => {
     if (filtered.length === 0) return null;
     const tiers: Record<SkuCapability['tier'], number> = { full: 0, partial: 0, 'stock-only': 0, 'sales-only': 0, minimal: 0 };
@@ -122,7 +121,6 @@ export default function Overview() {
     return { tiers, missingLeadTime, missingPrice, noSales, noStock, completePct };
   }, [filtered]);
 
-  // Financial KPI aggregations
   const financialKpis = useMemo(() => {
     if (filtered.length === 0) return null;
     let purchaseValueEur = 0;
@@ -181,7 +179,6 @@ export default function Overview() {
     const avgMarginPct = marginWeightedDenom > 0 ? marginWeightedSum / marginWeightedDenom : null;
     const hasAnyFinancialData = skusWithPurchase > 0 || skusWithMargin > 0;
 
-    // FX impact calculations
     const usdStrengthImpactEur = usdExposureUsd * (fxRates?.usdEur ?? 0.924) * 0.01;
     const totalFxExposure = eurExposureEur + usdExposureEur;
     const eurPct = totalFxExposure > 0 ? (eurExposureEur / totalFxExposure) * 100 : 0;
@@ -237,13 +234,13 @@ export default function Overview() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Inventory Overview</h1>
+            <h1 className="page-title">{t('overview.title')}</h1>
             <HelpTooltip
-              text="Dashboard showing real-time inventory health KPIs, ABC-XYZ matrix, and data quality."
-              tip="Use global filters to slice by supplier, category, or ABC class. Upload at least 6 months of data for reliable trend detection."
+              text={t('overview.helpText')}
+              tip={t('overview.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Real-time inventory health at a glance</p>
+          <p className="page-subtitle">{t('overview.subtitle')}</p>
         </div>
         <ExportButton
           data={filtered.map(s => ({
@@ -259,17 +256,15 @@ export default function Overview() {
 
       <DashboardAlerts />
 
-      {/* 3c) Zero revenue warning banner */}
       {allZeroRevenue && (
         <div className="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 mb-6">
           <AlertTriangle className="h-4 w-4 text-warning-foreground mt-0.5 shrink-0" />
           <p className="text-xs text-warning-foreground leading-relaxed">
-            <strong>ABC classification disabled</strong> — all SKUs have zero revenue. Please map the <code className="font-mono">unit_price</code> column for accurate classification.
+            <strong>{t('overview.abcDisabled')}</strong> — {t('overview.abcDisabledDesc')}
           </p>
         </div>
       )}
 
-      {/* Edge case info banners */}
       {(abcInfo || xyzInfo || insufficientDataCount > 0 || deadStockCount > 0 || overdueCount > 0) && (
         <div className="flex flex-wrap gap-2 mb-4">
           {abcInfo && (
@@ -284,61 +279,59 @@ export default function Overview() {
           )}
           {insufficientDataCount > 0 && (
             <Badge variant="outline" className="text-[10px] gap-1 border-warning/50 text-warning-foreground">
-              <AlertTriangle className="h-3 w-3" /> {insufficientDataCount} SKUs with limited data
+              <AlertTriangle className="h-3 w-3" /> {insufficientDataCount} {t('overview.skusLimitedData')}
             </Badge>
           )}
           {deadStockCount > 0 && (
             <Badge variant="outline" className="text-[10px] gap-1">
-              <PackageX className="h-3 w-3" /> {deadStockCount} dead stock SKUs
+              <PackageX className="h-3 w-3" /> {deadStockCount} {t('overview.deadStockSkus')}
             </Badge>
           )}
           {overdueCount > 0 && (
             <Badge variant="outline" className="text-[10px] gap-1 border-warning/50 text-warning-foreground">
-              {overdueCount} overdue deliveries
+              {overdueCount} {t('overview.overdueDeliveries')}
             </Badge>
           )}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <KpiCard icon={Package} label="Total SKUs" value={totalSkus} />
-        <KpiCard icon={AlertTriangle} label="Critical SKUs" value={criticalSkus} accent="bg-destructive" />
-        <KpiCard icon={ShoppingCart} label="Reorder Needed" value={reorderNeeded} accent="bg-warning" />
-        <KpiCard icon={PackageX} label="Overstock Items" value={overstockItems} accent="bg-muted" />
+        <KpiCard icon={Package} label={t('overview.totalSkus')} value={totalSkus} />
+        <KpiCard icon={AlertTriangle} label={t('overview.criticalSkus')} value={criticalSkus} accent="bg-destructive" />
+        <KpiCard icon={ShoppingCart} label={t('overview.reorderNeeded')} value={reorderNeeded} accent="bg-warning" />
+        <KpiCard icon={PackageX} label={t('overview.overstockItems')} value={overstockItems} accent="bg-muted" />
         {showPerClassSL && (
-          <KpiCard icon={Target} label="Wtd Avg Service Level" value={`${weightedAvgSL.toFixed(1)}%`} />
+          <KpiCard icon={Target} label={t('overview.wtdAvgServiceLevel')} value={`${weightedAvgSL.toFixed(1)}%`} />
         )}
         {hasReservations && (
-          <KpiCard icon={Lock} label="Reserved Stock Value" value={`€${reservedStockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+          <KpiCard icon={Lock} label={t('overview.reservedStockValue')} value={`€${reservedStockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         )}
       </div>
 
-      {/* Financial KPI cards */}
       {financialKpis?.hasAnyFinancialData && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <KpiCard
             icon={Coins}
-            label="Készlet beszerz. értéke"
+            label={t('overview.purchaseValue')}
             value={`€${financialKpis.purchaseValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-            subLabel={financialKpis.skusWithoutPurchase > 0 ? `${financialKpis.skusWithoutPurchase} SKU ár nélkül` : undefined}
+            subLabel={financialKpis.skusWithoutPurchase > 0 ? `${financialKpis.skusWithoutPurchase} ${t('overview.skusWithoutPrice')}` : undefined}
           />
           <KpiCard
             icon={Euro}
-            label="Készlet eladási értéke"
+            label={t('overview.sellingValue')}
             value={`${financialKpis.sellingValueHuf.toLocaleString(undefined, { maximumFractionDigits: 0 })} Ft`}
             subLabel={`≈ €${financialKpis.sellingValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           />
           <KpiCard
             icon={Percent}
-            label="Átlag árrés"
+            label={t('overview.avgMargin')}
             value={financialKpis.avgMarginPct !== null ? `${financialKpis.avgMarginPct.toFixed(1)}%` : '—'}
             accent={financialKpis.avgMarginPct !== null && financialKpis.avgMarginPct < 15 ? 'bg-destructive' : undefined}
-            subLabel={financialKpis.skusWithoutMargin > 0 ? `${financialKpis.skusWithoutMargin} SKU margin-adat nélkül` : undefined}
+            subLabel={financialKpis.skusWithoutMargin > 0 ? `${financialKpis.skusWithoutMargin} ${t('overview.skusWithoutMargin')}` : undefined}
           />
         </div>
       )}
 
-      {/* EUR & USD Exposure cards — always visible when data is loaded */}
       {(() => {
         const totalSkusCount = filtered.length;
         const hasPriceData = financialKpis && financialKpis.skusWithPurchase > 0;
@@ -353,32 +346,31 @@ export default function Overview() {
         const usdCount = financialKpis?.skusUsd ?? 0;
 
         const eurSubLabel = noPriceData
-          ? 'Upload CSV with purchase_price'
+          ? t('overview.uploadCsvWithPurchasePrice')
           : partialData
-            ? `${financialKpis!.skusWithPurchase} of ${totalSkusCount} SKUs have price data`
+            ? `${financialKpis!.skusWithPurchase} / ${totalSkusCount} ${t('overview.skusHavePriceData')}`
             : eurCount > 0
-              ? `${eurCount} EUR suppliers`
-              : 'No EUR purchases';
+              ? `${eurCount} ${t('overview.eurSuppliers')}`
+              : t('overview.noEurPurchases');
 
         const usdSubLabel = noPriceData
-          ? 'Upload CSV with purchase_price'
+          ? t('overview.uploadCsvWithPurchasePrice')
           : partialData
-            ? `${financialKpis!.skusWithPurchase} of ${totalSkusCount} SKUs have price data`
+            ? `${financialKpis!.skusWithPurchase} / ${totalSkusCount} ${t('overview.skusHavePriceData')}`
             : usdCount > 0
               ? `≈ $${usdValueUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} · ${usdCount} SKU`
-              : 'No USD purchases';
+              : t('overview.noUsdPurchases');
 
         return (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
-              {/* EUR Exposure */}
               <div className="kpi-card">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg p-2.5 bg-primary/10">
                     <Euro className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">EUR Exposure</p>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{t('overview.eurExposure')}</p>
                     <p className="text-2xl font-bold mt-0.5">
                       €{eurValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
@@ -392,7 +384,6 @@ export default function Overview() {
                 </div>
               </div>
 
-              {/* USD Exposure */}
               <div className="kpi-card">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg p-2.5 bg-primary/10">
@@ -400,7 +391,7 @@ export default function Overview() {
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">USD Exposure</p>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{t('overview.usdExposure')}</p>
                       {usdCount > 0 && (
                         <TooltipProvider delayDuration={200}>
                           <UiTooltip>
@@ -425,11 +416,10 @@ export default function Overview() {
               </div>
             </div>
 
-            {/* FX Summary line */}
             {financialKpis && financialKpis.totalFxExposure > 0 && (
               <p className="text-xs text-muted-foreground mb-8 px-1">
-                Total FX exposure: €{financialKpis.totalFxExposure.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                {' '}(EUR: {financialKpis.eurPct.toFixed(0)}% | USD: {financialKpis.usdPct.toFixed(0)}% | HUF impact: ±€{financialKpis.hufImpactEur.toLocaleString(undefined, { maximumFractionDigits: 0 })} per 1% EUR/HUF movement)
+                {t('overview.fxSummary')}: €{financialKpis.totalFxExposure.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {' '}(EUR: {financialKpis.eurPct.toFixed(0)}% | USD: {financialKpis.usdPct.toFixed(0)}% | HUF impact: ±€{financialKpis.hufImpactEur.toLocaleString(undefined, { maximumFractionDigits: 0 })} {t('overview.hufImpact')})
               </p>
             )}
             {(!financialKpis || financialKpis.totalFxExposure === 0) && <div className="mb-8" />}
@@ -437,13 +427,12 @@ export default function Overview() {
         );
       })()}
 
-      {/* Data Quality Card */}
       {dataQuality && dataQuality.completePct < 100 && (
         <div className="bg-card border rounded-lg p-5 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="h-4 w-4 text-primary" />
-            <h2 className="font-semibold text-sm">Data Quality</h2>
-            <span className="text-xs text-muted-foreground ml-auto">{dataQuality.completePct}% complete</span>
+            <h2 className="font-semibold text-sm">{t('overview.dataQuality')}</h2>
+            <span className="text-xs text-muted-foreground ml-auto">{dataQuality.completePct}% {t('common.complete').toLowerCase()}</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2 mb-3">
             <div
@@ -454,30 +443,30 @@ export default function Overview() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
             <div className="rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1.5">
               <span className="font-semibold">{dataQuality.tiers.full}</span>
-              <span className="text-muted-foreground ml-1">Full analysis</span>
+              <span className="text-muted-foreground ml-1">{t('overview.fullAnalysis')}</span>
             </div>
             {dataQuality.missingLeadTime > 0 && (
               <div className="rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
                 <span className="font-semibold">{dataQuality.missingLeadTime}</span>
-                <span className="text-muted-foreground ml-1">Missing lead time</span>
+                <span className="text-muted-foreground ml-1">{t('overview.missingLeadTime')}</span>
               </div>
             )}
             {dataQuality.missingPrice > 0 && (
               <div className="rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
                 <span className="font-semibold">{dataQuality.missingPrice}</span>
-                <span className="text-muted-foreground ml-1">Missing price</span>
+                <span className="text-muted-foreground ml-1">{t('overview.missingPrice')}</span>
               </div>
             )}
             {dataQuality.noSales > 0 && (
               <div className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5">
                 <span className="font-semibold">{dataQuality.noSales}</span>
-                <span className="text-muted-foreground ml-1">No sales history</span>
+                <span className="text-muted-foreground ml-1">{t('overview.noSalesHistory')}</span>
               </div>
             )}
             {dataQuality.noStock > 0 && (
               <div className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5">
                 <span className="font-semibold">{dataQuality.noStock}</span>
-                <span className="text-muted-foreground ml-1">No stock data</span>
+                <span className="text-muted-foreground ml-1">{t('overview.noStockData')}</span>
               </div>
             )}
           </div>
@@ -486,19 +475,19 @@ export default function Overview() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2 bg-card border rounded-lg p-6">
-          <h2 className="font-semibold mb-4">ABC-XYZ Classification Matrix</h2>
+          <h2 className="font-semibold mb-4">{t('overview.abcXyzMatrix')}</h2>
           <div className="overflow-auto">
             <div className="grid grid-cols-4 gap-2 min-w-[400px]">
               <div />
               {xyzLabels.map(xyz => (
                 <div key={xyz} className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider py-2">
-                  {xyz} {xyz === 'X' ? '(Stable)' : xyz === 'Y' ? '(Variable)' : '(Erratic)'}
+                  {xyz} {xyz === 'X' ? t('overview.stableX') : xyz === 'Y' ? t('overview.variableY') : t('overview.erraticZ')}
                 </div>
               ))}
               {abcLabels.map(abc => (
                 <>
                   <div key={`label-${abc}`} className="flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {abc} {abc === 'A' ? '(High Rev)' : abc === 'B' ? '(Mid Rev)' : '(Low Rev)'}
+                    {abc} {abc === 'A' ? t('overview.highRev') : abc === 'B' ? t('overview.midRev') : t('overview.lowRev')}
                   </div>
                   {xyzLabels.map(xyz => {
                     const key = `${abc}${xyz}`;
@@ -517,10 +506,10 @@ export default function Overview() {
         </div>
 
         <div className="bg-card border rounded-lg p-6">
-          <h2 className="font-semibold mb-4">Reorder Strategy Mix</h2>
+          <h2 className="font-semibold mb-4">{t('overview.reorderStrategyMix')}</h2>
           {strategyDistribution.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-              No SKU data
+              {t('overview.noSkuData')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={240}>
@@ -562,43 +551,42 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Trend Summary */}
       <div className="bg-card border rounded-lg p-6 mb-8">
-        <h2 className="font-semibold mb-4">Trend Summary</h2>
+        <h2 className="font-semibold mb-4">{t('overview.trendSummary')}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
           <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
             <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
             <div>
               <p className="text-lg font-bold">{risingCount}</p>
-              <p className="text-xs text-muted-foreground">Rising</p>
+              <p className="text-xs text-muted-foreground">{t('common.rising')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
             <Minus className="h-4 w-4 text-muted-foreground shrink-0" />
             <div>
               <p className="text-lg font-bold">{stableCount}</p>
-              <p className="text-xs text-muted-foreground">Stable</p>
+              <p className="text-xs text-muted-foreground">{t('common.stable')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
             <TrendingDown className="h-4 w-4 text-destructive shrink-0" />
             <div>
               <p className="text-lg font-bold">{fallingCount}</p>
-              <p className="text-xs text-muted-foreground">Falling</p>
+              <p className="text-xs text-muted-foreground">{t('common.falling')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
             <Flame className="h-4 w-4 text-amber-500 shrink-0" />
             <div>
               <p className="text-lg font-bold">{seasonalCount}</p>
-              <p className="text-xs text-muted-foreground">Seasonal spikes</p>
+              <p className="text-xs text-muted-foreground">{t('common.seasonal')}</p>
             </div>
           </div>
         </div>
 
         {top5Rising.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Top 5 Fastest Rising SKUs</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">{t('overview.top5Rising')}</h3>
             <div className="space-y-1.5">
               {top5Rising.map(s => (
                 <div key={s.sku} className="flex items-center gap-3 text-sm px-3 py-1.5 rounded-md bg-muted/30">

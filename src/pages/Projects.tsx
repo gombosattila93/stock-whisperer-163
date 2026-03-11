@@ -23,9 +23,11 @@ import { Plus, CheckCircle, XCircle, Search } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import type { ProjectReservation } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Projects() {
   const { reservations, addReservation, updateReservation, analysis, hasData } = useInventory();
+  const { t } = useLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('active');
 
@@ -120,8 +122,8 @@ export default function Projects() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Project Reservations</h1>
-          <p className="page-subtitle">Reserve stock for specific projects or customer orders</p>
+          <h1 className="page-title">{t('projects.title')}</h1>
+          <p className="page-subtitle">{t('projects.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -140,12 +142,12 @@ export default function Projects() {
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5">
                 <Plus className="h-4 w-4" />
-                New Reservation
+                {t('projects.newReservation')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>Create Project Reservation</DialogTitle>
+                <DialogTitle>{t('projects.createReservation')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -208,7 +210,7 @@ export default function Projects() {
                   </div>
                 )}
                 <Button onClick={handleCreate} disabled={!projectName.trim() || items.length === 0} className="w-full">
-                  Create Reservation
+                  {t('projects.createBtn')}
                 </Button>
               </div>
             </DialogContent>

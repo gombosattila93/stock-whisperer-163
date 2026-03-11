@@ -14,6 +14,7 @@ import {
 import { useMemo } from "react";
 import { PackageX } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { useLanguage } from "@/lib/i18n";
 
 function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
   return (

@@ -152,7 +152,7 @@ export default function ReorderCalendar() {
       <div className="bg-card border rounded-lg overflow-hidden">
         {/* Day headers */}
         <div className="grid grid-cols-7 border-b border-border">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+          {[t('calendar.mon'), t('calendar.tue'), t('calendar.wed'), t('calendar.thu'), t('calendar.fri'), t('calendar.sat'), t('calendar.sun')].map(d => (
             <div key={d} className="px-2 py-2 text-xs font-semibold text-muted-foreground text-center bg-muted/50">
               {d}
             </div>

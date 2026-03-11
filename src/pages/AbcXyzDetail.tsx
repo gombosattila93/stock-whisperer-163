@@ -107,7 +107,7 @@ export default function AbcXyzDetail() {
 
       <div className="filter-bar">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">ABC Class</span>
+          <span className="text-xs text-muted-foreground">{t('abcxyz.abcClass')}</span>
           <Select value={abcFilter} onValueChange={(v) => { setAbcFilter(v === "all" ? "" : v); setCurrentPage(1); }}>
             <SelectTrigger className="w-[100px] h-8 text-xs">
               <SelectValue placeholder="All" />

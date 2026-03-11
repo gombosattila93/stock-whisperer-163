@@ -27,6 +27,7 @@ import { useLanguage } from "@/lib/i18n";
 
 export default function Projects() {
   const { reservations, addReservation, updateReservation, analysis, hasData } = useInventory();
+  const { t } = useLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('active');
 

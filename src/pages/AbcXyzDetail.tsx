@@ -94,13 +94,13 @@ export default function AbcXyzDetail() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">ABC-XYZ Detail</h1>
+            <h1 className="page-title">{t('abcxyz.title')}</h1>
             <HelpTooltip
-              text="Dual classification: ABC (revenue importance) × XYZ (demand variability)."
-              tip="A = top 80% revenue, X = CV < 0.5 (stable). AX items deserve tight management; CZ items may be candidates for make-to-order. Adjust thresholds in Classification Settings."
+              text={t('abcxyz.helpText')}
+              tip={t('abcxyz.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Full SKU analysis with classification filters</p>
+          <p className="page-subtitle">{t('abcxyz.subtitle')}</p>
         </div>
         <ExportButton data={exportData} filename="abc-xyz-detail.csv" />
       </div>

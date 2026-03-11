@@ -122,8 +122,8 @@ export default function Projects() {
     <div>
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="page-title">Project Reservations</h1>
-          <p className="page-subtitle">Reserve stock for specific projects or customer orders</p>
+          <h1 className="page-title">{t('projects.title')}</h1>
+          <p className="page-subtitle">{t('projects.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={filterStatus} onValueChange={setFilterStatus}>

@@ -270,7 +270,7 @@ export default function ReorderCalendar() {
 
       {calendarOrders.length === 0 && (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground mt-4">
-          No items need reordering with current filters.
+          {t('calendar.noItemsNeedReordering')}
         </div>
       )}
     </div>

@@ -235,12 +235,12 @@ export default function ReorderCalendar() {
               <thead>
                 <tr>
                   <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">SKU</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Name</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Order Qty</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Lead Time</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Est. Delivery</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Urgency</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.name')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.supplier')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('calendar.orderQty')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('critical.leadTime')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('calendar.estDelivery')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.urgency')}</th>
                 </tr>
               </thead>
               <tbody>

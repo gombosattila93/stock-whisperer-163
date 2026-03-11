@@ -115,13 +115,13 @@ export default function ReorderCalendar() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Reorder Calendar</h1>
+            <h1 className="page-title">{t('calendar.title')}</h1>
             <HelpTooltip
-              text="Monthly view of when purchase orders need to be placed based on current stock levels, demand rates, and lead times."
-              tip="Each cell shows SKUs that need ordering on that date. Click a day to see details. Red = Critical (order today), Yellow = Warning, Blue = Watch."
+              text={t('calendar.helpText')}
+              tip={t('calendar.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Plan your purchasing week — see when orders must be placed</p>
+          <p className="page-subtitle">{t('calendar.subtitle')}</p>
         </div>
       </div>
 

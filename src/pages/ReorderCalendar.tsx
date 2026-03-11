@@ -185,7 +185,7 @@ export default function ReorderCalendar() {
               >
                 <div className={`text-xs font-medium mb-1 ${today ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                   {format(day, 'd')}
-                  {today && <span className="ml-1 text-[10px]">today</span>}
+                  {today && <span className="ml-1 text-[10px]">{t('calendar.today')}</span>}
                 </div>
 
                 {dayOrders.length > 0 && (

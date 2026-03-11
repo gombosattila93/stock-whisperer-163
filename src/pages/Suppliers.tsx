@@ -181,7 +181,7 @@ export default function Suppliers() {
 
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No suppliers found with current filters.
+          {t('suppliers.noSuppliers')}
         </div>
       ) : (
         <div className="bg-card border rounded-lg overflow-hidden">

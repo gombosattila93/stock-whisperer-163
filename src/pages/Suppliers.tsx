@@ -44,6 +44,7 @@ interface SupplierRow {
 
 export default function Suppliers() {
   const { filtered, hasData } = useInventory();
+  const { t } = useLanguage();
   const [expandedSupplier, setExpandedSupplier] = useState<string | null>(null);
   const [emailSupplier, setEmailSupplier] = useState<string | null>(null);
 

@@ -93,14 +93,14 @@ export default function Overstock() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Overstock Analysis</h1>
+            <h1 className="page-title">{t('overstock.title')}</h1>
             <HelpTooltip
-              text="Items with >180 days of stock coverage, plus dead stock (zero sales)."
-              tip="Tied-up capital = excess qty × purchase price. Dead stock items are the best candidates for liquidation or returns. Review this page monthly."
+              text={t('overstock.helpText')}
+              tip={t('overstock.helpTip')}
             />
           </div>
           <p className="page-subtitle">
-            Items with &gt;180 days of stock — Total tied-up capital:{' '}
+            {t('overstock.subtitle')}{' '}
             <span className="font-semibold text-foreground">€{totalTiedUp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </p>
         </div>

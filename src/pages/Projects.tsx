@@ -147,7 +147,7 @@ export default function Projects() {
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>Create Project Reservation</DialogTitle>
+                <DialogTitle>{t('projects.createReservation')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">

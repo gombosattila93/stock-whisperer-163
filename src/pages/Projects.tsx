@@ -23,6 +23,7 @@ import { Plus, CheckCircle, XCircle, Search } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import type { ProjectReservation } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Projects() {
   const { reservations, addReservation, updateReservation, analysis, hasData } = useInventory();

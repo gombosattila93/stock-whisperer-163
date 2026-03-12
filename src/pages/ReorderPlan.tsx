@@ -7,6 +7,7 @@ import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
 import { TablePagination, usePagination } from "@/components/TablePagination";
 import { HighlightText } from "@/components/HighlightText";
 import { exportToCsv } from "@/lib/csvUtils";
+import { useLanguage } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -48,6 +49,7 @@ function priorityScore(urgency: string, abc: string, trend: string): number {
 
 export default function ReorderPlan() {
   const { filtered, hasData, costSettings, skuSupplierOptions } = useInventory();
+  const { t } = useLanguage();
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
   const [optimized, setOptimized] = useState(false);
@@ -104,7 +106,7 @@ export default function ReorderPlan() {
   const totalOrderValue = useMemo(() => reorderItems.reduce((s, i) => s + i.order_value, 0), [reorderItems]);
   const overBudget = budgetEnabled && totalOrderValue > budget;
 
-  // What-if simulation — runs greedy algorithm at whatIfBudget
+  // What-if simulation
   const whatIfResult = useMemo(() => {
     if (!whatIfOpen) return null;
     let remaining = whatIfBudget;
@@ -127,16 +129,13 @@ export default function ReorderPlan() {
     return { approvedCount, approvedValue, deferredCount, deferredValue };
   }, [whatIfOpen, whatIfBudget, reorderItems, totalOrderValue, supplierBudgets]);
 
-  // Budget optimization — greedy by priority
   const optimizeWithinBudget = useCallback(() => {
     const approved = new Set<string>();
     let remaining = budget;
     const supplierSpent: Record<string, number> = {};
-
     for (const item of reorderItems) {
       const supplierCap = supplierBudgets[item.supplier];
       const supplierCurrent = supplierSpent[item.supplier] || 0;
-
       if (item.order_value <= remaining) {
         if (supplierCap && (supplierCurrent + item.order_value) > supplierCap) continue;
         approved.add(item.sku);
@@ -144,7 +143,6 @@ export default function ReorderPlan() {
         supplierSpent[item.supplier] = supplierCurrent + item.order_value;
       }
     }
-
     setApprovedSkus(approved);
     setOptimized(true);
   }, [reorderItems, budget, supplierBudgets]);
@@ -159,7 +157,6 @@ export default function ReorderPlan() {
   const approvedValue = useMemo(() => approvedItems.reduce((s, i) => s + i.order_value, 0), [approvedItems]);
   const deferredValue = useMemo(() => deferredItems.reduce((s, i) => s + i.order_value, 0), [deferredItems]);
 
-  // Per-supplier spend tracking
   const supplierSpend = useMemo(() => {
     const items = optimized ? approvedItems : reorderItems;
     const map: Record<string, number> = {};
@@ -169,7 +166,6 @@ export default function ReorderPlan() {
     return map;
   }, [reorderItems, approvedItems, optimized]);
 
-  // For table display, use sorted lists
   const displayItems = optimized ? approvedItems : reorderItems;
   const { sorted, sort, toggleSort } = useSortableTable(displayItems, { column: 'priority_score', direction: 'desc' });
   const { paginatedData, currentPage, pageSize, setCurrentPage, setPageSize, totalItems } = usePagination(sorted);
@@ -178,17 +174,10 @@ export default function ReorderPlan() {
     const items = optimized ? approvedItems : reorderItems;
     exportToCsv(
       items.map(i => ({
-        sku: i.sku,
-        name: i.sku_name,
-        supplier: i.supplier,
-        category: i.category,
-        abc_class: i.abc_class,
-        urgency: i.urgency,
-        priority_score: i.priority_score.toFixed(1),
-        suggested_qty: i.suggested_order_qty,
-        unit_price: i.unit_price.toFixed(2),
-        order_value: i.order_value.toFixed(2),
-        status: optimized ? 'approved' : 'pending',
+        sku: i.sku, name: i.sku_name, supplier: i.supplier, category: i.category,
+        abc_class: i.abc_class, urgency: i.urgency, priority_score: i.priority_score.toFixed(1),
+        suggested_qty: i.suggested_order_qty, unit_price: i.unit_price.toFixed(2),
+        order_value: i.order_value.toFixed(2), status: optimized ? 'approved' : 'pending',
       })),
       optimized ? 'approved-reorder-plan.csv' : 'reorder-plan.csv'
     );
@@ -207,17 +196,14 @@ export default function ReorderPlan() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Reorder Plan</h1>
-            <HelpTooltip
-              text="Budget-constrained purchasing optimizer that prioritizes items by urgency, ABC class, and demand trend."
-              tip="Set a budget in Cost Model, then click 'Optimize' to auto-select the highest-priority items. Use the What-If slider to simulate different budget scenarios."
-            />
+            <h1 className="page-title">{t('plan.title')}</h1>
+            <HelpTooltip text={t('plan.helpText')} tip={t('plan.helpTip')} />
           </div>
           <p className="page-subtitle">
-            Budget-constrained reorder prioritization
+            {t('plan.subtitle')}
             {budgetEnabled && (
               <span className="ml-2 font-medium">
-                — Budget: €{budget.toLocaleString()}
+                — {t('plan.budget')}: €{budget.toLocaleString()}
                 {costSettings.budgetPeriodDays !== 30 && ` / ${costSettings.budgetPeriodDays}d`}
               </span>
             )}
@@ -226,7 +212,7 @@ export default function ReorderPlan() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportApprovedPlan} className="gap-1.5">
             <Download className="h-4 w-4" />
-            Export {optimized ? 'approved' : ''} plan
+            {optimized ? t('plan.exportApproved') : t('plan.exportPlan')}
           </Button>
         </div>
       </div>
@@ -235,8 +221,7 @@ export default function ReorderPlan() {
         <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 mb-6">
           <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Enable <strong className="text-foreground">Budget Constraints</strong> in{' '}
-            <strong className="text-foreground">Cost Model</strong> to activate budget-limited optimization. Currently showing all reorder items ranked by priority.
+            {t('plan.enableBudget')}
           </p>
         </div>
       )}
@@ -244,36 +229,36 @@ export default function ReorderPlan() {
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-card border rounded-lg p-4">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total Order Value</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{t('plan.totalOrderValue')}</p>
           <p className={`text-2xl font-bold mt-1 ${overBudget ? 'text-destructive' : ''}`}>
             €{totalOrderValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
           {overBudget && (
             <p className="text-xs text-destructive mt-0.5">
-              €{(totalOrderValue - budget).toLocaleString(undefined, { maximumFractionDigits: 0 })} over budget
+              €{(totalOrderValue - budget).toLocaleString(undefined, { maximumFractionDigits: 0 })} {t('plan.overBudget')}
             </p>
           )}
         </div>
         <div className="bg-card border rounded-lg p-4">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">SKUs to Reorder</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{t('plan.skusToReorder')}</p>
           <p className="text-2xl font-bold mt-1">{reorderItems.length}</p>
         </div>
         {optimized && (
           <>
             <div className="bg-card border rounded-lg p-4 border-primary/30">
               <p className="text-xs text-primary font-medium uppercase tracking-wide flex items-center gap-1">
-                <CheckCircle className="h-3.5 w-3.5" /> Approved
+                <CheckCircle className="h-3.5 w-3.5" /> {t('plan.approved')}
               </p>
               <p className="text-2xl font-bold mt-1 text-primary">
-                {approvedItems.length} SKUs — €{approvedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {approvedItems.length} SKU — €{approvedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </p>
             </div>
             <div className="bg-card border rounded-lg p-4 border-muted-foreground/20">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> Deferred
+                <Clock className="h-3.5 w-3.5" /> {t('plan.deferred')}
               </p>
               <p className="text-2xl font-bold mt-1 text-muted-foreground">
-                {deferredItems.length} SKUs — €{deferredValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {deferredItems.length} SKU — €{deferredValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </p>
             </div>
           </>
@@ -286,11 +271,11 @@ export default function ReorderPlan() {
           {!optimized ? (
             <Button onClick={optimizeWithinBudget} className="gap-1.5">
               <Zap className="h-4 w-4" />
-              Optimize within budget
+              {t('plan.optimizeWithinBudget')}
             </Button>
           ) : (
             <Button variant="outline" onClick={resetOptimization} className="gap-1.5">
-              Reset optimization
+              {t('plan.resetOptimization')}
             </Button>
           )}
           <Button
@@ -300,12 +285,12 @@ export default function ReorderPlan() {
             className="gap-1.5"
           >
             <SlidersHorizontal className="h-4 w-4" />
-            What-if
+            {t('plan.whatIf')}
           </Button>
           {overBudget && !optimized && (
             <div className="flex items-center gap-1.5 text-destructive text-sm">
               <AlertTriangle className="h-4 w-4" />
-              Total exceeds budget — click optimize to prioritize
+              {t('plan.totalExceedsBudget')}
             </div>
           )}
         </div>
@@ -316,7 +301,7 @@ export default function ReorderPlan() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-primary" />
-                What-if Budget Simulator
+                {t('plan.whatIfBudgetSimulator')}
               </h3>
               <span className="text-lg font-bold text-primary">
                 €{whatIfBudget.toLocaleString()}
@@ -333,7 +318,7 @@ export default function ReorderPlan() {
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>€0</span>
               <span className="font-medium text-foreground">
-                Current budget: €{budget.toLocaleString()}
+                {t('plan.currentBudget')}: €{budget.toLocaleString()}
               </span>
               <span>€{Math.max(totalOrderValue * 1.5, budget * 2, 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             </div>
@@ -341,35 +326,26 @@ export default function ReorderPlan() {
               <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-primary" /> Approved
+                    <CheckCircle className="h-3 w-3 text-primary" /> {t('plan.approved')}
                   </p>
-                  <p className="text-xl font-bold text-primary">
-                    {whatIfResult.approvedCount} SKUs
-                  </p>
+                  <p className="text-xl font-bold text-primary">{whatIfResult.approvedCount} SKU</p>
                   <p className="text-sm text-muted-foreground">
                     €{whatIfResult.approvedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Deferred
+                    <Clock className="h-3 w-3" /> {t('plan.deferred')}
                   </p>
-                  <p className="text-xl font-bold text-muted-foreground">
-                    {whatIfResult.deferredCount} SKUs
-                  </p>
+                  <p className="text-xl font-bold text-muted-foreground">{whatIfResult.deferredCount} SKU</p>
                   <p className="text-sm text-muted-foreground">
                     €{whatIfResult.deferredValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                 </div>
               </div>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setWhatIfBudget(budget)}
-              className="text-xs"
-            >
-              Reset to current budget
+            <Button size="sm" variant="outline" onClick={() => setWhatIfBudget(budget)} className="text-xs">
+              {t('plan.resetToCurrentBudget')}
             </Button>
           </div>
         )}
@@ -378,7 +354,7 @@ export default function ReorderPlan() {
       {/* Per-supplier budget tracking */}
       {budgetEnabled && Object.keys(supplierSpend).length > 0 && (
         <div className="bg-card border rounded-lg p-5 mb-6">
-          <h3 className="text-sm font-semibold mb-3">Supplier Budget Allocation</h3>
+          <h3 className="text-sm font-semibold mb-3">{t('plan.supplierBudgetAllocation')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {Object.entries(supplierSpend)
               .sort((a, b) => b[1] - a[1])
@@ -403,11 +379,11 @@ export default function ReorderPlan() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Badge variant="destructive" className="text-[9px] cursor-help">
-                              Concentration risk
+                              {t('plan.concentrationRisk')}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="text-xs">This supplier represents &gt;40% of total budget — consider diversifying</p>
+                            <p className="text-xs">&gt;40% — {t('plan.concentrationRisk')}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -422,7 +398,7 @@ export default function ReorderPlan() {
       {/* Reorder table */}
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No items need reordering with current filters.
+          {t('plan.noItems')}
         </div>
       ) : (
         <div className="bg-card border rounded-lg overflow-hidden">
@@ -430,15 +406,15 @@ export default function ReorderPlan() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <SortableHeader column="priority_score" label="Priority" sort={sort} onSort={toggleSort} align="right" tooltip="Composite score = Urgency × ABC class × Trend. Higher = should be ordered first. Used by the budget optimizer." />
+                  <SortableHeader column="priority_score" label={t('common.priority')} sort={sort} onSort={toggleSort} align="right" />
                   <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} tooltip="Revenue importance: A (high), B (medium), C (low). A-class items get priority in budget allocation." />
-                  <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} tooltip="Critical = stock runs out before next delivery. Warning = tight buffer. Watch = approaching reorder point." />
-                  <SortableHeader column="days_of_stock" label="Days Stock" sort={sort} onSort={toggleSort} align="right" tooltip="Days until stockout at current demand rate." />
-                  <SortableHeader column="suggested_order_qty" label="Qty" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="order_value" label="Order Value" sort={sort} onSort={toggleSort} align="right" tooltip="Suggested qty × unit price. Sum of these determines if you're over budget." />
+                  <SortableHeader column="sku_name" label={t('common.name')} sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="supplier" label={t('common.supplier')} sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="abc_class" label="ABC" sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="urgency" label={t('common.urgency')} sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="days_of_stock" label={t('plan.daysStock')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="suggested_order_qty" label={t('common.qty')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="order_value" label={t('plan.orderValue')} sort={sort} onSort={toggleSort} align="right" />
                 </tr>
               </thead>
               <tbody>
@@ -448,9 +424,7 @@ export default function ReorderPlan() {
                     <td className="font-mono font-medium"><HighlightText text={item.sku} /></td>
                     <td><HighlightText text={item.sku_name} /></td>
                     <td><HighlightText text={item.supplier} /></td>
-                    <td>
-                      <Badge variant="outline" className="text-[10px]">{item.abc_class}</Badge>
-                    </td>
+                    <td><Badge variant="outline" className="text-[10px]">{item.abc_class}</Badge></td>
                     <td>
                       <span className={`inline-block px-2.5 py-1 rounded-md text-xs border ${urgencyClass[item.urgency] || ''}`}>
                         {item.urgency}
@@ -473,23 +447,23 @@ export default function ReorderPlan() {
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <Clock className="h-5 w-5 text-muted-foreground" />
-            Deferred Items ({deferredItems.length})
+            {t('plan.deferredItems')} ({deferredItems.length})
           </h3>
           <p className="text-xs text-muted-foreground mb-3">
-            These SKUs were deprioritized due to budget constraints. Review in {costSettings.budgetPeriodDays} days.
+            {t('plan.deferredDesc')} {costSettings.budgetPeriodDays} {t('common.days')}.
           </p>
           <div className="bg-card border rounded-lg overflow-hidden">
             <div className="overflow-auto">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Priority</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('common.priority')}</th>
                     <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">SKU</th>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Name</th>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Supplier</th>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Urgency</th>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Order Value</th>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Next Review</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.name')}</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.supplier')}</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.urgency')}</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('plan.orderValue')}</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('plan.nextReview')}</th>
                   </tr>
                 </thead>
                 <tbody>

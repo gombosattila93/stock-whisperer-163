@@ -14,6 +14,7 @@ import { EoqSettingsPanel } from "@/components/EoqSettingsPanel";
 import { EditableCell } from "@/components/EditableCell";
 import { TrendBadge } from "@/components/TrendBadge";
 import { exportToCsv } from "@/lib/csvUtils";
+import { useLanguage } from "@/lib/i18n";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 
 function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string, field: string, value: number) => void }) {
+  const { t } = useLanguage();
   const [value, setValue] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -49,7 +51,7 @@ function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string
   };
 
   if (saved) {
-    return <span className="text-xs text-primary font-medium">✓ Saved — will appear in reorder list on next refresh</span>;
+    return <span className="text-xs text-primary font-medium">✓ {t('common.save')}</span>;
   }
 
   return (
@@ -65,7 +67,7 @@ function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string
         className="h-7 w-20 text-xs"
       />
       <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleSave} disabled={!value}>
-        Save
+        {t('common.save')}
       </Button>
     </div>
   );
@@ -73,6 +75,7 @@ function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string
 
 export default function ReorderList() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap, fxRates } = useInventory();
+  const { t } = useLanguage();
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
@@ -307,7 +310,7 @@ export default function ReorderList() {
       avg_urgency: r.avgUrgency,
     }));
     data.push({
-      supplier: 'GRAND TOTAL',
+      supplier: t('reorder.grandTotal'),
       skus_to_order: grandTotal.skuCount,
       total_order_qty: grandTotal.totalQty,
       total_order_value_eur: grandTotal.totalValueEur.toFixed(2),
@@ -322,18 +325,18 @@ export default function ReorderList() {
       <div className="page-header flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="page-title">Reorder List</h1>
+            <h1 className="page-title">{t('reorder.title')}</h1>
             <HelpTooltip
-              text="Items where effective stock ≤ reorder point — the system recommends ordering."
-              tip="Choose a strategy (ROP/EOQ/Min-Max/Periodic), approve items with checkboxes, then export. Override strategy per-SKU with the dropdown. Lead time changes recalculate instantly."
+              text={t('reorder.helpText')}
+              tip={t('reorder.helpTip')}
             />
           </div>
-          <p className="page-subtitle">Items where effective stock ≤ reorder point</p>
+          <p className="page-subtitle">{t('reorder.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowPO(true)} disabled={sorted.length === 0} className="gap-1.5">
             <FileText className="h-4 w-4" />
-            Generate PO
+            {t('reorder.generatePO')}
           </Button>
           <ExportButton data={exportData} filename="reorder-list.csv" />
         </div>
@@ -342,7 +345,7 @@ export default function ReorderList() {
       {excludedCount > 0 && (
         <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-4 py-3 mb-4">
           <span className="text-xs text-muted-foreground">
-            {excludedCount} SKUs excluded — missing stock, lead time, or demand data. See ABC-XYZ Detail for full list.
+            {excludedCount} {t('reorder.excluded')}
           </span>
         </div>
       )}
@@ -351,19 +354,19 @@ export default function ReorderList() {
         <div className="rounded-lg border border-border bg-card mb-4">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
             <Clock className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Set lead time to enable reorder</span>
-            <span className="text-xs text-muted-foreground ml-1">({needsLeadTime.length} SKUs)</span>
+            <span className="text-sm font-medium">{t('reorder.setLeadTime')}</span>
+            <span className="text-xs text-muted-foreground ml-1">({needsLeadTime.length} SKU)</span>
           </div>
           <div className="overflow-auto">
             <table className="data-table">
               <thead>
                 <tr>
                   <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">SKU</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Name</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Stock</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Avg Demand/day</th>
-                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Lead Time (days)</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.name')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.supplier')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('common.stock')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('abcxyz.avgDailyDemand')}</th>
+                  <th className="px-4 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('critical.leadTime')} ({t('common.days')})</th>
                 </tr>
               </thead>
               <tbody>
@@ -388,7 +391,7 @@ export default function ReorderList() {
       <div className="filter-bar mb-4">
         <div className="flex items-center gap-2">
           <EoqSettingsPanel settings={eoqSettings} onChange={handleEoqChange} />
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Default Strategy</Label>
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">{t('reorder.defaultStrategy')}</Label>
           <Select value={globalStrategy} onValueChange={(v) => setGlobalStrategy(v as ReorderStrategy)}>
             <SelectTrigger className="w-[220px] h-8 text-xs">
               <SelectValue />
@@ -412,14 +415,14 @@ export default function ReorderList() {
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={clearAllOverrides} className="text-xs text-muted-foreground gap-1.5">
                     <RotateCcw className="h-3 w-3" />
-                    {overrideCount} override{overrideCount !== 1 ? 's' : ''}
+                    {overrideCount} {overrideCount !== 1 ? 'overrides' : 'override'}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Clear all per-SKU strategy overrides</TooltipContent>
+                <TooltipContent>{t('reorder.resetToDefault')}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
-          <span className="text-xs text-muted-foreground">{totalItems} items need reordering</span>
+          <span className="text-xs text-muted-foreground">{totalItems} {t('reorder.needsReorderCount')}</span>
         </div>
       </div>
 
@@ -427,16 +430,16 @@ export default function ReorderList() {
       {someSelected && (
         <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
            <CheckSquare className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-sm font-medium">{selectedSkus.size} selected</span>
+          <span className="text-sm font-medium">{selectedSkus.size} {t('reorder.selected')}</span>
           <div className="flex items-center gap-2 ml-2">
-            <Label className="text-xs text-muted-foreground">Strategy:</Label>
+            <Label className="text-xs text-muted-foreground">{t('common.strategy')}:</Label>
             <Select onValueChange={(v) => applyBulkStrategy(v as ReorderStrategy | '__global__')}>
               <SelectTrigger className="h-7 w-[160px] text-xs">
                 <SelectValue placeholder="Choose…" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__global__">
-                  <span className="text-muted-foreground">Reset to Default</span>
+                  <span className="text-muted-foreground">{t('reorder.resetToDefault')}</span>
                 </SelectItem>
                 {STRATEGY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
@@ -447,34 +450,34 @@ export default function ReorderList() {
             </Select>
           </div>
           <div className="flex items-center gap-2 ml-2">
-            <Label className="text-xs text-muted-foreground">Lead time:</Label>
+            <Label className="text-xs text-muted-foreground">{t('critical.leadTime')}:</Label>
             <Input
               type="number"
               min={1}
               max={365}
-              placeholder="days"
+              placeholder={t('common.days')}
               value={bulkLeadTime}
               onChange={e => setBulkLeadTime(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && applyBulkLeadTime()}
               className="h-7 w-20 text-xs"
             />
             <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={applyBulkLeadTime} disabled={!bulkLeadTime}>
-              Apply
+              {t('common.apply')}
             </Button>
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowPO(true)} className="text-xs gap-1 ml-2">
             <FileText className="h-3.5 w-3.5" />
-            PO for selected
+            {t('reorder.poForSelected')}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedSkus(new Set())} className="text-xs text-muted-foreground ml-auto">
-            Clear selection
+            {t('reorder.clearSelection')}
           </Button>
         </div>
       )}
 
       {sorted.length === 0 ? (
         <div className="bg-card border rounded-lg p-12 text-center text-muted-foreground">
-          No items need reordering with current filters.
+          {t('reorder.noItems')}
         </div>
       ) : (
         <>
@@ -491,21 +494,21 @@ export default function ReorderList() {
                       />
                     </th>
                     <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                    <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                    <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Sparkline</th>
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Direction</th>
-                    <SortableHeader column="stock_qty" label="Stock Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Current physical stock on hand. Click to edit inline — overrides persist per session." />
-                    <SortableHeader column="ordered_qty" label="Ordered Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Open purchase orders. Included in effective stock calculation. Mark past-due if delivery is overdue." />
-                    <SortableHeader column="lead_time_days" label="Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Supplier delivery lead time in days. Critical for safety stock and reorder calculations." />
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Strategy</th>
-                    <SortableHeader column="suggested_order_qty" label="Suggested Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Calculated order quantity based on the selected strategy (ROP, EOQ, Min-Max, or Periodic). Adjusted for MOQ and seasonality." />
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Trigger</th>
-                    <SortableHeader column="urgency" label="Urgency" sort={sort} onSort={toggleSort} tooltip="Critical = days of stock < lead time. Warning = within 1.5× lead time. Watch = approaching reorder point." />
-                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Est. PO Value</th>
-                    {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Price Break</th>}
-                    {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Min Order</th>}
-                    {hasReservations && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Reserved</th>}
+                    <SortableHeader column="sku_name" label={t('common.name')} sort={sort} onSort={toggleSort} />
+                    <SortableHeader column="supplier" label={t('common.supplier')} sort={sort} onSort={toggleSort} />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('reorder.sparkline')}</th>
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.direction')}</th>
+                    <SortableHeader column="stock_qty" label={t('critical.stockQty')} sort={sort} onSort={toggleSort} align="right" />
+                    <SortableHeader column="ordered_qty" label={t('critical.orderedQty')} sort={sort} onSort={toggleSort} align="right" />
+                    <SortableHeader column="lead_time_days" label={t('critical.leadTime')} sort={sort} onSort={toggleSort} align="right" />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.strategy')}</th>
+                    <SortableHeader column="suggested_order_qty" label={t('reorder.suggestedQty')} sort={sort} onSort={toggleSort} align="right" />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('reorder.trigger')}</th>
+                    <SortableHeader column="urgency" label={t('common.urgency')} sort={sort} onSort={toggleSort} />
+                    <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('reorder.estPoValue')}</th>
+                    {costSettings.priceBreaksEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('reorder.priceBreak')}</th>}
+                    {costSettings.minOrderValueEnabled && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('reorder.minOrder')}</th>}
+                    {hasReservations && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('critical.reserved')}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -562,7 +565,7 @@ export default function ReorderList() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__global__">
-                              <span className="text-muted-foreground">Default</span>
+                              <span className="text-muted-foreground">{t('common.default')}</span>
                             </SelectItem>
                             {STRATEGY_OPTIONS.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
@@ -581,7 +584,7 @@ export default function ReorderList() {
                                   <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-accent text-accent-foreground font-medium cursor-help">MOQ</span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p className="text-xs">Rounded up to MOQ: {s.moq} units</p>
+                                  <p className="text-xs">MOQ: {s.moq} {t('common.units')}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -593,7 +596,7 @@ export default function ReorderList() {
                                   <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500 shrink-0 cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-[250px]">
-                                  <p className="text-xs">Demand is {Math.round(s.seasonalityPct)}% above 90d average — qty adjusted from {s.base_suggested_qty}</p>
+                                  <p className="text-xs">{t('common.seasonal')} {Math.round(s.seasonalityPct)}%</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -631,7 +634,7 @@ export default function ReorderList() {
                               )}
                               {pd && pd.nextPriceBreakQty !== null && pd.nextPriceBreakQty > 0 && pd.nextPriceBreakSaving !== null && pd.nextPriceBreakSaving > 0 && (
                                 <div className="text-[10px] text-warning-foreground mt-0.5">
-                                  +{pd.nextPriceBreakQty} db → €{(pd.nextPriceBreakSaving / s.suggested_order_qty).toFixed(2)}/db megtakarítás
+                                  +{pd.nextPriceBreakQty} db → €{(pd.nextPriceBreakSaving / s.suggested_order_qty).toFixed(2)}/db {t('reorder.saving')}
                                 </div>
                               )}
                             </div>
@@ -642,18 +645,18 @@ export default function ReorderList() {
                         <td className="text-xs">
                           {s.priceBreakQty > 0 ? (
                             <span className="text-primary font-medium">
-                              ↑{s.priceBreakQty} (save €{s.priceBreakSaving.toFixed(0)})
+                              ↑{s.priceBreakQty} ({t('reorder.saving')} €{s.priceBreakSaving.toFixed(0)})
                             </span>
                           ) : s.pbOpportunityQty > 0 ? (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <span className="text-primary/80 font-medium cursor-help">
-                                    Order {s.pbOpportunityQty - s.suggested_order_qty} more → save €{s.pbOpportunitySaving.toFixed(0)}
+                                    +{s.pbOpportunityQty - s.suggested_order_qty} → {t('reorder.saving')} €{s.pbOpportunitySaving.toFixed(0)}
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p className="text-xs">Next price break at {s.pbOpportunityQty} units from supplier options</p>
+                                  <p className="text-xs">{t('reorder.priceBreak')} @ {s.pbOpportunityQty} {t('common.units')}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -667,7 +670,7 @@ export default function ReorderList() {
                         return (
                           <td className="text-xs">
                             {minVal && gap > 0 ? (
-                              <span className="text-destructive font-medium">−€{gap.toFixed(0)} below min</span>
+                              <span className="text-destructive font-medium">−€{gap.toFixed(0)} {t('reorder.belowMin')}</span>
                             ) : '—'}
                           </td>
                         );
@@ -696,10 +699,10 @@ export default function ReorderList() {
           {supplierSummary.length > 0 && (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Reorder Summary by Supplier</h2>
+                <h2 className="text-lg font-semibold">{t('reorder.supplierSummary')}</h2>
                 <Button variant="outline" size="sm" onClick={exportSupplierSummary}>
                   <Download className="h-4 w-4 mr-1.5" />
-                  Export supplier summary
+                  {t('reorder.exportSupplierSummary')}
                 </Button>
               </div>
               <div className="bg-card border rounded-lg overflow-hidden">
@@ -707,12 +710,12 @@ export default function ReorderList() {
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Supplier</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">SKUs to Order</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Total Order Qty</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">EUR Value</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">USD Value</th>
-                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Avg Urgency</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('common.supplier')}</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('reorder.skusToOrder')}</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('reorder.totalOrderQty')}</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('reorder.eurValue')}</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('reorder.usdComponent')}</th>
+                        <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('reorder.avgUrgency')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -740,13 +743,13 @@ export default function ReorderList() {
                         </tr>
                       ))}
                       <tr className="border-t-2 border-border font-bold bg-muted/30">
-                        <td>Grand Total</td>
+                        <td>{t('reorder.grandTotal')}</td>
                         <td className="text-right">{grandTotal.skuCount}</td>
                         <td className="text-right">{grandTotal.totalQty.toLocaleString()}</td>
                         <td className="text-right">€{grandTotal.totalValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                         <td className="text-right">
                           {grandTotal.hasAnyUsd && (
-                            <span className="text-muted-foreground text-xs">ebből USD: ${grandTotal.totalUsdRaw.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            <span className="text-muted-foreground text-xs">USD: ${grandTotal.totalUsdRaw.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                           )}
                         </td>
                         <td></td>

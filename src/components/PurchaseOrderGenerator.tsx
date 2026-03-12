@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { useLanguage } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -43,22 +44,21 @@ interface SupplierGroup {
   maxLeadTime: number;
 }
 
-// Session-scoped monotonic counter for PO numbers (survives re-renders, resets per session)
 let _poCounter = 0;
 
 export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName = "InventoryPro" }: PurchaseOrderGeneratorProps) {
+  const { t } = useLanguage();
   const [buyerName, setBuyerName] = useState("");
   const [notes, setNotes] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
 
   const poNumber = useMemo(() => {
     const d = new Date();
-    // Collision-safe: timestamp (ms precision) + session monotonic counter
     _poCounter++;
     const ts = d.getTime().toString(36).toUpperCase().slice(-4);
     const seq = String(_poCounter).padStart(3, '0');
     return `PO-${format(d, 'yyyyMMdd')}-${ts}${seq}`;
-  }, [open]); // regenerate when opened
+  }, [open]);
 
   const supplierGroups = useMemo(() => {
     const map = new Map<string, POItem[]>();
@@ -86,10 +86,8 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
   const handlePrint = () => {
     const content = printRef.current;
     if (!content) return;
-
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -152,42 +150,32 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            Generate Purchase Order
+            {t('po.title')}
           </DialogTitle>
           <DialogDescription>
-            {grandTotal.items} items from {grandTotal.suppliers} supplier{grandTotal.suppliers !== 1 ? 's' : ''} — Total €{grandTotal.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {grandTotal.items} {t('po.description')} {grandTotal.suppliers} {grandTotal.suppliers !== 1 ? t('po.suppliers') : t('po.supplier')} — {t('po.total')} €{grandTotal.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <Label className="text-xs">Buyer Name (optional)</Label>
-            <Input
-              value={buyerName}
-              onChange={e => setBuyerName(e.target.value)}
-              placeholder="Your name"
-              className="h-8 text-sm mt-1"
-            />
+            <Label className="text-xs">{t('po.buyerName')}</Label>
+            <Input value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder={t('po.yourName')} className="h-8 text-sm mt-1" />
           </div>
           <div>
-            <Label className="text-xs">Notes (optional)</Label>
-            <Input
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Special instructions..."
-              className="h-8 text-sm mt-1"
-            />
+            <Label className="text-xs">{t('po.notes')}</Label>
+            <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('po.specialInstructions')} className="h-8 text-sm mt-1" />
           </div>
         </div>
 
         <div className="flex gap-2 mb-4">
           <Button onClick={handlePrint} className="gap-1.5">
             <Printer className="h-4 w-4" />
-            Print / Save PDF
+            {t('po.printSavePdf')}
           </Button>
           <Button variant="outline" onClick={handleExportCsv} className="gap-1.5">
             <Download className="h-4 w-4" />
-            Export CSV
+            {t('po.exportCsv')}
           </Button>
         </div>
 
@@ -197,14 +185,14 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
         <div ref={printRef} className="mt-4">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, paddingBottom: 16, borderBottom: '2px solid currentColor' }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>PURCHASE ORDER</div>
+              <div style={{ fontSize: 24, fontWeight: 700 }}>{t('po.purchaseOrder')}</div>
               <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>{poNumber}</div>
             </div>
             <div style={{ textAlign: 'right', fontSize: 11, color: '#666', lineHeight: 1.8 }}>
-              <div><strong>Date:</strong> {format(new Date(), 'MMMM d, yyyy')}</div>
-              {buyerName && <div><strong>Buyer:</strong> {buyerName}</div>}
-              <div><strong>Company:</strong> {companyName}</div>
-              <div><strong>Items:</strong> {grandTotal.items} | <strong>Suppliers:</strong> {grandTotal.suppliers}</div>
+              <div><strong>{t('po.date')}:</strong> {format(new Date(), 'MMMM d, yyyy')}</div>
+              {buyerName && <div><strong>{t('po.buyer')}:</strong> {buyerName}</div>}
+              <div><strong>{t('po.company')}:</strong> {companyName}</div>
+              <div><strong>{t('po.items')}:</strong> {grandTotal.items} | <strong>{t('po.suppliers')}:</strong> {grandTotal.suppliers}</div>
             </div>
           </div>
 
@@ -213,19 +201,19 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, padding: '8px 12px', background: 'hsl(var(--muted))', borderLeft: '4px solid hsl(var(--primary))' }} className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
                 {group.supplier}
-                <Badge variant="secondary" className="ml-2 text-[10px]">{group.items.length} items</Badge>
+                <Badge variant="secondary" className="ml-2 text-[10px]">{group.items.length} {t('po.items').toLowerCase()}</Badge>
               </div>
 
               <table className="data-table" style={{ marginBottom: 8 }}>
                 <thead>
                   <tr>
                     <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">SKU</th>
-                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">Description</th>
-                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Qty</th>
-                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Unit Price</th>
-                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Line Total</th>
-                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">Lead Time</th>
-                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">Urgency</th>
+                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-left">{t('po.description2')}</th>
+                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('common.qty')}</th>
+                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('po.unitPrice')}</th>
+                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('po.lineTotal')}</th>
+                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-right">{t('critical.leadTime')}</th>
+                    <th className="px-3 py-2 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50">{t('common.urgency')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -248,7 +236,7 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
                     </tr>
                   ))}
                   <tr className="border-t-2 border-border font-semibold bg-muted/30">
-                    <td colSpan={2} className="text-sm">Subtotal — {group.supplier}</td>
+                    <td colSpan={2} className="text-sm">{t('po.subtotal')} — {group.supplier}</td>
                     <td className="text-right">{group.totalQty.toLocaleString()}</td>
                     <td></td>
                     <td className="text-right">€{group.totalValueEur.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
@@ -262,22 +250,22 @@ export function PurchaseOrderGenerator({ open, onOpenChange, items, companyName 
 
           {/* Grand total */}
           <div className="flex justify-between items-center px-4 py-3 bg-foreground text-background rounded-lg mt-2">
-            <span className="font-bold text-sm">GRAND TOTAL</span>
+            <span className="font-bold text-sm">{t('po.grandTotal')}</span>
             <div className="flex items-center gap-6 text-sm font-semibold">
-              <span>{grandTotal.items} items</span>
-              <span>{grandTotal.qty.toLocaleString()} units</span>
+              <span>{grandTotal.items} {t('po.items').toLowerCase()}</span>
+              <span>{grandTotal.qty.toLocaleString()} {t('common.units')}</span>
               <span className="text-lg">€{grandTotal.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             </div>
           </div>
 
           {notes && (
             <div className="mt-4 p-3 border border-dashed border-border rounded text-sm text-muted-foreground">
-              <strong>Notes:</strong> {notes}
+              <strong>{t('po.notes')}:</strong> {notes}
             </div>
           )}
 
           <div className="mt-6 pt-4 border-t border-border text-center text-[10px] text-muted-foreground">
-            Generated by {companyName} • {format(new Date(), 'yyyy-MM-dd HH:mm')} • {poNumber}
+            {t('po.generatedBy')} {companyName} • {format(new Date(), 'yyyy-MM-dd HH:mm')} • {poNumber}
           </div>
         </div>
       </DialogContent>

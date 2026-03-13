@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Plus, Trash2, Star, StarOff } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 interface Props {
   sku: string;
@@ -24,6 +25,7 @@ const EMPTY_OPTION: SupplierOption = {
 };
 
 export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }: Props) {
+  const { t } = useLanguage();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<SupplierOption>({ ...EMPTY_OPTION });
 
@@ -38,7 +40,6 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
 
   const removeOption = useCallback((idx: number) => {
     const next = options.filter((_, i) => i !== idx);
-    // Ensure at least one primary if any remain
     if (next.length > 0 && !next.some(o => o.is_primary)) {
       next[0].is_primary = true;
     }
@@ -58,7 +59,7 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
   return (
     <div className="space-y-3 p-3 bg-muted/30 rounded-md border border-border">
       {options.length === 0 && !adding && (
-        <p className="text-xs text-muted-foreground">No supplier options configured.</p>
+        <p className="text-xs text-muted-foreground">{t('supOpt.noOptions')}</p>
       )}
 
       {options.map((opt, idx) => (
@@ -66,7 +67,7 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
           <button
             onClick={() => setPrimary(idx)}
             className="shrink-0"
-            title={opt.is_primary ? "Primary supplier" : "Set as primary"}
+            title={opt.is_primary ? t('supOpt.primarySupplier') : t('supOpt.setAsPrimary')}
           >
             {opt.is_primary ? (
               <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
@@ -82,7 +83,7 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
             <span className="text-muted-foreground">{Math.round(opt.reliability_score * 100)}% rel.</span>
           )}
           {opt.price_breaks.length > 0 && (
-            <span className="text-muted-foreground">{opt.price_breaks.length} breaks</span>
+            <span className="text-muted-foreground">{opt.price_breaks.length} {t('supOpt.priceBreaks').toLowerCase()}</span>
           )}
           <button onClick={() => removeOption(idx)} className="ml-auto text-destructive hover:text-destructive/80">
             <Trash2 className="h-3.5 w-3.5" />
@@ -94,20 +95,20 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
         <div className="space-y-2 border-t border-border pt-2">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div>
-              <Label className="text-[10px] text-muted-foreground">Supplier</Label>
+              <Label className="text-[10px] text-muted-foreground">{t('supOpt.supplier')}</Label>
               <Input
                 list={`suppliers-${sku}`}
                 value={draft.supplier}
                 onChange={e => setDraft(d => ({ ...d, supplier: e.target.value }))}
                 className="h-7 text-xs"
-                placeholder="Supplier name"
+                placeholder={t('supOpt.supplierName')}
               />
               <datalist id={`suppliers-${sku}`}>
                 {knownSuppliers.map(s => <option key={s} value={s} />)}
               </datalist>
             </div>
             <div>
-              <Label className="text-[10px] text-muted-foreground">Unit Price (€)</Label>
+              <Label className="text-[10px] text-muted-foreground">{t('supOpt.unitPrice')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -118,7 +119,7 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
               />
             </div>
             <div>
-              <Label className="text-[10px] text-muted-foreground">Lead Time (days)</Label>
+              <Label className="text-[10px] text-muted-foreground">{t('supOpt.leadTime')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -145,10 +146,10 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
                 onCheckedChange={v => setDraft(d => ({ ...d, is_primary: v }))}
                 className="scale-75"
               />
-              <Label className="text-[10px]">Primary</Label>
+              <Label className="text-[10px]">{t('supOpt.primary')}</Label>
             </div>
             <div className="flex items-center gap-1.5">
-              <Label className="text-[10px] text-muted-foreground">Reliability</Label>
+              <Label className="text-[10px] text-muted-foreground">{t('supOpt.reliability')}</Label>
               <Slider
                 min={0}
                 max={1}
@@ -164,9 +165,9 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
           {/* Price breaks */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Label className="text-[10px] text-muted-foreground">Price Breaks</Label>
+              <Label className="text-[10px] text-muted-foreground">{t('supOpt.priceBreaks')}</Label>
               {draft.price_breaks.length < 5 && (
-                <button onClick={addPriceBreak} className="text-[10px] text-primary hover:underline">+ Add tier</button>
+                <button onClick={addPriceBreak} className="text-[10px] text-primary hover:underline">{t('supOpt.addTier')}</button>
               )}
             </div>
             {draft.price_breaks.map((pb, i) => (
@@ -174,7 +175,7 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
                 <Input
                   type="number"
                   min={1}
-                  placeholder="Min qty"
+                  placeholder={t('supOpt.minQty')}
                   value={pb.minQty || ""}
                   onChange={e => {
                     const breaks = [...draft.price_breaks];
@@ -187,7 +188,7 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
                   type="number"
                   min={0}
                   step={0.01}
-                  placeholder="Unit price"
+                  placeholder={t('po.unitPrice')}
                   value={pb.unitPrice || ""}
                   onChange={e => {
                     const breaks = [...draft.price_breaks];
@@ -208,17 +209,17 @@ export function SupplierOptionsEditor({ sku, options, onChange, knownSuppliers }
 
           <div className="flex gap-2">
             <Button size="sm" onClick={addOption} disabled={!draft.supplier.trim()} className="h-7 text-xs">
-              Save
+              {t('supOpt.save')}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft({ ...EMPTY_OPTION }); }} className="h-7 text-xs">
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </div>
       ) : (
         <Button size="sm" variant="outline" onClick={() => setAdding(true)} className="h-7 text-xs gap-1">
           <Plus className="h-3 w-3" />
-          Add supplier option
+          {t('supOpt.addSupplierOption')}
         </Button>
       )}
     </div>

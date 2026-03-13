@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 interface EditableCellProps {
   value: number;
@@ -12,6 +13,7 @@ interface EditableCellProps {
 }
 
 export function EditableCell({ value, sku, field, isOverridden, onSave }: EditableCellProps) {
+  const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +58,7 @@ export function EditableCell({ value, sku, field, isOverridden, onSave }: Editab
         "inline-flex items-center gap-1 text-right cursor-pointer rounded px-1.5 py-0.5 transition-colors hover:bg-accent group",
         isOverridden && "bg-primary/10 text-primary font-semibold"
       )}
-      title={isOverridden ? "Manually overridden — click to edit" : "Click to override"}
+      title={isOverridden ? t('cell.overriddenTip') : t('cell.overrideTip')}
     >
       <span>{value.toLocaleString()}</span>
       {isOverridden ? (

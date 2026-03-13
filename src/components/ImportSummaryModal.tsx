@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle, Info, XCircle } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 interface ImportSummaryModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface ImportSummaryModalProps {
 }
 
 export function ImportSummaryModal({ open, summary, onProceed, onCancel }: ImportSummaryModalProps) {
+  const { t } = useLanguage();
   if (!summary) return null;
 
   const hasErrors = summary.dataWarnings.some(w => w.startsWith('[ERROR]'));
@@ -32,27 +34,27 @@ export function ImportSummaryModal({ open, summary, onProceed, onCancel }: Impor
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-primary" />
-            Import Summary
+            {t('import.title')}
           </DialogTitle>
-          <DialogDescription>Review the import results before proceeding</DialogDescription>
+          <DialogDescription>{t('import.reviewResults')}</DialogDescription>
         </DialogHeader>
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="bg-muted/50 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground font-medium">Total Rows</p>
+            <p className="text-xs text-muted-foreground font-medium">{t('import.totalRows')}</p>
             <p className="text-lg font-bold">{summary.totalRows.toLocaleString()}</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground font-medium">Valid Rows</p>
+            <p className="text-xs text-muted-foreground font-medium">{t('import.validRows')}</p>
             <p className="text-lg font-bold text-primary">{summary.validRows.toLocaleString()}</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground font-medium">Unique SKUs</p>
+            <p className="text-xs text-muted-foreground font-medium">{t('import.uniqueSkus')}</p>
             <p className="text-lg font-bold">{summary.uniqueSkus.toLocaleString()}</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground font-medium">Skipped Rows</p>
+            <p className="text-xs text-muted-foreground font-medium">{t('import.skippedRows')}</p>
             <p className={`text-lg font-bold ${summary.skippedRows > 0 ? 'text-warning-foreground' : ''}`}>
               {summary.skippedRows.toLocaleString()}
             </p>
@@ -62,15 +64,15 @@ export function ImportSummaryModal({ open, summary, onProceed, onCancel }: Impor
         {/* Metadata */}
         <div className="space-y-1.5 text-xs">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Date Range</span>
+            <span className="text-muted-foreground">{t('import.dateRange')}</span>
             <span className="font-medium">{summary.dateRange.from} → {summary.dateRange.to}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Date Format</span>
+            <span className="text-muted-foreground">{t('import.dateFormat')}</span>
             <span className="font-medium">{summary.detectedDateFormat}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Encoding</span>
+            <span className="text-muted-foreground">{t('import.encoding')}</span>
             <Badge variant={summary.detectedEncoding !== 'UTF-8' ? 'secondary' : 'outline'} className="text-[10px]">
               {summary.detectedEncoding}
             </Badge>
@@ -81,7 +83,7 @@ export function ImportSummaryModal({ open, summary, onProceed, onCancel }: Impor
         {skipReasons.length > 0 && (
           <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 space-y-1.5">
             <p className="text-xs font-semibold text-warning-foreground flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" /> Skipped Rows Breakdown
+              <AlertTriangle className="h-3.5 w-3.5" /> {t('import.skippedBreakdown')}
             </p>
             {skipReasons.map((r, i) => (
               <div key={i} className="flex justify-between text-xs">
@@ -96,7 +98,7 @@ export function ImportSummaryModal({ open, summary, onProceed, onCancel }: Impor
         {warnings.length > 0 && (
           <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 space-y-1.5">
             <p className="text-xs font-semibold text-warning-foreground flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" /> Warnings
+              <Info className="h-3.5 w-3.5" /> {t('import.warnings')}
             </p>
             {warnings.map((w, i) => (
               <p key={i} className="text-xs text-muted-foreground">• {w}</p>
@@ -108,7 +110,7 @@ export function ImportSummaryModal({ open, summary, onProceed, onCancel }: Impor
         {errors.length > 0 && (
           <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-1.5">
             <p className="text-xs font-semibold text-destructive flex items-center gap-1.5">
-              <XCircle className="h-3.5 w-3.5" /> Errors — Recommended to fix before proceeding
+              <XCircle className="h-3.5 w-3.5" /> {t('import.errorsTitle')}
             </p>
             {errors.map((e, i) => (
               <p key={i} className="text-xs text-destructive/80">• {e}</p>
@@ -117,9 +119,9 @@ export function ImportSummaryModal({ open, summary, onProceed, onCancel }: Impor
         )}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onCancel}>Cancel Import</Button>
+          <Button variant="outline" onClick={onCancel}>{t('import.cancelImport')}</Button>
           <Button onClick={onProceed}>
-            {hasErrors ? 'Proceed Anyway' : 'Proceed'}
+            {hasErrors ? t('import.proceedAnyway') : t('import.proceed')}
           </Button>
         </DialogFooter>
       </DialogContent>

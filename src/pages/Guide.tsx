@@ -150,7 +150,7 @@ export default function Guide() {
               <KeyValue label="expected_delivery_date">{isHu ? "Várható szállítási dátum" : "Expected delivery date"}</KeyValue>
             </div>
           </div>
-          <Tip>{isHu ? 'Nem minden oszlop szükséges. A rendszer "fokozatos degradálás" modellt használ — az elérhető adatok alapján engedélyezi a funkciókat.' : 'Not all columns are required. The system uses a "graceful degradation" model — it enables features based on available data.'}</Tip>
+          <Tip>{isHu ? "Nem minden oszlop szükséges. A rendszer fokozatos degradálás modellt használ — az elérhető adatok alapján engedélyezi a funkciókat." : "Not all columns are required. The system uses a graceful degradation model — it enables features based on available data."}</Tip>
         </Section>
 
         {/* Column Mapping */}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Copy, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 
 interface SkuLine {
   sku: string;
@@ -79,7 +80,8 @@ Best regards`;
 }
 
 export function ReorderEmailModal({ open, onOpenChange, supplier, skus }: ReorderEmailModalProps) {
-  const [lang, setLang] = useState<'en' | 'hu'>('en');
+  const { t, language } = useLanguage();
+  const [lang, setLang] = useState<'en' | 'hu'>(language);
   const [copied, setCopied] = useState(false);
 
   const { subject, body } = generateEmail(supplier, skus, lang);
@@ -88,7 +90,7 @@ export function ReorderEmailModal({ open, onOpenChange, supplier, skus }: Reorde
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullText);
     setCopied(true);
-    toast.success('Copied to clipboard');
+    toast.success(t('email.copiedToast'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -98,10 +100,10 @@ export function ReorderEmailModal({ open, onOpenChange, supplier, skus }: Reorde
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
-            Draft Order Email — {supplier}
+            {t('email.draftTitle')} — {supplier}
           </DialogTitle>
           <DialogDescription>
-            Pre-filled email template with {skus.length} item{skus.length !== 1 ? 's' : ''} to reorder
+            {t('email.prefilled')} {skus.length} {t('email.itemsToReorder')}
           </DialogDescription>
         </DialogHeader>
 
@@ -123,7 +125,7 @@ export function ReorderEmailModal({ open, onOpenChange, supplier, skus }: Reorde
         <div className="flex justify-end mt-4 pt-3 border-t">
           <Button onClick={handleCopy} className="gap-2">
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Copied!' : 'Copy to clipboard'}
+            {copied ? t('email.copied') : t('email.copyToClipboard')}
           </Button>
         </div>
       </DialogContent>

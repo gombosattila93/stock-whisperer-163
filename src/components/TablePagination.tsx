@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 interface PaginationProps {
   totalItems: number;
@@ -20,6 +21,7 @@ interface PaginationProps {
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 250];
 
 export function TablePagination({ totalItems, pageSize, currentPage, onPageChange, onPageSizeChange }: PaginationProps) {
+  const { t } = useLanguage();
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, totalItems);
@@ -27,7 +29,7 @@ export function TablePagination({ totalItems, pageSize, currentPage, onPageChang
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t bg-card">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span>Rows per page</span>
+        <span>{t('pagination.rowsPerPage')}</span>
         <Select value={String(pageSize)} onValueChange={(v) => { onPageSizeChange(Number(v)); onPageChange(1); }}>
           <SelectTrigger className="h-7 w-[65px] text-xs">
             <SelectValue />
@@ -42,7 +44,7 @@ export function TablePagination({ totalItems, pageSize, currentPage, onPageChang
 
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-muted-foreground mr-2">
-          {start}–{end} of {totalItems.toLocaleString()}
+          {start}–{end} {t('pagination.of')} {totalItems.toLocaleString()}
         </span>
         <Button variant="outline" size="icon" className="h-7 w-7" disabled={currentPage <= 1} onClick={() => onPageChange(1)}>
           <ChevronsLeft className="h-3.5 w-3.5" />
@@ -51,7 +53,7 @@ export function TablePagination({ totalItems, pageSize, currentPage, onPageChang
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
         <span className="text-xs text-muted-foreground px-1">
-          Page {currentPage} of {totalPages}
+          {t('pagination.page')} {currentPage} {t('pagination.of')} {totalPages}
         </span>
         <Button variant="outline" size="icon" className="h-7 w-7" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)}>
           <ChevronRight className="h-3.5 w-3.5" />

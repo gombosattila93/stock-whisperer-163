@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import { HelpCircle, Settings2 } from "lucide-react";
 import { EoqSettings, DEFAULT_EOQ_SETTINGS } from "@/lib/reorderStrategies";
+import { useLanguage } from "@/lib/i18n";
 
 interface EoqSettingsPanelProps {
   settings: EoqSettings;
@@ -25,6 +26,7 @@ interface EoqSettingsPanelProps {
 }
 
 export function EoqSettingsPanel({ settings, onChange }: EoqSettingsPanelProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [local, setLocal] = useState<EoqSettings>(settings);
 
@@ -52,16 +54,16 @@ export function EoqSettingsPanel({ settings, onChange }: EoqSettingsPanelProps) 
               EOQ
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Configure EOQ cost parameters</TooltipContent>
+          <TooltipContent>{t('eoq.configureTooltip')}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>EOQ Parameters</DialogTitle>
+            <DialogTitle>{t('eoq.parameters')}</DialogTitle>
             <DialogDescription>
-              Configure the cost assumptions used in Economic Order Quantity calculations.
+              {t('eoq.dialogDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -69,14 +71,13 @@ export function EoqSettingsPanel({ settings, onChange }: EoqSettingsPanelProps) 
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Label htmlFor="orderingCost" className="text-sm">Ordering Cost ($)</Label>
+                  <Label htmlFor="orderingCost" className="text-sm">{t('eoq.orderingCostLabel')}</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent side="right" className="max-w-[240px] text-xs">
-                      Fixed cost per purchase order — includes admin, shipping setup, receiving labor. 
-                      Typical range: $20–$200. Higher ordering cost → larger EOQ batches.
+                      {t('eoq.orderingCostTip')}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -90,20 +91,18 @@ export function EoqSettingsPanel({ settings, onChange }: EoqSettingsPanelProps) 
                   onChange={(e) => setLocal(prev => ({ ...prev, orderingCost: Math.max(1, Number(e.target.value) || 1) }))}
                   className="h-8"
                 />
-                <p className="text-[10px] text-muted-foreground">Default: ${DEFAULT_EOQ_SETTINGS.orderingCost}</p>
+                <p className="text-[10px] text-muted-foreground">{t('common.default')}: ${DEFAULT_EOQ_SETTINGS.orderingCost}</p>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Label htmlFor="holdingPct" className="text-sm">Holding Cost (% of unit price/year)</Label>
+                  <Label htmlFor="holdingPct" className="text-sm">{t('eoq.holdingCostLabel')}</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent side="right" className="max-w-[240px] text-xs">
-                      Annual cost to hold one unit as a percentage of its price — includes warehousing, 
-                      insurance, obsolescence, capital cost. Typical range: 15%–35%. 
-                      Higher holding cost → smaller EOQ batches.
+                      {t('eoq.holdingCostTip')}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -120,17 +119,17 @@ export function EoqSettingsPanel({ settings, onChange }: EoqSettingsPanelProps) 
                   />
                   <span className="text-sm text-muted-foreground shrink-0">%</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground">Default: {DEFAULT_EOQ_SETTINGS.holdingPct * 100}%</p>
+                <p className="text-[10px] text-muted-foreground">{t('common.default')}: {DEFAULT_EOQ_SETTINGS.holdingPct * 100}%</p>
               </div>
             </div>
           </TooltipProvider>
 
           <DialogFooter className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={handleReset} className="mr-auto text-xs">
-              Reset Defaults
+              {t('eoq.resetDefaults')}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleSave}>Apply</Button>
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+            <Button size="sm" onClick={handleSave}>{t('common.apply')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpCircle, RotateCcw } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export type { ClassificationThresholds } from '@/lib/classificationTypes';
 export { DEFAULT_THRESHOLDS } from '@/lib/classificationTypes';
@@ -49,15 +50,16 @@ Best practices:
 If most items are Z, your demand window may be too short. Try 90-180 days for smoother averages.`;
 
 export function ClassificationSettings({ open, onOpenChange, thresholds, onApply }: ClassificationSettingsProps) {
+  const { t } = useLanguage();
   const [local, setLocal] = useState<ClassificationThresholds>(thresholds);
   const [errors, setErrors] = useState<string[]>([]);
 
   const validate = (): boolean => {
     const errs: string[] = [];
-    if (local.abcA <= 0 || local.abcA >= 100) errs.push("ABC A cutoff must be between 1-99%");
-    if (local.abcB <= local.abcA || local.abcB >= 100) errs.push("ABC B cutoff must be > A cutoff and < 100%");
-    if (local.xyzX <= 0) errs.push("XYZ X threshold must be > 0");
-    if (local.xyzY <= local.xyzX) errs.push("XYZ Y threshold must be > X threshold");
+    if (local.abcA <= 0 || local.abcA >= 100) errs.push(t('class.errAbcA'));
+    if (local.abcB <= local.abcA || local.abcB >= 100) errs.push(t('class.errAbcB'));
+    if (local.xyzX <= 0) errs.push(t('class.errXyzX'));
+    if (local.xyzY <= local.xyzX) errs.push(t('class.errXyzY'));
     setErrors(errs);
     return errs.length === 0;
   };
@@ -78,9 +80,9 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Classification Thresholds</DialogTitle>
+          <DialogTitle>{t('class.title')}</DialogTitle>
           <DialogDescription>
-            Customize ABC revenue cutoffs and XYZ variability boundaries.
+            {t('class.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -89,7 +91,7 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
             {/* ABC Section */}
             <div>
               <div className="flex items-center gap-1.5 mb-3">
-                <h3 className="text-sm font-semibold">ABC Classification (Revenue)</h3>
+                <h3 className="text-sm font-semibold">{t('class.abcRevenue')}</h3>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -102,7 +104,7 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">A cutoff (cumulative %)</Label>
+                  <Label className="text-xs">{t('class.aCutoff')}</Label>
                   <div className="flex items-center gap-1 mt-1">
                     <Input
                       type="number"
@@ -114,10 +116,10 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
                     />
                     <span className="text-xs text-muted-foreground">%</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">SKUs covering top {local.abcA}% revenue → A</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{t('class.skusCoveringTopRevA')} {local.abcA}{t('class.revenueA')}</p>
                 </div>
                 <div>
-                  <Label className="text-xs">B cutoff (cumulative %)</Label>
+                  <Label className="text-xs">{t('class.bCutoff')}</Label>
                   <div className="flex items-center gap-1 mt-1">
                     <Input
                       type="number"
@@ -129,7 +131,7 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
                     />
                     <span className="text-xs text-muted-foreground">%</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Up to {local.abcB}% → B, rest → C</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{t('class.upTo')} {local.abcB}% {t('class.bRestC')}</p>
                 </div>
               </div>
             </div>
@@ -137,7 +139,7 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
             {/* XYZ Section */}
             <div>
               <div className="flex items-center gap-1.5 mb-3">
-                <h3 className="text-sm font-semibold">XYZ Classification (Demand Variability)</h3>
+                <h3 className="text-sm font-semibold">{t('class.xyzVariability')}</h3>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -150,7 +152,7 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">X threshold (CV &lt;)</Label>
+                  <Label className="text-xs">{t('class.xThreshold')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -159,10 +161,10 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
                     className="h-8 text-xs mt-1"
                     min={0.01}
                   />
-                  <p className="text-[10px] text-muted-foreground mt-0.5">CV &lt; {local.xyzX} → Stable (X)</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{t('class.cvLessThan')} {local.xyzX} {t('class.stableX')}</p>
                 </div>
                 <div>
-                  <Label className="text-xs">Y threshold (CV ≤)</Label>
+                  <Label className="text-xs">{t('class.yThreshold')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -171,7 +173,7 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
                     className="h-8 text-xs mt-1"
                     min={0.01}
                   />
-                  <p className="text-[10px] text-muted-foreground mt-0.5">CV ≤ {local.xyzY} → Variable (Y), else Erratic (Z)</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{t('class.cvLessEqual')} {local.xyzY} {t('class.variableYElseZ')}</p>
                 </div>
               </div>
             </div>
@@ -188,11 +190,11 @@ export function ClassificationSettings({ open, onOpenChange, thresholds, onApply
 
         <DialogFooter className="mt-2 flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={handleReset} className="text-xs gap-1">
-            <RotateCcw className="h-3 w-3" /> Reset defaults
+            <RotateCcw className="h-3 w-3" /> {t('class.resetDefaults')}
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleApply}>Apply</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleApply}>{t('common.apply')}</Button>
           </div>
         </DialogFooter>
       </DialogContent>

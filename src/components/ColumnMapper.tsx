@@ -24,9 +24,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { HelpCircle, CheckCircle2, AlertTriangle, Calendar } from "lucide-react";
 import { detectDateFormat, getDateFormatLabel } from "@/lib/dateUtils";
+import { useLanguage } from "@/lib/i18n";
 
 export interface ColumnMapping {
-  [targetField: string]: string; // targetField -> sourceColumn
+  [targetField: string]: string;
 }
 
 interface ColumnMapperProps {
@@ -45,190 +46,38 @@ interface FieldDef {
 }
 
 const TARGET_FIELDS: FieldDef[] = [
-  {
-    key: "sku",
-    label: "SKU",
-    required: true,
-    tip: "Unique product identifier. Best practice: use a consistent format (e.g. alphanumeric, no spaces). This is the primary key for grouping sales records.",
-  },
-  {
-    key: "sku_name",
-    label: "SKU Name",
-    required: false,
-    tip: "Human-readable product name. Keep concise (<80 chars). Falls back to SKU code if unmapped.",
-  },
-  {
-    key: "supplier",
-    label: "Supplier",
-    required: false,
-    tip: "Supplier or vendor name. Standardize spelling across rows (e.g. always 'Acme Corp', not 'acme' or 'ACME'). Defaults to 'Unknown'.",
-  },
-  {
-    key: "category",
-    label: "Category",
-    required: false,
-    tip: "Product category for filtering. Use a flat taxonomy (2–3 levels max). Avoid overly granular categories that fragment analysis.",
-  },
-  {
-    key: "date",
-    label: "Date",
-    required: true,
-    tip: "Transaction/sale date. Best practice: ISO 8601 format (YYYY-MM-DD). Consistent date formats prevent parsing errors and ensure correct demand calculations.",
-  },
-  {
-    key: "partner_id",
-    label: "Partner ID",
-    required: false,
-    tip: "Customer or channel identifier. Useful for multi-channel demand analysis. Leave unmapped if single-channel.",
-  },
-  {
-    key: "sold_qty",
-    label: "Sold Qty",
-    required: false,
-    tip: "Units sold in this transaction. Must be numeric (≥0). Negative values (returns) should be separate rows or netted before import.",
-  },
-  {
-    key: "unit_price",
-    label: "Unit Price",
-    required: false,
-    tip: "Selling price per unit. Used for ABC revenue classification. Ensure currency consistency — don't mix USD and EUR in the same dataset.",
-  },
-  {
-    key: "stock_qty",
-    label: "Stock Qty",
-    required: false,
-    tip: "Current on-hand inventory. Should reflect the latest snapshot. If you have multiple rows per SKU, the most recent date's value is used.",
-  },
-  {
-    key: "lead_time_days",
-    label: "Lead Time (days)",
-    required: false,
-    tip: "Supplier lead time in days. Critical for safety stock calculations. Best practice: use average observed lead time, not quoted lead time, for accuracy.",
-  },
-  {
-    key: "ordered_qty",
-    label: "Ordered Qty",
-    required: false,
-    tip: "Quantity already on order (in-transit). Added to stock for 'effective stock'. Set to 0 if no open POs.",
-  },
-  {
-    key: "expected_delivery_date",
-    label: "Expected Delivery",
-    required: false,
-    tip: "When the ordered quantity is expected. ISO 8601 (YYYY-MM-DD). Used for forward-looking stock projections.",
-  },
-  // ─── Multi-currency fields ───
-  {
-    key: "selling_price_huf",
-    label: "Selling Price (HUF)",
-    required: false,
-    tip: "Customer selling price in Hungarian Forint. Used for margin calculation. Leave empty to derive from unit_price × EUR/HUF rate.",
-  },
-  {
-    key: "purchase_currency",
-    label: "Purchase Currency",
-    required: false,
-    tip: "USD or EUR. Applies to ALL purchase_price columns for this SKU. Leave empty to default to EUR.",
-  },
-  {
-    key: "purchase_price_1",
-    label: "Purchase Price 1",
-    required: false,
-    tip: "Base purchase price (no minimum). Add price_2/qty_2 columns for volume discounts. Up to 8 price breaks supported.",
-  },
-  {
-    key: "purchase_qty_1",
-    label: "Purchase Qty 1",
-    required: false,
-    tip: "Minimum order quantity for price 1. Defaults to 1 if omitted.",
-  },
-  {
-    key: "purchase_price_2",
-    label: "Purchase Price 2",
-    required: false,
-    tip: "Volume discount price break 2. Must be lower than price 1.",
-  },
-  {
-    key: "purchase_qty_2",
-    label: "Purchase Qty 2",
-    required: false,
-    tip: "Minimum order quantity for price break 2.",
-  },
-  {
-    key: "purchase_price_3",
-    label: "Purchase Price 3",
-    required: false,
-    tip: "Volume discount price break 3.",
-  },
-  {
-    key: "purchase_qty_3",
-    label: "Purchase Qty 3",
-    required: false,
-    tip: "Minimum order quantity for price break 3.",
-  },
-  {
-    key: "purchase_price_4",
-    label: "Purchase Price 4",
-    required: false,
-    tip: "Volume discount price break 4.",
-  },
-  {
-    key: "purchase_qty_4",
-    label: "Purchase Qty 4",
-    required: false,
-    tip: "Minimum order quantity for price break 4.",
-  },
-  {
-    key: "purchase_price_5",
-    label: "Purchase Price 5",
-    required: false,
-    tip: "Volume discount price break 5.",
-  },
-  {
-    key: "purchase_qty_5",
-    label: "Purchase Qty 5",
-    required: false,
-    tip: "Minimum order quantity for price break 5.",
-  },
-  {
-    key: "purchase_price_6",
-    label: "Purchase Price 6",
-    required: false,
-    tip: "Volume discount price break 6.",
-  },
-  {
-    key: "purchase_qty_6",
-    label: "Purchase Qty 6",
-    required: false,
-    tip: "Minimum order quantity for price break 6.",
-  },
-  {
-    key: "purchase_price_7",
-    label: "Purchase Price 7",
-    required: false,
-    tip: "Volume discount price break 7.",
-  },
-  {
-    key: "purchase_qty_7",
-    label: "Purchase Qty 7",
-    required: false,
-    tip: "Minimum order quantity for price break 7.",
-  },
-  {
-    key: "purchase_price_8",
-    label: "Purchase Price 8",
-    required: false,
-    tip: "Best/highest volume price break 8.",
-  },
-  {
-    key: "purchase_qty_8",
-    label: "Purchase Qty 8",
-    required: false,
-    tip: "Minimum order quantity for price break 8.",
-  },
+  { key: "sku", label: "SKU", required: true, tip: "Unique product identifier. Best practice: use a consistent format (e.g. alphanumeric, no spaces). This is the primary key for grouping sales records." },
+  { key: "sku_name", label: "SKU Name", required: false, tip: "Human-readable product name. Keep concise (<80 chars). Falls back to SKU code if unmapped." },
+  { key: "supplier", label: "Supplier", required: false, tip: "Supplier or vendor name. Standardize spelling across rows. Defaults to 'Unknown'." },
+  { key: "category", label: "Category", required: false, tip: "Product category for filtering. Use a flat taxonomy (2–3 levels max)." },
+  { key: "date", label: "Date", required: true, tip: "Transaction/sale date. Best practice: ISO 8601 format (YYYY-MM-DD)." },
+  { key: "partner_id", label: "Partner ID", required: false, tip: "Customer or channel identifier." },
+  { key: "sold_qty", label: "Sold Qty", required: false, tip: "Units sold in this transaction. Must be numeric (≥0)." },
+  { key: "unit_price", label: "Unit Price", required: false, tip: "Selling price per unit. Used for ABC revenue classification." },
+  { key: "stock_qty", label: "Stock Qty", required: false, tip: "Current on-hand inventory." },
+  { key: "lead_time_days", label: "Lead Time (days)", required: false, tip: "Supplier lead time in days." },
+  { key: "ordered_qty", label: "Ordered Qty", required: false, tip: "Quantity already on order (in-transit)." },
+  { key: "expected_delivery_date", label: "Expected Delivery", required: false, tip: "When the ordered quantity is expected. ISO 8601 (YYYY-MM-DD)." },
+  { key: "selling_price_huf", label: "Selling Price (HUF)", required: false, tip: "Customer selling price in Hungarian Forint." },
+  { key: "purchase_currency", label: "Purchase Currency", required: false, tip: "USD or EUR. Defaults to EUR." },
+  { key: "purchase_price_1", label: "Purchase Price 1", required: false, tip: "Base purchase price (no minimum)." },
+  { key: "purchase_qty_1", label: "Purchase Qty 1", required: false, tip: "Minimum order quantity for price 1." },
+  { key: "purchase_price_2", label: "Purchase Price 2", required: false, tip: "Volume discount price break 2." },
+  { key: "purchase_qty_2", label: "Purchase Qty 2", required: false, tip: "Minimum order quantity for price break 2." },
+  { key: "purchase_price_3", label: "Purchase Price 3", required: false, tip: "Volume discount price break 3." },
+  { key: "purchase_qty_3", label: "Purchase Qty 3", required: false, tip: "Minimum order quantity for price break 3." },
+  { key: "purchase_price_4", label: "Purchase Price 4", required: false, tip: "Volume discount price break 4." },
+  { key: "purchase_qty_4", label: "Purchase Qty 4", required: false, tip: "Minimum order quantity for price break 4." },
+  { key: "purchase_price_5", label: "Purchase Price 5", required: false, tip: "Volume discount price break 5." },
+  { key: "purchase_qty_5", label: "Purchase Qty 5", required: false, tip: "Minimum order quantity for price break 5." },
+  { key: "purchase_price_6", label: "Purchase Price 6", required: false, tip: "Volume discount price break 6." },
+  { key: "purchase_qty_6", label: "Purchase Qty 6", required: false, tip: "Minimum order quantity for price break 6." },
+  { key: "purchase_price_7", label: "Purchase Price 7", required: false, tip: "Volume discount price break 7." },
+  { key: "purchase_qty_7", label: "Purchase Qty 7", required: false, tip: "Minimum order quantity for price break 7." },
+  { key: "purchase_price_8", label: "Purchase Price 8", required: false, tip: "Best/highest volume price break 8." },
+  { key: "purchase_qty_8", label: "Purchase Qty 8", required: false, tip: "Minimum order quantity for price break 8." },
 ];
 
-/** Common aliases for each target field to improve auto-mapping accuracy */
 const FIELD_ALIASES: Record<string, string[]> = {
   sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],
   sku_name: ["skuname", "productname", "itemname", "description", "itemdescription", "productdescription", "title", "materialname", "articlename"],
@@ -242,7 +91,6 @@ const FIELD_ALIASES: Record<string, string[]> = {
   lead_time_days: ["leadtimedays", "leadtime", "deliverytime", "deliveryleadtime", "lt", "replenishmenttime"],
   ordered_qty: ["orderedqty", "qtyordered", "onorder", "qtyonorder", "openorderqty", "poqty", "intransit"],
   expected_delivery_date: ["expecteddeliverydate", "eta", "expecteddate", "deliverydate", "arrivaldate", "duedate", "podate"],
-  // Multi-currency aliases
   selling_price_huf: ["sellingpricehuf", "hufprice", "eladar", "arhuf", "sellingprice", "salepricehuf"],
   purchase_currency: ["purchasecurrency", "currency", "ccy", "curr", "deviza"],
   purchase_price_1: ["purchaseprice1", "purchaseprice", "buyprice", "cost", "supplierprice", "beszerzesiar"],
@@ -280,9 +128,9 @@ function autoMap(sourceColumns: string[]): ColumnMapping {
 }
 
 export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onConfirm }: ColumnMapperProps) {
+  const { t } = useLanguage();
   const [mapping, setMapping] = useState<ColumnMapping>(() => autoMap(sourceColumns));
 
-  // Detect date format from the mapped date column
   const dateFormatInfo = useMemo(() => {
     const dateCol = mapping['date'];
     if (!dateCol || !rawData?.length) return null;
@@ -317,27 +165,27 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Map CSV Columns</DialogTitle>
+          <DialogTitle>{t('mapper.title')}</DialogTitle>
           <DialogDescription>
-            Match your CSV headers to the expected fields. Required fields are marked with *.
-            Hover the <HelpCircle className="inline h-3.5 w-3.5" /> icon for best-practice tips.
+            {t('mapper.description')}
+            {' '}{t('mapper.hoverTip')} <HelpCircle className="inline h-3.5 w-3.5" /> {t('mapper.iconForTips')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 mb-2">
           <Badge variant={unmappedRequired.length === 0 ? "default" : "destructive"} className="text-xs">
-            {mappedCount}/{TARGET_FIELDS.length} mapped
+            {mappedCount}/{TARGET_FIELDS.length} {t('mapper.mapped')}
           </Badge>
           {unmappedRequired.length > 0 && (
             <span className="text-xs text-destructive flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
-              {unmappedRequired.map((f) => f.label).join(", ")} required
+              {unmappedRequired.map((f) => f.label).join(", ")} {t('mapper.required')}
             </span>
           )}
           {unmappedRequired.length === 0 && (
             <span className="text-xs text-success flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
-              All required fields mapped
+              {t('mapper.allRequiredMapped')}
             </span>
           )}
         </div>
@@ -347,10 +195,10 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
             <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-foreground">
-                Date format detected: <span className="text-primary">{dateFormatInfo.label}</span>
+                {t('mapper.dateFormatDetected')} <span className="text-primary">{dateFormatInfo.label}</span>
               </p>
               <p className="text-muted-foreground mt-0.5">
-                Samples: {dateFormatInfo.sampleValues.map((v, i) => (
+                {t('mapper.samples')} {dateFormatInfo.sampleValues.map((v, i) => (
                   <code key={i} className="mx-0.5 rounded bg-background px-1 py-0.5">{v}</code>
                 ))}
               </p>
@@ -381,10 +229,10 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
                   onValueChange={(v) => handleChange(field.key, v)}
                 >
                   <SelectTrigger className="h-8 text-xs flex-1">
-                    <SelectValue placeholder="— unmapped —" />
+                    <SelectValue placeholder={t('mapper.unmapped')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">— unmapped —</SelectItem>
+                    <SelectItem value="__none__">{t('mapper.unmapped')}</SelectItem>
                     {sourceColumns.map((col) => (
                       <SelectItem
                         key={col}
@@ -392,7 +240,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
                         disabled={usedColumns.has(col) && mapping[field.key] !== col}
                       >
                         {col}
-                        {usedColumns.has(col) && mapping[field.key] !== col && " (used)"}
+                        {usedColumns.has(col) && mapping[field.key] !== col && ` ${t('mapper.used')}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -407,39 +255,39 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
 
         {/* Feature impact preview */}
         <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1">
-          <p className="font-semibold text-foreground mb-1">With this mapping you will get:</p>
+          <p className="font-semibold text-foreground mb-1">{t('mapper.withThisMapping')}</p>
           {mapping['sold_qty'] && mapping['date'] ? (
-            <p className="text-primary">✅ Demand analysis (sold_qty + date mapped)</p>
+            <p className="text-primary">✅ {t('mapper.demandAnalysis')} ({t('mapper.demandAnalysisMapped')})</p>
           ) : (
-            <p className="text-warning-foreground">⚠️ Demand analysis disabled (need sold_qty + date)</p>
+            <p className="text-warning-foreground">⚠️ {t('mapper.demandAnalysisDisabled')}</p>
           )}
           {mapping['unit_price'] ? (
-            <p className="text-primary">✅ ABC classification (unit_price mapped)</p>
+            <p className="text-primary">✅ {t('mapper.abcClassification')} ({t('mapper.abcMapped')})</p>
           ) : (
-            <p className="text-warning-foreground">⚠️ ABC classification disabled (unit_price not mapped)</p>
+            <p className="text-warning-foreground">⚠️ {t('mapper.abcDisabled')}</p>
           )}
           {mapping['lead_time_days'] ? (
-            <p className="text-primary">✅ Reorder point calculation (lead_time_days mapped)</p>
+            <p className="text-primary">✅ {t('mapper.reorderPointCalc')} ({t('mapper.reorderMapped')})</p>
           ) : (
-            <p className="text-warning-foreground">⚠️ Reorder point disabled (lead_time_days not mapped)</p>
+            <p className="text-warning-foreground">⚠️ {t('mapper.reorderDisabled')}</p>
           )}
           {mapping['stock_qty'] ? (
-            <p className="text-primary">✅ Stock analysis (stock_qty mapped)</p>
+            <p className="text-primary">✅ {t('mapper.stockAnalysis')} ({t('mapper.stockMapped')})</p>
           ) : (
-            <p className="text-warning-foreground">⚠️ Stock analysis disabled (stock_qty not mapped)</p>
+            <p className="text-warning-foreground">⚠️ {t('mapper.stockDisabled')}</p>
           )}
-          <p className="text-muted-foreground mt-1">ℹ️ You can add missing data manually per SKU later</p>
+          <p className="text-muted-foreground mt-1">ℹ️ {t('mapper.addMissingLater')}</p>
         </div>
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={() => onConfirm(mapping)}
             disabled={unmappedRequired.length > 0}
           >
-            Apply Mapping & Import
+            {t('mapper.applyMapping')}
           </Button>
         </DialogFooter>
       </DialogContent>

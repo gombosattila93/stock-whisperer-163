@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { TrendDirection } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n";
 
 interface TrendBadgeProps {
   trend: TrendDirection;
@@ -17,6 +18,7 @@ interface TrendBadgeProps {
 }
 
 export function TrendBadge({ trend, trendPct, seasonalityFlag, seasonalityPct, compact }: TrendBadgeProps) {
+  const { t } = useLanguage();
   const pct = Math.abs(Math.round(trendPct));
 
   return (
@@ -36,7 +38,7 @@ export function TrendBadge({ trend, trendPct, seasonalityFlag, seasonalityPct, c
       {trend === 'stable' && (
         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
           <Minus className="h-3.5 w-3.5" />
-          {!compact && 'Stable'}
+          {!compact && t('common.stable')}
         </span>
       )}
       {seasonalityFlag && seasonalityPct !== undefined && (
@@ -48,7 +50,7 @@ export function TrendBadge({ trend, trendPct, seasonalityFlag, seasonalityPct, c
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs">Seasonal spike — demand is {Math.round(seasonalityPct)}% above 90d average</p>
+              <p className="text-xs">{t('trend.seasonalSpike')} {Math.round(seasonalityPct)}% {t('trend.above90dAvg')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

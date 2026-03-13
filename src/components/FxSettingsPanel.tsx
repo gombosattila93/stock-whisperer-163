@@ -17,26 +17,28 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage } from "@/lib/i18n";
 
-function sourceBadge(source: FxRateConfig['source']) {
+function sourceBadge(source: FxRateConfig['source'], t: (key: any) => string) {
   switch (source) {
     case 'ecb': return <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">ECB</Badge>;
-    case 'manual': return <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-600">Manuális</Badge>;
-    case 'fallback': return <Badge variant="destructive" className="text-[10px]">Tartalék</Badge>;
+    case 'manual': return <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-600">{t('fxPanel.manual')}</Badge>;
+    case 'fallback': return <Badge variant="destructive" className="text-[10px]">{t('fxPanel.fallback')}</Badge>;
   }
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: (key: any) => string): string {
   const ms = Date.now() - new Date(iso).getTime();
-  if (isNaN(ms)) return 'ismeretlen';
+  if (isNaN(ms)) return t('fxPanel.unknown');
   const hours = Math.floor(ms / 3600000);
-  if (hours < 1) return 'most';
-  if (hours < 24) return `${hours} órája`;
+  if (hours < 1) return t('fxPanel.now');
+  if (hours < 24) return `${hours} ${t('fxPanel.hoursAgo')}`;
   const days = Math.floor(hours / 24);
-  return `${days} napja`;
+  return `${days} ${t('fxPanel.daysAgo')}`;
 }
 
 export function FxSettingsPanel() {
+  const { t } = useLanguage();
   const { fxRates, setFxRates } = useInventory();
   const [manualMode, setManualMode] = useState(fxRates.manualOverride);
   const [manualUsdEur, setManualUsdEur] = useState(String(fxRates.usdEur));
@@ -63,7 +65,7 @@ export function FxSettingsPanel() {
       const rates = await fetchEcbRates();
       if (isRateDeviant(rates)) {
         const confirmed = window.confirm(
-          `Szokatlan árfolyam észlelve:\n1 USD = ${rates.usdEur.toFixed(4)} EUR\n1 EUR = ${rates.eurHuf.toFixed(1)} HUF\n\nBiztosan helyes?`
+          `${t('fxPanel.unusualRate')}:\n1 USD = ${rates.usdEur.toFixed(4)} EUR\n1 EUR = ${rates.eurHuf.toFixed(1)} HUF\n\n${t('fxPanel.areYouSure')}`
         );
         if (!confirmed) {
           setIsFetching(false);
@@ -71,9 +73,9 @@ export function FxSettingsPanel() {
         }
       }
       setFxRates(rates);
-      toast.success('ECB árfolyam frissítve');
+      toast.success(t('fxPanel.ecbUpdated'));
     } catch (err) {
-      toast.error('ECB lekérés sikertelen', { description: String(err) });
+      toast.error(t('fxPanel.ecbFailed'), { description: String(err) });
     } finally {
       setIsFetching(false);
     }
@@ -83,24 +85,22 @@ export function FxSettingsPanel() {
     const u = parseFloat(manualUsdEur);
     const h = parseFloat(manualEurHuf);
     if (!isFinite(u) || u <= 0 || !isFinite(h) || h <= 0) {
-      toast.error('Érvénytelen árfolyam');
+      toast.error(t('fxPanel.invalidRate'));
       return;
     }
     const rates = createManualRates(u, h);
     if (isRateDeviant(rates)) {
-      const confirmed = window.confirm(
-        `Szokatlan árfolyam — > 30% eltérés a tartaléktól.\nBiztosan helyes?`
-      );
+      const confirmed = window.confirm(t('fxPanel.unusualDeviation'));
       if (!confirmed) return;
     }
     setFxRates(rates);
-    toast.success('Manuális árfolyam alkalmazva');
+    toast.success(t('fxPanel.manualApplied'));
   };
 
   const handleClearOverride = () => {
     setManualMode(false);
     setFxRates(FALLBACK_RATES);
-    toast.info('Manuális felülbírálat törölve');
+    toast.info(t('fxPanel.overrideCleared'));
   };
 
   const stale = isRateStale(fxRates);
@@ -120,11 +120,11 @@ export function FxSettingsPanel() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Deviza & Árfolyam
-            {sourceBadge(fxRates.source)}
+            {t('fxPanel.title')}
+            {sourceBadge(fxRates.source, t)}
           </DialogTitle>
           <DialogDescription>
-            Árfolyam beállítások a többvalutás árrésszámításhoz
+            {t('fxPanel.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +144,7 @@ export function FxSettingsPanel() {
           </div>
           <Separator />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Frissítve: {timeAgo(fxRates.lastUpdated)}</span>
+            <span>{t('fxPanel.updated')} {timeAgo(fxRates.lastUpdated, t)}</span>
             <Button
               variant="outline"
               size="sm"
@@ -153,13 +153,13 @@ export function FxSettingsPanel() {
               disabled={isFetching}
             >
               <RefreshCw className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`} />
-              Frissítés
+              {t('fxPanel.refresh')}
             </Button>
           </div>
           {stale && !fxRates.manualOverride && (
             <div className="flex items-center gap-1.5 text-xs text-warning-foreground">
               <AlertTriangle className="h-3 w-3" />
-              Elavult árfolyam — frissítés ajánlott
+              {t('fxPanel.staleRate')}
             </div>
           )}
         </div>
@@ -168,7 +168,7 @@ export function FxSettingsPanel() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label htmlFor="manual-toggle" className="text-sm font-medium">
-              Manuális árfolyam
+              {t('fxPanel.manualRate')}
             </Label>
             <Switch
               id="manual-toggle"
@@ -181,7 +181,7 @@ export function FxSettingsPanel() {
             <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 p-3">
               <div className="flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400">
                 <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                Manuális mód aktív — ECB árfolyam figyelmen kívül marad
+                {t('fxPanel.manualActive')}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -208,15 +208,15 @@ export function FxSettingsPanel() {
                 </div>
               </div>
               <div className="text-xs text-muted-foreground">
-                1 USD = <span className="font-mono">{derivedUsdHuf}</span> HUF (számított)
+                1 USD = <span className="font-mono">{derivedUsdHuf}</span> HUF {t('fxPanel.calculated')}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" className="h-7 text-xs" onClick={handleApplyManual}>
-                  Alkalmaz
+                  {t('fxPanel.applyBtn')}
                 </Button>
                 {fxRates.manualOverride && (
                   <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleClearOverride}>
-                    Override törlése
+                    {t('fxPanel.clearOverride')}
                   </Button>
                 )}
               </div>

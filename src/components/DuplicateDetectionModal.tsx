@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { AlertTriangle, CheckCircle2, Copy, Plus } from "lucide-react";
 import type { DuplicateAnalysis } from "@/lib/duplicateDetection";
+import { useLanguage } from "@/lib/i18n";
 
 export type ConflictResolution = "keep_old" | "use_new" | "keep_both";
 
@@ -44,6 +45,7 @@ export function DuplicateDetectionModal({
   fileName,
   onConfirm,
 }: DuplicateDetectionModalProps) {
+  const { t } = useLanguage();
   const { genuineNew, exactDuplicates, conflicts } = analysis;
 
   const [resolutions, setResolutions] = useState<Map<string, ConflictResolution>>(() => {
@@ -76,10 +78,10 @@ export function DuplicateDetectionModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Duplicate Detection — {fileName}
+            {t('dup.title')} — {fileName}
           </DialogTitle>
           <DialogDescription>
-            {totalIncoming} incoming rows analyzed against existing data.
+            {totalIncoming} {t('dup.analyzed')}
           </DialogDescription>
         </DialogHeader>
 
@@ -88,19 +90,19 @@ export function DuplicateDetectionModal({
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
               <Plus className="h-4 w-4 text-emerald-500" />
-              <span className="text-sm font-medium">{genuineNew.length} new rows</span>
-              <span className="text-xs text-muted-foreground">will be added</span>
+              <span className="text-sm font-medium">{genuineNew.length} {t('dup.newRows')}</span>
+              <span className="text-xs text-muted-foreground">{t('dup.willBeAdded')}</span>
             </div>
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
               <Copy className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{exactDuplicates.length} exact duplicates</span>
-              <span className="text-xs text-muted-foreground">will be skipped</span>
+              <span className="text-sm font-medium">{exactDuplicates.length} {t('dup.exactDuplicates')}</span>
+              <span className="text-xs text-muted-foreground">{t('dup.willBeSkipped')}</span>
             </div>
             {conflicts.length > 0 && (
               <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span className="text-sm font-medium">{conflicts.length} conflicts</span>
-                <span className="text-xs text-muted-foreground">need resolution</span>
+                <span className="text-sm font-medium">{conflicts.length} {t('dup.conflicts')}</span>
+                <span className="text-xs text-muted-foreground">{t('dup.needResolution')}</span>
               </div>
             )}
           </div>
@@ -110,32 +112,17 @@ export function DuplicateDetectionModal({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold">
-                  Conflicts — same SKU + date + partner, different qty
+                  {t('dup.conflictsTitle')}
                 </h4>
                 <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-7"
-                    onClick={() => setAllResolutions("keep_old")}
-                  >
-                    All: Keep old
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setAllResolutions("keep_old")}>
+                    {t('dup.allKeepOld')}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-7"
-                    onClick={() => setAllResolutions("use_new")}
-                  >
-                    All: Use new
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setAllResolutions("use_new")}>
+                    {t('dup.allUseNew')}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-7"
-                    onClick={() => setAllResolutions("keep_both")}
-                  >
-                    All: Keep both
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setAllResolutions("keep_both")}>
+                    {t('dup.allKeepBoth')}
                   </Button>
                 </div>
               </div>
@@ -145,11 +132,11 @@ export function DuplicateDetectionModal({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs">SKU</TableHead>
-                      <TableHead className="text-xs">Date</TableHead>
+                      <TableHead className="text-xs">{t('po.date')}</TableHead>
                       <TableHead className="text-xs">Partner</TableHead>
-                      <TableHead className="text-xs text-right">Old Qty</TableHead>
-                      <TableHead className="text-xs text-right">New Qty</TableHead>
-                      <TableHead className="text-xs w-[140px]">Resolution</TableHead>
+                      <TableHead className="text-xs text-right">{t('dup.oldQty')}</TableHead>
+                      <TableHead className="text-xs text-right">{t('dup.newQty')}</TableHead>
+                      <TableHead className="text-xs w-[140px]">{t('dup.resolution')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -175,9 +162,9 @@ export function DuplicateDetectionModal({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="keep_old">Keep old</SelectItem>
-                              <SelectItem value="use_new">Use new</SelectItem>
-                              <SelectItem value="keep_both">Keep both</SelectItem>
+                              <SelectItem value="keep_old">{t('dup.keepOld')}</SelectItem>
+                              <SelectItem value="use_new">{t('dup.useNew')}</SelectItem>
+                              <SelectItem value="keep_both">{t('dup.keepBoth')}</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -193,20 +180,20 @@ export function DuplicateDetectionModal({
           {genuineNew.length === 0 && conflicts.length === 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
               <CheckCircle2 className="h-4 w-4" />
-              All incoming rows are exact duplicates — nothing to add.
+              {t('dup.allDuplicates')}
             </div>
           )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={() => onConfirm(resolutions)}
             disabled={genuineNew.length === 0 && conflicts.length === 0}
           >
-            Merge {genuineNew.length + conflicts.length} rows
+            {t('dup.mergeRows')} {genuineNew.length + conflicts.length} {t('dup.rows')}
           </Button>
         </DialogFooter>
       </DialogContent>

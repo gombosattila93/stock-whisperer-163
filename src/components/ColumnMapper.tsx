@@ -45,38 +45,32 @@ interface FieldDef {
   tip: string;
 }
 
-const TARGET_FIELDS: FieldDef[] = [
-  { key: "sku", label: "SKU", required: true, tip: "Unique product identifier. Best practice: use a consistent format (e.g. alphanumeric, no spaces). This is the primary key for grouping sales records." },
-  { key: "sku_name", label: "SKU Name", required: false, tip: "Human-readable product name. Keep concise (<80 chars). Falls back to SKU code if unmapped." },
-  { key: "supplier", label: "Supplier", required: false, tip: "Supplier or vendor name. Standardize spelling across rows. Defaults to 'Unknown'." },
-  { key: "category", label: "Category", required: false, tip: "Product category for filtering. Use a flat taxonomy (2–3 levels max)." },
-  { key: "date", label: "Date", required: true, tip: "Transaction/sale date. Best practice: ISO 8601 format (YYYY-MM-DD)." },
-  { key: "partner_id", label: "Partner ID", required: false, tip: "Customer or channel identifier." },
-  { key: "sold_qty", label: "Sold Qty", required: false, tip: "Units sold in this transaction. Must be numeric (≥0)." },
-  { key: "unit_price", label: "Unit Price", required: false, tip: "Selling price per unit. Used for ABC revenue classification." },
-  { key: "stock_qty", label: "Stock Qty", required: false, tip: "Current on-hand inventory." },
-  { key: "lead_time_days", label: "Lead Time (days)", required: false, tip: "Supplier lead time in days." },
-  { key: "ordered_qty", label: "Ordered Qty", required: false, tip: "Quantity already on order (in-transit)." },
-  { key: "expected_delivery_date", label: "Expected Delivery", required: false, tip: "When the ordered quantity is expected. ISO 8601 (YYYY-MM-DD)." },
-  { key: "selling_price_huf", label: "Selling Price (HUF)", required: false, tip: "Customer selling price in Hungarian Forint." },
-  { key: "purchase_currency", label: "Purchase Currency", required: false, tip: "USD or EUR. Defaults to EUR." },
-  { key: "purchase_price_1", label: "Purchase Price 1", required: false, tip: "Base purchase price (no minimum)." },
-  { key: "purchase_qty_1", label: "Purchase Qty 1", required: false, tip: "Minimum order quantity for price 1." },
-  { key: "purchase_price_2", label: "Purchase Price 2", required: false, tip: "Volume discount price break 2." },
-  { key: "purchase_qty_2", label: "Purchase Qty 2", required: false, tip: "Minimum order quantity for price break 2." },
-  { key: "purchase_price_3", label: "Purchase Price 3", required: false, tip: "Volume discount price break 3." },
-  { key: "purchase_qty_3", label: "Purchase Qty 3", required: false, tip: "Minimum order quantity for price break 3." },
-  { key: "purchase_price_4", label: "Purchase Price 4", required: false, tip: "Volume discount price break 4." },
-  { key: "purchase_qty_4", label: "Purchase Qty 4", required: false, tip: "Minimum order quantity for price break 4." },
-  { key: "purchase_price_5", label: "Purchase Price 5", required: false, tip: "Volume discount price break 5." },
-  { key: "purchase_qty_5", label: "Purchase Qty 5", required: false, tip: "Minimum order quantity for price break 5." },
-  { key: "purchase_price_6", label: "Purchase Price 6", required: false, tip: "Volume discount price break 6." },
-  { key: "purchase_qty_6", label: "Purchase Qty 6", required: false, tip: "Minimum order quantity for price break 6." },
-  { key: "purchase_price_7", label: "Purchase Price 7", required: false, tip: "Volume discount price break 7." },
-  { key: "purchase_qty_7", label: "Purchase Qty 7", required: false, tip: "Minimum order quantity for price break 7." },
-  { key: "purchase_price_8", label: "Purchase Price 8", required: false, tip: "Best/highest volume price break 8." },
-  { key: "purchase_qty_8", label: "Purchase Qty 8", required: false, tip: "Minimum order quantity for price break 8." },
-];
+function getTargetFields(t: (key: string) => string): FieldDef[] {
+  return [
+    { key: "sku", label: t('mapper.field.sku'), required: true, tip: t('mapper.tip.sku') },
+    { key: "sku_name", label: t('mapper.field.skuName'), required: false, tip: t('mapper.tip.skuName') },
+    { key: "supplier", label: t('mapper.field.supplier'), required: false, tip: t('mapper.tip.supplier') },
+    { key: "category", label: t('mapper.field.category'), required: false, tip: t('mapper.tip.category') },
+    { key: "date", label: t('mapper.field.date'), required: true, tip: t('mapper.tip.date') },
+    { key: "partner_id", label: t('mapper.field.partnerId'), required: false, tip: t('mapper.tip.partnerId') },
+    { key: "sold_qty", label: t('mapper.field.soldQty'), required: false, tip: t('mapper.tip.soldQty') },
+    { key: "unit_price", label: t('mapper.field.unitPrice'), required: false, tip: t('mapper.tip.unitPrice') },
+    { key: "stock_qty", label: t('mapper.field.stockQty'), required: false, tip: t('mapper.tip.stockQty') },
+    { key: "lead_time_days", label: t('mapper.field.leadTime'), required: false, tip: t('mapper.tip.leadTime') },
+    { key: "ordered_qty", label: t('mapper.field.orderedQty'), required: false, tip: t('mapper.tip.orderedQty') },
+    { key: "expected_delivery_date", label: t('mapper.field.expectedDelivery'), required: false, tip: t('mapper.tip.expectedDelivery') },
+    { key: "selling_price_huf", label: t('mapper.field.sellingPriceHuf'), required: false, tip: t('mapper.tip.sellingPriceHuf') },
+    { key: "purchase_currency", label: t('mapper.field.purchaseCurrency'), required: false, tip: t('mapper.tip.purchaseCurrency') },
+    { key: "purchase_price_1", label: `${t('mapper.field.purchasePrice')} 1`, required: false, tip: t('mapper.tip.purchasePrice1') },
+    { key: "purchase_qty_1", label: `${t('mapper.field.purchaseQty')} 1`, required: false, tip: t('mapper.tip.purchaseQty1') },
+    ...([2,3,4,5,6,7].flatMap(n => [
+      { key: `purchase_price_${n}`, label: `${t('mapper.field.purchasePrice')} ${n}`, required: false, tip: `${t('mapper.tip.purchasePriceN')} ${n}.` },
+      { key: `purchase_qty_${n}`, label: `${t('mapper.field.purchaseQty')} ${n}`, required: false, tip: `${t('mapper.tip.purchaseQtyN')} ${n}.` },
+    ])),
+    { key: "purchase_price_8", label: `${t('mapper.field.purchasePrice')} 8`, required: false, tip: t('mapper.tip.purchasePrice8') },
+    { key: "purchase_qty_8", label: `${t('mapper.field.purchaseQty')} 8`, required: false, tip: `${t('mapper.tip.purchaseQtyN')} 8.` },
+  ];
+}
 
 const FIELD_ALIASES: Record<string, string[]> = {
   sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],

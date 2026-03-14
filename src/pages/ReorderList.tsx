@@ -60,7 +60,7 @@ function LeadTimeQuickInput({ sku, onSave }: { sku: string; onSave: (sku: string
         type="number"
         min={1}
         max={365}
-        placeholder="e.g. 14"
+        placeholder={t('placeholder.eg14')}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleSave()}

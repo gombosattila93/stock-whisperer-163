@@ -212,7 +212,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
                     </TooltipTrigger>
                     <TooltipContent side="right" className="max-w-[280px] text-xs">
-                      {field.tip}
+                      {t(field.tipKey as any)}
                     </TooltipContent>
                   </Tooltip>
                 </div>

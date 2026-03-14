@@ -40,37 +40,35 @@ interface ColumnMapperProps {
 
 interface FieldDef {
   key: string;
-  label: string;
+  labelKey: string;
   required: boolean;
-  tip: string;
+  tipKey: string;
 }
 
-function getTargetFields(t: (key: string) => string): FieldDef[] {
-  return [
-    { key: "sku", label: t('mapper.field.sku'), required: true, tip: t('mapper.tip.sku') },
-    { key: "sku_name", label: t('mapper.field.skuName'), required: false, tip: t('mapper.tip.skuName') },
-    { key: "supplier", label: t('mapper.field.supplier'), required: false, tip: t('mapper.tip.supplier') },
-    { key: "category", label: t('mapper.field.category'), required: false, tip: t('mapper.tip.category') },
-    { key: "date", label: t('mapper.field.date'), required: true, tip: t('mapper.tip.date') },
-    { key: "partner_id", label: t('mapper.field.partnerId'), required: false, tip: t('mapper.tip.partnerId') },
-    { key: "sold_qty", label: t('mapper.field.soldQty'), required: false, tip: t('mapper.tip.soldQty') },
-    { key: "unit_price", label: t('mapper.field.unitPrice'), required: false, tip: t('mapper.tip.unitPrice') },
-    { key: "stock_qty", label: t('mapper.field.stockQty'), required: false, tip: t('mapper.tip.stockQty') },
-    { key: "lead_time_days", label: t('mapper.field.leadTime'), required: false, tip: t('mapper.tip.leadTime') },
-    { key: "ordered_qty", label: t('mapper.field.orderedQty'), required: false, tip: t('mapper.tip.orderedQty') },
-    { key: "expected_delivery_date", label: t('mapper.field.expectedDelivery'), required: false, tip: t('mapper.tip.expectedDelivery') },
-    { key: "selling_price_huf", label: t('mapper.field.sellingPriceHuf'), required: false, tip: t('mapper.tip.sellingPriceHuf') },
-    { key: "purchase_currency", label: t('mapper.field.purchaseCurrency'), required: false, tip: t('mapper.tip.purchaseCurrency') },
-    { key: "purchase_price_1", label: `${t('mapper.field.purchasePrice')} 1`, required: false, tip: t('mapper.tip.purchasePrice1') },
-    { key: "purchase_qty_1", label: `${t('mapper.field.purchaseQty')} 1`, required: false, tip: t('mapper.tip.purchaseQty1') },
-    ...([2,3,4,5,6,7].flatMap(n => [
-      { key: `purchase_price_${n}`, label: `${t('mapper.field.purchasePrice')} ${n}`, required: false, tip: `${t('mapper.tip.purchasePriceN')} ${n}.` },
-      { key: `purchase_qty_${n}`, label: `${t('mapper.field.purchaseQty')} ${n}`, required: false, tip: `${t('mapper.tip.purchaseQtyN')} ${n}.` },
-    ])),
-    { key: "purchase_price_8", label: `${t('mapper.field.purchasePrice')} 8`, required: false, tip: t('mapper.tip.purchasePrice8') },
-    { key: "purchase_qty_8", label: `${t('mapper.field.purchaseQty')} 8`, required: false, tip: `${t('mapper.tip.purchaseQtyN')} 8.` },
-  ];
-}
+const TARGET_FIELDS: FieldDef[] = [
+  { key: "sku", labelKey: "mapper.field.sku", required: true, tipKey: "mapper.tip.sku" },
+  { key: "sku_name", labelKey: "mapper.field.skuName", required: false, tipKey: "mapper.tip.skuName" },
+  { key: "supplier", labelKey: "mapper.field.supplier", required: false, tipKey: "mapper.tip.supplier" },
+  { key: "category", labelKey: "mapper.field.category", required: false, tipKey: "mapper.tip.category" },
+  { key: "date", labelKey: "mapper.field.date", required: true, tipKey: "mapper.tip.date" },
+  { key: "partner_id", labelKey: "mapper.field.partnerId", required: false, tipKey: "mapper.tip.partnerId" },
+  { key: "sold_qty", labelKey: "mapper.field.soldQty", required: false, tipKey: "mapper.tip.soldQty" },
+  { key: "unit_price", labelKey: "mapper.field.unitPrice", required: false, tipKey: "mapper.tip.unitPrice" },
+  { key: "stock_qty", labelKey: "mapper.field.stockQty", required: false, tipKey: "mapper.tip.stockQty" },
+  { key: "lead_time_days", labelKey: "mapper.field.leadTime", required: false, tipKey: "mapper.tip.leadTime" },
+  { key: "ordered_qty", labelKey: "mapper.field.orderedQty", required: false, tipKey: "mapper.tip.orderedQty" },
+  { key: "expected_delivery_date", labelKey: "mapper.field.expectedDelivery", required: false, tipKey: "mapper.tip.expectedDelivery" },
+  { key: "selling_price_huf", labelKey: "mapper.field.sellingPriceHuf", required: false, tipKey: "mapper.tip.sellingPriceHuf" },
+  { key: "purchase_currency", labelKey: "mapper.field.purchaseCurrency", required: false, tipKey: "mapper.tip.purchaseCurrency" },
+  { key: "purchase_price_1", labelKey: "mapper.field.purchasePrice", required: false, tipKey: "mapper.tip.purchasePrice1" },
+  { key: "purchase_qty_1", labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQty1" },
+  ...([2,3,4,5,6,7].flatMap(n => [
+    { key: `purchase_price_${n}`, labelKey: "mapper.field.purchasePrice", required: false, tipKey: "mapper.tip.purchasePriceN" },
+    { key: `purchase_qty_${n}`, labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQtyN" },
+  ])),
+  { key: "purchase_price_8", labelKey: "mapper.field.purchasePrice", required: false, tipKey: "mapper.tip.purchasePrice8" },
+  { key: "purchase_qty_8", labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQtyN" },
+];
 
 const FIELD_ALIASES: Record<string, string[]> = {
   sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],

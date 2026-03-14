@@ -171,7 +171,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
           {unmappedRequired.length > 0 && (
             <span className="text-xs text-destructive flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
-              {unmappedRequired.map((f) => f.label).join(", ")} {t('mapper.required')}
+              {unmappedRequired.map((f) => getFieldLabel(f, t)).join(", ")} {t('mapper.required')}
             </span>
           )}
           {unmappedRequired.length === 0 && (

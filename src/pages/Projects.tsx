@@ -161,18 +161,18 @@ export default function Projects() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs">Due Date</Label>
-                  <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="h-8 text-sm" />
-                </div>
-                <div>
-                  <Label className="text-xs">Add SKUs</Label>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      value={skuSearch}
-                      onChange={e => setSkuSearch(e.target.value)}
-                      className="h-8 text-sm pl-8"
-                      placeholder="Search SKU or name…"
+                    <Label className="text-xs">{t('projects.dueDateLabel')}</Label>
+                    <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t('projects.addSkusLabel')}</Label>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        value={skuSearch}
+                        onChange={e => setSkuSearch(e.target.value)}
+                        className="h-8 text-sm pl-8"
+                        placeholder={t('projects.searchSkuPlaceholder')}
                     />
                   </div>
                   {skuOptions.length > 0 && (

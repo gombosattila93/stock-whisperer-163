@@ -591,6 +591,63 @@ const translations = {
   "fxPanel.unknown": { en: "unknown", hu: "ismeretlen" },
   "fxPanel.manual": { en: "Manual", hu: "Manuális" },
   "fxPanel.fallback": { en: "Fallback", hu: "Tartalék" },
+
+  // ─── Export / Clipboard ─────────────────────────
+  "export.copied": { en: "Copied!", hu: "Másolva!" },
+  "export.copiedDesc": { en: "Table data copied — paste into Excel or Sheets.", hu: "Táblázat adatok másolva — illessze be Excelbe vagy Google Táblázatba." },
+  "export.copyFailed": { en: "Copy failed", hu: "Másolás sikertelen" },
+  "export.copyFailedDesc": { en: "Your browser blocked clipboard access.", hu: "A böngésző blokkolta a vágólap-hozzáférést." },
+  "export.copyTooltip": { en: "Copy to clipboard (paste into Excel)", hu: "Másolás vágólapra (beilleszthető Excelbe)" },
+
+  // ─── Projects form ─────────────────────────────
+  "projects.projectNameLabel": { en: "Project Name *", hu: "Projekt neve *" },
+  "projects.projectNamePlaceholder": { en: "e.g. Customer Order #1234", hu: "pl. Megrendelés #1234" },
+  "projects.customerLabel": { en: "Customer", hu: "Ügyfél" },
+  "projects.customerPlaceholder": { en: "Customer name", hu: "Ügyfél neve" },
+  "projects.dueDateLabel": { en: "Due Date", hu: "Határidő" },
+  "projects.addSkusLabel": { en: "Add SKUs", hu: "SKU-k hozzáadása" },
+  "projects.searchSkuPlaceholder": { en: "Search SKU or name…", hu: "SKU vagy név keresése…" },
+
+  // ─── Placeholders ──────────────────────────────
+  "placeholder.eg14": { en: "e.g. 14", hu: "pl. 14" },
+  "placeholder.choose": { en: "Choose…", hu: "Válasszon…" },
+
+  // ─── Column Mapper fields ─────────────────────
+  "mapper.field.sku": { en: "SKU", hu: "SKU" },
+  "mapper.field.skuName": { en: "SKU Name", hu: "SKU Név" },
+  "mapper.field.supplier": { en: "Supplier", hu: "Beszállító" },
+  "mapper.field.category": { en: "Category", hu: "Kategória" },
+  "mapper.field.date": { en: "Date", hu: "Dátum" },
+  "mapper.field.partnerId": { en: "Partner ID", hu: "Partner ID" },
+  "mapper.field.soldQty": { en: "Sold Qty", hu: "Eladott menny." },
+  "mapper.field.unitPrice": { en: "Unit Price", hu: "Egységár" },
+  "mapper.field.stockQty": { en: "Stock Qty", hu: "Készlet menny." },
+  "mapper.field.leadTime": { en: "Lead Time (days)", hu: "Átfutási idő (nap)" },
+  "mapper.field.orderedQty": { en: "Ordered Qty", hu: "Rendelt menny." },
+  "mapper.field.expectedDelivery": { en: "Expected Delivery", hu: "Várható szállítás" },
+  "mapper.field.sellingPriceHuf": { en: "Selling Price (HUF)", hu: "Eladási ár (HUF)" },
+  "mapper.field.purchaseCurrency": { en: "Purchase Currency", hu: "Beszerzési pénznem" },
+  "mapper.field.purchasePrice": { en: "Purchase Price", hu: "Beszerzési ár" },
+  "mapper.field.purchaseQty": { en: "Purchase Qty", hu: "Beszerzési menny." },
+  "mapper.tip.sku": { en: "Unique product identifier. Best practice: use a consistent format (e.g. alphanumeric, no spaces). This is the primary key for grouping sales records.", hu: "Egyedi termékazonosító. Ajánlás: egységes formátum (pl. alfanumerikus, szóközök nélkül). Ez az elsődleges kulcs az értékesítési rekordok csoportosításához." },
+  "mapper.tip.skuName": { en: "Human-readable product name. Keep concise (<80 chars). Falls back to SKU code if unmapped.", hu: "Olvasható terméknév. Legyen rövid (<80 karakter). Ha nincs megadva, az SKU kódot használja." },
+  "mapper.tip.supplier": { en: "Supplier or vendor name. Standardize spelling across rows. Defaults to 'Unknown'.", hu: "Beszállító neve. Egységesítse az írásmódot. Alapértelmezett: 'Ismeretlen'." },
+  "mapper.tip.category": { en: "Product category for filtering. Use a flat taxonomy (2–3 levels max).", hu: "Termékkategória szűréshez. Használjon lapos taxonómiát (max 2-3 szint)." },
+  "mapper.tip.date": { en: "Transaction/sale date. Best practice: ISO 8601 format (YYYY-MM-DD).", hu: "Tranzakció/eladás dátuma. Ajánlott: ISO 8601 formátum (ÉÉÉÉ-HH-NN)." },
+  "mapper.tip.partnerId": { en: "Customer or channel identifier.", hu: "Ügyfél vagy csatorna azonosító." },
+  "mapper.tip.soldQty": { en: "Units sold in this transaction. Must be numeric (≥0).", hu: "Eladott egységek ebben a tranzakcióban. Szám kell legyen (≥0)." },
+  "mapper.tip.unitPrice": { en: "Selling price per unit. Used for ABC revenue classification.", hu: "Egységár. Az ABC bevétel-osztályozáshoz használt." },
+  "mapper.tip.stockQty": { en: "Current on-hand inventory.", hu: "Aktuális kézi készlet." },
+  "mapper.tip.leadTime": { en: "Supplier lead time in days.", hu: "Beszállítói átfutási idő napokban." },
+  "mapper.tip.orderedQty": { en: "Quantity already on order (in-transit).", hu: "Már megrendelt mennyiség (úton)." },
+  "mapper.tip.expectedDelivery": { en: "When the ordered quantity is expected. ISO 8601 (YYYY-MM-DD).", hu: "Mikor várható a megrendelt mennyiség. ISO 8601 (ÉÉÉÉ-HH-NN)." },
+  "mapper.tip.sellingPriceHuf": { en: "Customer selling price in Hungarian Forint.", hu: "Ügyfél eladási ár magyar forintban." },
+  "mapper.tip.purchaseCurrency": { en: "USD or EUR. Defaults to EUR.", hu: "USD vagy EUR. Alapértelmezett: EUR." },
+  "mapper.tip.purchasePrice1": { en: "Base purchase price (no minimum).", hu: "Alap beszerzési ár (nincs minimum)." },
+  "mapper.tip.purchaseQty1": { en: "Minimum order quantity for price 1.", hu: "Minimális rendelési mennyiség az 1. árhoz." },
+  "mapper.tip.purchasePriceN": { en: "Volume discount price break", hu: "Mennyiségi kedvezmény ársáv" },
+  "mapper.tip.purchaseQtyN": { en: "Minimum order quantity for price break", hu: "Minimális rendelési mennyiség az ársávhoz" },
+  "mapper.tip.purchasePrice8": { en: "Best/highest volume price break 8.", hu: "Legjobb/legmagasabb mennyiségi ársáv 8." },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

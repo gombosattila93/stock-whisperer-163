@@ -435,7 +435,7 @@ export default function ReorderList() {
             <Label className="text-xs text-muted-foreground">{t('common.strategy')}:</Label>
             <Select onValueChange={(v) => applyBulkStrategy(v as ReorderStrategy | '__global__')}>
               <SelectTrigger className="h-7 w-[160px] text-xs">
-                <SelectValue placeholder="Choose…" />
+                <SelectValue placeholder={t('placeholder.choose')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__global__">

@@ -49,7 +49,7 @@ export function ExportButton({ data, filename }: ExportButtonProps) {
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Copy to clipboard (paste into Excel)</p>
+            <p>{t('export.copyTooltip')}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

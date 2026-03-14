@@ -40,43 +40,42 @@ interface ColumnMapperProps {
 
 interface FieldDef {
   key: string;
-  label: string;
+  labelKey: string;
   required: boolean;
-  tip: string;
+  tipKey: string;
 }
 
 const TARGET_FIELDS: FieldDef[] = [
-  { key: "sku", label: "SKU", required: true, tip: "Unique product identifier. Best practice: use a consistent format (e.g. alphanumeric, no spaces). This is the primary key for grouping sales records." },
-  { key: "sku_name", label: "SKU Name", required: false, tip: "Human-readable product name. Keep concise (<80 chars). Falls back to SKU code if unmapped." },
-  { key: "supplier", label: "Supplier", required: false, tip: "Supplier or vendor name. Standardize spelling across rows. Defaults to 'Unknown'." },
-  { key: "category", label: "Category", required: false, tip: "Product category for filtering. Use a flat taxonomy (2–3 levels max)." },
-  { key: "date", label: "Date", required: true, tip: "Transaction/sale date. Best practice: ISO 8601 format (YYYY-MM-DD)." },
-  { key: "partner_id", label: "Partner ID", required: false, tip: "Customer or channel identifier." },
-  { key: "sold_qty", label: "Sold Qty", required: false, tip: "Units sold in this transaction. Must be numeric (≥0)." },
-  { key: "unit_price", label: "Unit Price", required: false, tip: "Selling price per unit. Used for ABC revenue classification." },
-  { key: "stock_qty", label: "Stock Qty", required: false, tip: "Current on-hand inventory." },
-  { key: "lead_time_days", label: "Lead Time (days)", required: false, tip: "Supplier lead time in days." },
-  { key: "ordered_qty", label: "Ordered Qty", required: false, tip: "Quantity already on order (in-transit)." },
-  { key: "expected_delivery_date", label: "Expected Delivery", required: false, tip: "When the ordered quantity is expected. ISO 8601 (YYYY-MM-DD)." },
-  { key: "selling_price_huf", label: "Selling Price (HUF)", required: false, tip: "Customer selling price in Hungarian Forint." },
-  { key: "purchase_currency", label: "Purchase Currency", required: false, tip: "USD or EUR. Defaults to EUR." },
-  { key: "purchase_price_1", label: "Purchase Price 1", required: false, tip: "Base purchase price (no minimum)." },
-  { key: "purchase_qty_1", label: "Purchase Qty 1", required: false, tip: "Minimum order quantity for price 1." },
-  { key: "purchase_price_2", label: "Purchase Price 2", required: false, tip: "Volume discount price break 2." },
-  { key: "purchase_qty_2", label: "Purchase Qty 2", required: false, tip: "Minimum order quantity for price break 2." },
-  { key: "purchase_price_3", label: "Purchase Price 3", required: false, tip: "Volume discount price break 3." },
-  { key: "purchase_qty_3", label: "Purchase Qty 3", required: false, tip: "Minimum order quantity for price break 3." },
-  { key: "purchase_price_4", label: "Purchase Price 4", required: false, tip: "Volume discount price break 4." },
-  { key: "purchase_qty_4", label: "Purchase Qty 4", required: false, tip: "Minimum order quantity for price break 4." },
-  { key: "purchase_price_5", label: "Purchase Price 5", required: false, tip: "Volume discount price break 5." },
-  { key: "purchase_qty_5", label: "Purchase Qty 5", required: false, tip: "Minimum order quantity for price break 5." },
-  { key: "purchase_price_6", label: "Purchase Price 6", required: false, tip: "Volume discount price break 6." },
-  { key: "purchase_qty_6", label: "Purchase Qty 6", required: false, tip: "Minimum order quantity for price break 6." },
-  { key: "purchase_price_7", label: "Purchase Price 7", required: false, tip: "Volume discount price break 7." },
-  { key: "purchase_qty_7", label: "Purchase Qty 7", required: false, tip: "Minimum order quantity for price break 7." },
-  { key: "purchase_price_8", label: "Purchase Price 8", required: false, tip: "Best/highest volume price break 8." },
-  { key: "purchase_qty_8", label: "Purchase Qty 8", required: false, tip: "Minimum order quantity for price break 8." },
+  { key: "sku", labelKey: "mapper.field.sku", required: true, tipKey: "mapper.tip.sku" },
+  { key: "sku_name", labelKey: "mapper.field.skuName", required: false, tipKey: "mapper.tip.skuName" },
+  { key: "supplier", labelKey: "mapper.field.supplier", required: false, tipKey: "mapper.tip.supplier" },
+  { key: "category", labelKey: "mapper.field.category", required: false, tipKey: "mapper.tip.category" },
+  { key: "date", labelKey: "mapper.field.date", required: true, tipKey: "mapper.tip.date" },
+  { key: "partner_id", labelKey: "mapper.field.partnerId", required: false, tipKey: "mapper.tip.partnerId" },
+  { key: "sold_qty", labelKey: "mapper.field.soldQty", required: false, tipKey: "mapper.tip.soldQty" },
+  { key: "unit_price", labelKey: "mapper.field.unitPrice", required: false, tipKey: "mapper.tip.unitPrice" },
+  { key: "stock_qty", labelKey: "mapper.field.stockQty", required: false, tipKey: "mapper.tip.stockQty" },
+  { key: "lead_time_days", labelKey: "mapper.field.leadTime", required: false, tipKey: "mapper.tip.leadTime" },
+  { key: "ordered_qty", labelKey: "mapper.field.orderedQty", required: false, tipKey: "mapper.tip.orderedQty" },
+  { key: "expected_delivery_date", labelKey: "mapper.field.expectedDelivery", required: false, tipKey: "mapper.tip.expectedDelivery" },
+  { key: "selling_price_huf", labelKey: "mapper.field.sellingPriceHuf", required: false, tipKey: "mapper.tip.sellingPriceHuf" },
+  { key: "purchase_currency", labelKey: "mapper.field.purchaseCurrency", required: false, tipKey: "mapper.tip.purchaseCurrency" },
+  { key: "purchase_price_1", labelKey: "mapper.field.purchasePrice", required: false, tipKey: "mapper.tip.purchasePrice1" },
+  { key: "purchase_qty_1", labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQty1" },
+  ...([2,3,4,5,6,7].flatMap(n => [
+    { key: `purchase_price_${n}`, labelKey: "mapper.field.purchasePrice", required: false, tipKey: "mapper.tip.purchasePriceN" },
+    { key: `purchase_qty_${n}`, labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQtyN" },
+  ])),
+  { key: "purchase_price_8", labelKey: "mapper.field.purchasePrice", required: false, tipKey: "mapper.tip.purchasePrice8" },
+  { key: "purchase_qty_8", labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQtyN" },
 ];
+
+function getFieldLabel(field: FieldDef, t: (key: any) => string): string {
+  const base = t(field.labelKey as any);
+  // Extract number suffix from key for purchase_price_N / purchase_qty_N
+  const match = field.key.match(/_(\d+)$/);
+  return match ? `${base} ${match[1]}` : base;
+}
 
 const FIELD_ALIASES: Record<string, string[]> = {
   sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],
@@ -179,7 +178,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
           {unmappedRequired.length > 0 && (
             <span className="text-xs text-destructive flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
-              {unmappedRequired.map((f) => f.label).join(", ")} {t('mapper.required')}
+              {unmappedRequired.map((f) => getFieldLabel(f, t)).join(", ")} {t('mapper.required')}
             </span>
           )}
           {unmappedRequired.length === 0 && (
@@ -212,7 +211,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
               <div key={field.key} className="flex items-center gap-2">
                 <div className="w-[160px] flex items-center gap-1 shrink-0">
                   <span className="text-sm font-medium">
-                    {field.label}
+                    {getFieldLabel(field, t)}
                     {field.required && <span className="text-destructive ml-0.5">*</span>}
                   </span>
                   <Tooltip>
@@ -220,7 +219,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
                     </TooltipTrigger>
                     <TooltipContent side="right" className="max-w-[280px] text-xs">
-                      {field.tip}
+                      {t(field.tipKey as any)}
                     </TooltipContent>
                   </Tooltip>
                 </div>

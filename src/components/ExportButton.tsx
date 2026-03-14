@@ -24,9 +24,9 @@ export function ExportButton({ data, filename }: ExportButtonProps) {
     try {
       const tsv = Papa.unparse(data, { delimiter: "\t" });
       await navigator.clipboard.writeText(tsv);
-      toast({ title: "Copied!", description: "Table data copied — paste into Excel or Sheets." });
+      toast({ title: t('export.copied'), description: t('export.copiedDesc') });
     } catch {
-      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+      toast({ title: t('export.copyFailed'), description: t('export.copyFailedDesc'), variant: "destructive" });
     }
   };
 

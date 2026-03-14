@@ -204,7 +204,7 @@ export function ColumnMapper({ open, onOpenChange, sourceColumns, rawData, onCon
               <div key={field.key} className="flex items-center gap-2">
                 <div className="w-[160px] flex items-center gap-1 shrink-0">
                   <span className="text-sm font-medium">
-                    {field.label}
+                    {getFieldLabel(field, t)}
                     {field.required && <span className="text-destructive ml-0.5">*</span>}
                   </span>
                   <Tooltip>

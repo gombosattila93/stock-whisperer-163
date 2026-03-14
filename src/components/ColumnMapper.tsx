@@ -70,6 +70,13 @@ const TARGET_FIELDS: FieldDef[] = [
   { key: "purchase_qty_8", labelKey: "mapper.field.purchaseQty", required: false, tipKey: "mapper.tip.purchaseQtyN" },
 ];
 
+function getFieldLabel(field: FieldDef, t: (key: any) => string): string {
+  const base = t(field.labelKey as any);
+  // Extract number suffix from key for purchase_price_N / purchase_qty_N
+  const match = field.key.match(/_(\d+)$/);
+  return match ? `${base} ${match[1]}` : base;
+}
+
 const FIELD_ALIASES: Record<string, string[]> = {
   sku: ["sku", "productcode", "productid", "itemcode", "itemid", "itemno", "partnumber", "partno", "materialcode", "articleno", "barcode", "upc", "ean"],
   sku_name: ["skuname", "productname", "itemname", "description", "itemdescription", "productdescription", "title", "materialname", "articlename"],

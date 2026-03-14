@@ -152,12 +152,12 @@ export default function Projects() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Project Name *</Label>
-                    <Input value={projectName} onChange={e => setProjectName(e.target.value)} className="h-8 text-sm" placeholder="e.g. Customer Order #1234" />
+                    <Label className="text-xs">{t('projects.projectNameLabel')}</Label>
+                    <Input value={projectName} onChange={e => setProjectName(e.target.value)} className="h-8 text-sm" placeholder={t('projects.projectNamePlaceholder')} />
                   </div>
                   <div>
-                    <Label className="text-xs">Customer</Label>
-                    <Input value={customer} onChange={e => setCustomer(e.target.value)} className="h-8 text-sm" placeholder="Customer name" />
+                    <Label className="text-xs">{t('projects.customerLabel')}</Label>
+                    <Input value={customer} onChange={e => setCustomer(e.target.value)} className="h-8 text-sm" placeholder={t('projects.customerPlaceholder')} />
                   </div>
                 </div>
                 <div>

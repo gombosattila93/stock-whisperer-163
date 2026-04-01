@@ -232,7 +232,7 @@ export default function CriticalSkus() {
                   {s.pastDueOrders && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
                       <Badge variant="outline" className="text-[9px] border-warning/50 text-warning-foreground mt-0.5">{t('critical.pastDue')}</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Order excluded from effective stock — delivery likely already arrived</p></TooltipContent></Tooltip></TooltipProvider>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.orderExcludedTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                 </div>
               ),

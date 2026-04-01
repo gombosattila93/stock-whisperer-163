@@ -271,16 +271,16 @@ export default function Suppliers() {
                               <thead>
                                 <tr className="text-muted-foreground">
                                   <th className="text-left py-1.5 px-2">SKU</th>
-                                  <th className="text-left py-1.5 px-2">Name</th>
-                                  <th className="text-left py-1.5 px-2">Category</th>
-                                  {hasPricingData && <th className="text-center py-1.5 px-2">Cur.</th>}
-                                  <th className="text-right py-1.5 px-2">Stock</th>
-                                  <th className="text-right py-1.5 px-2">Ordered</th>
-                                  <th className="text-right py-1.5 px-2">Days of Stock</th>
-                                  <th className="text-right py-1.5 px-2">Order Qty</th>
-                                  <th className="text-right py-1.5 px-2">Order Value (€)</th>
-                                  {hasPricingData && <th className="text-right py-1.5 px-2">Margin</th>}
-                                  <th className="text-left py-1.5 px-2">Status</th>
+                                  <th className="text-left py-1.5 px-2">{t('common.name')}</th>
+                                  <th className="text-left py-1.5 px-2">{t('common.category')}</th>
+                                  {hasPricingData && <th className="text-center py-1.5 px-2">{t('common.currency')}</th>}
+                                  <th className="text-right py-1.5 px-2">{t('common.stock')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('critical.orderedQty')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('suppliers.daysOfStock')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('suppliers.orderQty')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('suppliers.orderValueEur')}</th>
+                                  {hasPricingData && <th className="text-right py-1.5 px-2">{t('common.margin')}</th>}
+                                  <th className="text-left py-1.5 px-2">{t('common.status')}</th>
                                 </tr>
                               </thead>
                               <tbody>

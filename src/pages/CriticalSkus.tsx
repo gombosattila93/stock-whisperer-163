@@ -31,6 +31,7 @@ function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
 }
 
 function MarginCell({ marginPct, marginEur }: { marginPct: number | null; marginEur: number | null }) {
+  const { t } = useLanguage();
   if (marginPct === null) return <span className="text-muted-foreground">—</span>;
   const color = marginPct < 0 ? 'text-destructive font-semibold' : marginPct < 15 ? 'text-warning-foreground' : 'text-foreground';
   return (

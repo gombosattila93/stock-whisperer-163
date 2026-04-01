@@ -248,8 +248,8 @@ export default function AbcXyzDetail() {
                       <td className="text-right">
                         {s.days_of_stock === null ? (
                           <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                            <span className="text-muted-foreground cursor-help">—</span>
-                          </TooltipTrigger><TooltipContent><p className="text-xs">Stock or demand data required</p></TooltipContent></Tooltip></TooltipProvider>
+                           <span className="text-muted-foreground cursor-help">—</span>
+                          </TooltipTrigger><TooltipContent><p className="text-xs">{t('abcxyz.stockOrDemandRequired')}</p></TooltipContent></Tooltip></TooltipProvider>
                         ) : s.days_of_stock === Infinity ? '∞' : Math.round(s.days_of_stock).toLocaleString()}
                       </td>
                       {costSettings.holdingCostEnabled && (

@@ -150,7 +150,7 @@ export default function CriticalSkus() {
                   {s.insufficientData && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
                       <Badge variant="outline" className="text-[9px] ml-1.5 border-warning/50 text-warning-foreground">{t('critical.limitedData')}</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Less than 30% of the demand window has sales data</p></TooltipContent></Tooltip></TooltipProvider>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.limitedDataTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.singleRecordEstimate && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>

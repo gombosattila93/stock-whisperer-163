@@ -176,8 +176,9 @@ export default function AbcXyzDetail() {
               {paginatedData.map(s => {
                 const isExpanded = expandedSkus.has(s.sku);
                 const opts = skuSupplierOptions[s.sku] || [];
-                const tierInfo = TIER_BADGE[s.capability.tier];
-                const missingList = getMissingList(s.capability);
+                const tierClassName = TIER_BADGE_CLASS[s.capability.tier];
+                const tierLabel = t(TIER_LABEL_KEY[s.capability.tier] as any);
+                const missingList = getMissingList(s.capability, t);
                 return (
                   <>
                     <tr key={s.sku} className="cursor-pointer hover:bg-muted/20" onClick={() => toggleExpand(s.sku)}>

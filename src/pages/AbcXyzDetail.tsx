@@ -210,8 +210,8 @@ export default function AbcXyzDetail() {
                       <td>
                         {s.xyz_class === 'N/A' ? (
                           <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                            <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground cursor-help">N/A</span>
-                          </TooltipTrigger><TooltipContent><p className="text-xs">Insufficient sales history (need 3+ records)</p></TooltipContent></Tooltip></TooltipProvider>
+                           <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground cursor-help">N/A</span>
+                          </TooltipTrigger><TooltipContent><p className="text-xs">{t('abcxyz.insufficientSales')}</p></TooltipContent></Tooltip></TooltipProvider>
                         ) : (
                           <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
                             s.xyz_class === 'X' ? 'bg-success/10 text-success' :

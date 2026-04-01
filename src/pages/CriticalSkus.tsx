@@ -154,8 +154,8 @@ export default function CriticalSkus() {
                   )}
                   {s.singleRecordEstimate && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-[9px] ml-1 border-muted-foreground/30">1 record</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Safety stock estimated — only 1 sale record</p></TooltipContent></Tooltip></TooltipProvider>
+                      <Badge variant="outline" className="text-[9px] ml-1 border-muted-foreground/30">{t('critical.singleRecord')}</Badge>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.singleRecordTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.safetyStockCapped && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>

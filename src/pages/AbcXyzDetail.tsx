@@ -227,14 +227,14 @@ export default function AbcXyzDetail() {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge variant="outline" className={`text-[10px] cursor-help ${tierInfo.className}`}>
-                                {tierInfo.label}
+                              <Badge variant="outline" className={`text-[10px] cursor-help ${tierClassName}`}>
+                                {tierLabel}
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="text-xs font-medium mb-1">Data tier: {s.capability.tier}</p>
+                              <p className="text-xs font-medium mb-1">{t('tier.dataTier')}: {tierLabel}</p>
                               {missingList.length > 0 && (
-                                <p className="text-xs text-muted-foreground">Missing: {missingList.join(', ')}</p>
+                                <p className="text-xs text-muted-foreground">{t('tier.missing')}: {missingList.join(', ')}</p>
                               )}
                             </TooltipContent>
                           </Tooltip>

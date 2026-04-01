@@ -165,10 +165,10 @@ export default function AbcXyzDetail() {
                 <SortableHeader column="stock_qty" label={t('critical.stockQty')} sort={sort} onSort={toggleSort} align="right" />
                 <SortableHeader column="days_of_stock" label={t('critical.daysOfStock')} sort={sort} onSort={toggleSort} align="right" />
                 {costSettings.holdingCostEnabled && (
-                  <SortableHeader column="tco" label="TCO €/yr" sort={sort} onSort={toggleSort} align="right" tooltip="Total Cost of Ownership per year: purchase cost + holding cost + ordering cost. Helps identify truly expensive items." />
+                <SortableHeader column="tco" label={t('abcxyz.tcoYr')} sort={sort} onSort={toggleSort} align="right" />
                 )}
                 {costSettings.obsolescenceCostEnabled && (
-                  <SortableHeader column="obsolescenceCost" label="Obsolescence €" sort={sort} onSort={toggleSort} align="right" tooltip="Estimated write-off risk based on stock age and demand velocity. Higher for slow-moving and dead stock." />
+                  <SortableHeader column="obsolescenceCost" label={t('abcxyz.obsolescence')} sort={sort} onSort={toggleSort} align="right" />
                 )}
               </tr>
             </thead>

@@ -400,8 +400,8 @@ export default function Overview() {
                                 <Info style={{ width: 12, height: 12 }} />
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                              <p>Every 1% USD strengthening increases your stock purchase cost by approximately <strong>€{(financialKpis?.usdStrengthImpactEur ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></p>
+                             <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                               <p>{t('overview.usdImpactTooltip')} <strong>€{(financialKpis?.usdStrengthImpactEur ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></p>
                             </TooltipContent>
                           </UiTooltip>
                         </TooltipProvider>

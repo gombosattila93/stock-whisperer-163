@@ -319,8 +319,8 @@ export default function Suppliers() {
                                     )}
                                     <td className="py-1.5 px-2">
                                       {s.overdueDelivery && (
-                                        <Badge variant="outline" className="text-[9px] border-warning/50 bg-warning/10 text-warning-foreground">
-                                          Overdue delivery
+                                         <Badge variant="outline" className="text-[9px] border-warning/50 bg-warning/10 text-warning-foreground">
+                                           {t('suppliers.overdueDelivery')}
                                         </Badge>
                                       )}
                                     </td>

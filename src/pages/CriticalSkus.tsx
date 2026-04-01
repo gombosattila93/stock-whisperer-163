@@ -317,7 +317,7 @@ export default function CriticalSkus() {
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="text-xs">Alternative supplier with shorter lead time ({alt.lead_time_days}d vs {s.lead_time_days}d)</p>
+                        <p className="text-xs">{t('critical.altSupplierTooltip')} ({alt.lead_time_days}d vs {s.lead_time_days}d)</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

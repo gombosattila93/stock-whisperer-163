@@ -265,11 +265,11 @@ export default function Overstock() {
                     {showShelfLife && (
                       <td>
                         {s.shelfLifeRisk === 'critical' ? (
-                          <Badge variant="destructive" className="text-[10px]">Critical — {s.shelfLifeDays}d</Badge>
+                          <Badge variant="destructive" className="text-[10px]">{t('overstock.shelfCritical')} — {s.shelfLifeDays}d</Badge>
                         ) : s.shelfLifeRisk === 'warning' ? (
-                          <Badge variant="secondary" className="text-[10px] bg-warning/15 text-warning-foreground border-warning/30">Warning — {s.shelfLifeDays}d</Badge>
+                          <Badge variant="secondary" className="text-[10px] bg-warning/15 text-warning-foreground border-warning/30">{t('overstock.shelfWarning')} — {s.shelfLifeDays}d</Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">OK</span>
+                          <span className="text-xs text-muted-foreground">{t('overstock.shelfOk')}</span>
                         )}
                       </td>
                     )}

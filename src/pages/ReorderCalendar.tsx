@@ -228,7 +228,7 @@ export default function ReorderCalendar() {
             <span className="font-semibold text-sm">
               {t('calendar.ordersFor')} {format(new Date(selectedDay), 'EEEE, MMMM d, yyyy')}
             </span>
-            <Badge variant="secondary" className="ml-2">{selectedOrders.length} items</Badge>
+            <Badge variant="secondary" className="ml-2">{selectedOrders.length} {t('common.items')}</Badge>
           </div>
           <div className="overflow-auto">
             <table className="data-table">

@@ -164,8 +164,8 @@ export default function CriticalSkus() {
                   )}
                   {s.shelfLifeLtWarning && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="destructive" className="text-[9px] ml-1">⚠ Shelf &lt; LT</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Shelf life shorter than lead time — order only on demand</p></TooltipContent></Tooltip></TooltipProvider>
+                      <Badge variant="destructive" className="text-[9px] ml-1">{t('critical.shelfLtWarning')}</Badge>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.shelfLtTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                 </div>
               ),

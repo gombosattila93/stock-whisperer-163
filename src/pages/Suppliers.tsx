@@ -190,15 +190,15 @@ export default function Suppliers() {
               <thead>
                 <tr>
                   <th className="px-4 py-3 w-8 bg-muted/50"></th>
-                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="totalSkus" label="Total SKUs" sort={sort} onSort={toggleSort} align="right" />
-                  <SortableHeader column="criticalSkus" label="Critical SKUs" sort={sort} onSort={toggleSort} align="right" tooltip="SKUs where days of stock < lead time. Higher count = more urgency from this supplier." />
-                  <SortableHeader column="reorderSkus" label="To Reorder" sort={sort} onSort={toggleSort} align="right" tooltip="SKUs where effective stock ≤ reorder point. These need purchase orders." />
-                  <SortableHeader column="overdueCount" label="Overdue" sort={sort} onSort={toggleSort} align="right" tooltip="Open orders past their expected delivery date. Flag for supplier performance review." />
-                  <SortableHeader column="tiedUpCapital" label="Tied-Up Capital (€)" sort={sort} onSort={toggleSort} align="right" tooltip="Capital locked in overstock (>180 days) from this supplier. Target for reduction." />
-                  <SortableHeader column="suggestedOrderValueEur" label="Suggested Order (€)" sort={sort} onSort={toggleSort} align="right" tooltip="Total EUR value of all pending reorder suggestions for this supplier." />
-                  {hasPricingData && <SortableHeader column="avgMarginPct" label="Avg Margin" sort={sort} onSort={toggleSort} align="right" tooltip="Revenue-weighted average margin across all SKUs from this supplier." />}
-                  <SortableHeader column="avgLeadTime" label="Avg Lead Time" sort={sort} onSort={toggleSort} align="right" tooltip="Average delivery lead time across all SKUs. Compare across suppliers for same category." />
+                  <SortableHeader column="supplier" label={t('common.supplier')} sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="totalSkus" label={t('suppliers.totalSkus')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="criticalSkus" label={t('suppliers.criticalSkus')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="reorderSkus" label={t('suppliers.toReorder')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="overdueCount" label={t('common.overdue')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="tiedUpCapital" label={t('suppliers.tiedUpCapital')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="suggestedOrderValueEur" label={t('suppliers.suggestedOrder')} sort={sort} onSort={toggleSort} align="right" />
+                  {hasPricingData && <SortableHeader column="avgMarginPct" label={t('suppliers.avgMargin')} sort={sort} onSort={toggleSort} align="right" />}
+                  <SortableHeader column="avgLeadTime" label={t('suppliers.avgLeadTime')} sort={sort} onSort={toggleSort} align="right" />
                 </tr>
               </thead>
               <tbody>
@@ -252,7 +252,7 @@ export default function Suppliers() {
                           <div className="bg-muted/30 px-8 py-3">
                             <div className="flex items-center justify-between mb-2">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Reorder List — {row.supplier}
+                                {t('suppliers.reorderList')} — {row.supplier}
                               </p>
                               <Button
                                 variant="outline"
@@ -264,23 +264,23 @@ export default function Suppliers() {
                                 }}
                               >
                                 <Mail className="h-3.5 w-3.5" />
-                                Draft Email
+                                {t('suppliers.draftEmail')}
                               </Button>
                             </div>
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="text-muted-foreground">
                                   <th className="text-left py-1.5 px-2">SKU</th>
-                                  <th className="text-left py-1.5 px-2">Name</th>
-                                  <th className="text-left py-1.5 px-2">Category</th>
-                                  {hasPricingData && <th className="text-center py-1.5 px-2">Cur.</th>}
-                                  <th className="text-right py-1.5 px-2">Stock</th>
-                                  <th className="text-right py-1.5 px-2">Ordered</th>
-                                  <th className="text-right py-1.5 px-2">Days of Stock</th>
-                                  <th className="text-right py-1.5 px-2">Order Qty</th>
-                                  <th className="text-right py-1.5 px-2">Order Value (€)</th>
-                                  {hasPricingData && <th className="text-right py-1.5 px-2">Margin</th>}
-                                  <th className="text-left py-1.5 px-2">Status</th>
+                                  <th className="text-left py-1.5 px-2">{t('common.name')}</th>
+                                  <th className="text-left py-1.5 px-2">{t('common.category')}</th>
+                                  {hasPricingData && <th className="text-center py-1.5 px-2">{t('common.currency')}</th>}
+                                  <th className="text-right py-1.5 px-2">{t('common.stock')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('critical.orderedQty')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('suppliers.daysOfStock')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('suppliers.orderQty')}</th>
+                                  <th className="text-right py-1.5 px-2">{t('suppliers.orderValueEur')}</th>
+                                  {hasPricingData && <th className="text-right py-1.5 px-2">{t('common.margin')}</th>}
+                                  <th className="text-left py-1.5 px-2">{t('common.status')}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -319,8 +319,8 @@ export default function Suppliers() {
                                     )}
                                     <td className="py-1.5 px-2">
                                       {s.overdueDelivery && (
-                                        <Badge variant="outline" className="text-[9px] border-warning/50 bg-warning/10 text-warning-foreground">
-                                          Overdue delivery
+                                         <Badge variant="outline" className="text-[9px] border-warning/50 bg-warning/10 text-warning-foreground">
+                                           {t('suppliers.overdueDelivery')}
                                         </Badge>
                                       )}
                                     </td>

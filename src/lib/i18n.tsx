@@ -108,9 +108,9 @@ const translations = {
   "overview.overstockItems": { en: "Overstock Items", hu: "Túlkészlet tételek" },
   "overview.wtdAvgServiceLevel": { en: "Wtd Avg Service Level", hu: "Súlyozott átl. szervizszint" },
   "overview.reservedStockValue": { en: "Reserved Stock Value", hu: "Foglalt készlet értéke" },
-  "overview.purchaseValue": { en: "Készlet beszerz. értéke", hu: "Készlet beszerz. értéke" },
-  "overview.sellingValue": { en: "Készlet eladási értéke", hu: "Készlet eladási értéke" },
-  "overview.avgMargin": { en: "Átlag árrés", hu: "Átlag árrés" },
+  "overview.purchaseValue": { en: "Stock Purchase Value", hu: "Készlet beszerz. értéke" },
+  "overview.sellingValue": { en: "Stock Selling Value", hu: "Készlet eladási értéke" },
+  "overview.avgMargin": { en: "Avg Margin", hu: "Átlag árrés" },
   "overview.skusWithoutPrice": { en: "SKU without price", hu: "SKU ár nélkül" },
   "overview.skusWithoutMargin": { en: "SKU without margin data", hu: "SKU margin-adat nélkül" },
   "overview.eurExposure": { en: "EUR Exposure", hu: "EUR Kitettség" },
@@ -648,6 +648,79 @@ const translations = {
   "mapper.tip.purchasePriceN": { en: "Volume discount price break", hu: "Mennyiségi kedvezmény ársáv" },
   "mapper.tip.purchaseQtyN": { en: "Minimum order quantity for price break", hu: "Minimális rendelési mennyiség az ársávhoz" },
   "mapper.tip.purchasePrice8": { en: "Best/highest volume price break 8.", hu: "Legjobb/legmagasabb mennyiségi ársáv 8." },
+
+  // ─── Data tier badges ─────────────────────────────
+  "tier.full": { en: "Complete", hu: "Teljes" },
+  "tier.partial": { en: "Partial", hu: "Részleges" },
+  "tier.stockOnly": { en: "Stock only", hu: "Csak készlet" },
+  "tier.salesOnly": { en: "Sales only", hu: "Csak értékesítés" },
+  "tier.minimal": { en: "Minimal", hu: "Minimális" },
+  "tier.dataTier": { en: "Data tier", hu: "Adat szint" },
+  "tier.missing": { en: "Missing", hu: "Hiányzó" },
+
+  // ─── Missing data descriptions ────────────────────
+  "missing.unitPrice": { en: "unit_price (ABC disabled)", hu: "unit_price (ABC kikapcsolva)" },
+  "missing.leadTime": { en: "lead_time_days (reorder disabled)", hu: "lead_time_days (rendelés kikapcsolva)" },
+  "missing.stockData": { en: "stock_qty (stock analysis disabled)", hu: "stock_qty (készletelemzés kikapcsolva)" },
+  "missing.salesData": { en: "sales data (demand analysis disabled)", hu: "értékesítési adat (kereslet elemzés kikapcsolva)" },
+  "missing.orderedQty": { en: "ordered_qty", hu: "ordered_qty" },
+
+  // ─── AbcXyz table extras ──────────────────────────
+  "abcxyz.priceDataRequired": { en: "Price data required for ABC", hu: "Ár adat szükséges az ABC-hez" },
+  "abcxyz.insufficientSales": { en: "Insufficient sales history (need 3+ records)", hu: "Elégtelen értékesítési előzmény (3+ rekord szükséges)" },
+  "abcxyz.stockOrDemandRequired": { en: "Stock or demand data required", hu: "Készlet vagy kereslet adat szükséges" },
+
+  // ─── Suppliers sub-table ──────────────────────────
+  "suppliers.reorderListFor": { en: "Reorder List", hu: "Rendelési lista" },
+  "suppliers.daysOfStock": { en: "Days of Stock", hu: "Készlet napjai" },
+
+  // ─── Overstock shelf life ─────────────────────────
+  "overstock.shelfCritical": { en: "Critical", hu: "Kritikus" },
+  "overstock.shelfWarning": { en: "Warning", hu: "Figyelmeztetés" },
+  "overstock.shelfOk": { en: "OK", hu: "OK" },
+  "overstock.unitMargin": { en: "unit margin", hu: "egységárrés" },
+
+  // ─── CriticalSkus tooltips ────────────────────────
+  "critical.limitedDataTooltip": { en: "Less than 30% of the demand window has sales data", hu: "A kereslet ablak kevesebb mint 30%-ának van értékesítési adata" },
+  "critical.singleRecord": { en: "1 record", hu: "1 rekord" },
+  "critical.singleRecordTooltip": { en: "Safety stock estimated — only 1 sale record", hu: "Biztonsági készlet becsült — csak 1 értékesítési rekord" },
+  "critical.ssCappedTooltip": { en: "Safety stock capped — highly erratic demand", hu: "Biztonsági készlet korlátozva — rendkívül kiszámíthatatlan kereslet" },
+  "critical.shelfLtWarning": { en: "⚠ Shelf < LT", hu: "⚠ Szav. < Száll." },
+  "critical.shelfLtTooltip": { en: "Shelf life shorter than lead time — order only on demand", hu: "Szavatosság rövidebb a szállítási időnél — csak igény esetén rendelj" },
+  "critical.orderExcludedTooltip": { en: "Order excluded from effective stock — delivery likely already arrived", hu: "Rendelés kizárva az effektív készletből — szállítás valószínűleg már megérkezett" },
+  "critical.altSupplierTooltip": { en: "Alternative supplier with shorter lead time", hu: "Alternatív beszállító rövidebb szállítási idővel" },
+  "critical.marginTooltip": { en: "Margin", hu: "Árrés" },
+  "critical.avail": { en: "avail", hu: "elérhető" },
+
+  // ─── Calendar tooltips ────────────────────────────
+  "calendar.supplier": { en: "Supplier", hu: "Beszállító" },
+  "calendar.orderQtyLabel": { en: "Order qty", hu: "Rendelési menny." },
+  "calendar.leadTimeLabel": { en: "Lead time", hu: "Szállítási idő" },
+  "calendar.delivery": { en: "delivery", hu: "szállítás" },
+  "calendar.more": { en: "more", hu: "további" },
+
+  // ─── Overview USD tooltip ─────────────────────────
+  "overview.usdImpactTooltip": { en: "Every 1% USD strengthening increases your stock purchase cost by approximately", hu: "Minden 1% USD erősödés megközelítőleg ennyivel növeli a készlet beszerzési költséget:" },
+  "overview.hufImpactLabel": { en: "HUF impact", hu: "HUF hatás" },
+
+  // ─── Reorder Strategies (translatable) ────────────
+  "strategy.rop.label": { en: "Reorder Point (ROP)", hu: "Rendelési Pont (ROP)" },
+  "strategy.rop.description": { en: "Order when stock hits reorder point — simple, widely used", hu: "Rendelés, amikor a készlet eléri a rendelési pontot — egyszerű, széles körben használt" },
+  "strategy.eoq.label": { en: "EOQ", hu: "EOQ" },
+  "strategy.eoq.description": { en: "Economic Order Quantity — minimizes total ordering + holding cost", hu: "Gazdaságos rendelési mennyiség — minimalizálja az összes rendelési + tartási költséget" },
+  "strategy.minmax.label": { en: "Min/Max", hu: "Min/Max" },
+  "strategy.minmax.description": { en: "Maintain stock between min and max levels — good for stable demand", hu: "Készlet szinten tartása min és max között — jó stabil kereslet esetén" },
+  "strategy.periodic.label": { en: "Periodic Review", hu: "Periodikus felülvizsgálat" },
+  "strategy.periodic.description": { en: "Order up to target every N days — simpler to schedule", hu: "Rendelés célszintig N naponta — könnyebben ütemezhető" },
+  "strategy.rop.strategyLabel": { en: "Reorder Point", hu: "Rendelési pont" },
+  "strategy.eoq.strategyLabel": { en: "EOQ (Economic Order Qty)", hu: "EOQ (Gazdaságos rendelési menny.)" },
+  "strategy.minmax.strategyLabel": { en: "Min/Max", hu: "Min/Max" },
+  "strategy.periodic.strategyLabel": { en: "Periodic Review", hu: "Periodikus felülvizsgálat" },
+  "strategy.stockBelow": { en: "Stock ≤", hu: "Készlet ≤" },
+  "strategy.unitsOrderEoq": { en: "units, order EOQ batch", hu: "db, EOQ adag rendelése" },
+  "strategy.fillTo": { en: "fill to", hu: "feltöltés" },
+  "strategy.every": { en: "Every", hu: "Minden" },
+  "strategy.daysFillTo": { en: "days, fill to", hu: "naponta, feltöltés" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

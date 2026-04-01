@@ -208,16 +208,16 @@ export default function Overstock() {
               <thead>
                 <tr>
                   <SortableHeader column="sku" label="SKU" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="sku_name" label="Name" sort={sort} onSort={toggleSort} />
-                  <SortableHeader column="supplier" label="Supplier" sort={sort} onSort={toggleSort} />
-                  {hasPricingData && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-center">Cur.</th>}
-                  <SortableHeader column="days_of_stock" label="Days of Stock" sort={sort} onSort={toggleSort} align="right" tooltip="How many days current stock will last at avg consumption. Items here have >180 days — significantly overstocked." />
-                  <SortableHeader column="excess_qty" label="Excess Qty" sort={sort} onSort={toggleSort} align="right" tooltip="Units above the 180-day ideal level. Excess = current stock − (avg daily demand × 180)." />
-                  <SortableHeader column="tied_up_capital" label="Tied-up Capital (€)" sort={sort} onSort={toggleSort} align="right" tooltip="Excess qty × purchase price in EUR. This capital is locked in slow-moving inventory." />
-                  {hasPricingData && <SortableHeader column="marginPct" label="Margin %" sort={sort} onSort={toggleSort} align="right" tooltip="Profit margin on this SKU. Low-margin overstock items are best candidates for liquidation." />}
-                  {showHolding && <SortableHeader column="holdingCost" label="Annual Holding €" sort={sort} onSort={toggleSort} align="right" tooltip="Yearly cost of storing this excess inventory (insurance, depreciation, opportunity cost). Set rate in Cost Model." />}
-                  {showStorage && <SortableHeader column="storageCost" label="Storage €/mo" sort={sort} onSort={toggleSort} align="right" tooltip="Monthly warehouse cost for excess units. Configure per-unit storage rate in Cost Model." />}
-                  {showShelfLife && <SortableHeader column="shelfLifeRisk" label="Shelf Life Risk" sort={sort} onSort={toggleSort} tooltip="Risk of expiry before stock is sold. Critical = expires before it can be sold at current demand." />}
+                  <SortableHeader column="sku_name" label={t('common.name')} sort={sort} onSort={toggleSort} />
+                  <SortableHeader column="supplier" label={t('common.supplier')} sort={sort} onSort={toggleSort} />
+                  {hasPricingData && <th className="px-4 py-3 font-semibold text-muted-foreground uppercase text-xs tracking-wider bg-muted/50 text-center">{t('common.currency')}</th>}
+                  <SortableHeader column="days_of_stock" label={t('overstock.daysOfStock')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="excess_qty" label={t('overstock.excessQty')} sort={sort} onSort={toggleSort} align="right" />
+                  <SortableHeader column="tied_up_capital" label={t('overstock.tiedUpCapital')} sort={sort} onSort={toggleSort} align="right" />
+                  {hasPricingData && <SortableHeader column="marginPct" label={`${t('common.margin')} %`} sort={sort} onSort={toggleSort} align="right" />}
+                  {showHolding && <SortableHeader column="holdingCost" label={t('overstock.annualHolding')} sort={sort} onSort={toggleSort} align="right" />}
+                  {showStorage && <SortableHeader column="storageCost" label={t('overstock.storageMo')} sort={sort} onSort={toggleSort} align="right" />}
+                  {showShelfLife && <SortableHeader column="shelfLifeRisk" label={t('overstock.shelfLifeRisk')} sort={sort} onSort={toggleSort} />}
                 </tr>
               </thead>
               <tbody>
@@ -249,7 +249,7 @@ export default function Overstock() {
                                 </span>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="text-xs">€{s.priceData.marginEur?.toFixed(2) ?? '—'}/unit margin</p>
+                                <p className="text-xs">€{s.priceData.marginEur?.toFixed(2) ?? '—'}/{t('overstock.unitMargin')}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -265,11 +265,11 @@ export default function Overstock() {
                     {showShelfLife && (
                       <td>
                         {s.shelfLifeRisk === 'critical' ? (
-                          <Badge variant="destructive" className="text-[10px]">Critical — {s.shelfLifeDays}d</Badge>
+                          <Badge variant="destructive" className="text-[10px]">{t('overstock.shelfCritical')} — {s.shelfLifeDays}d</Badge>
                         ) : s.shelfLifeRisk === 'warning' ? (
-                          <Badge variant="secondary" className="text-[10px] bg-warning/15 text-warning-foreground border-warning/30">Warning — {s.shelfLifeDays}d</Badge>
+                          <Badge variant="secondary" className="text-[10px] bg-warning/15 text-warning-foreground border-warning/30">{t('overstock.shelfWarning')} — {s.shelfLifeDays}d</Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">OK</span>
+                          <span className="text-xs text-muted-foreground">{t('overstock.shelfOk')}</span>
                         )}
                       </td>
                     )}

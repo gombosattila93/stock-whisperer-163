@@ -200,17 +200,17 @@ export default function ReorderCalendar() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="text-xs">
-                              <p className="font-semibold">{order.sku} — {order.sku_name}</p>
-                              <p>Supplier: {order.supplier}</p>
-                              <p>Order qty: {order.suggested_order_qty}</p>
-                              <p>Lead time: {order.lead_time_days}d → delivery {format(order.deliveryDate, 'MMM d')}</p>
+                             <p className="font-semibold">{order.sku} — {order.sku_name}</p>
+                              <p>{t('calendar.supplier')}: {order.supplier}</p>
+                              <p>{t('calendar.orderQtyLabel')}: {order.suggested_order_qty}</p>
+                              <p>{t('calendar.leadTimeLabel')}: {order.lead_time_days}d → {t('calendar.delivery')} {format(order.deliveryDate, 'MMM d')}</p>
                             </div>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     ))}
                     {dayOrders.length > 3 && (
-                      <div className="text-[10px] text-muted-foreground pl-1">+{dayOrders.length - 3} more</div>
+                      <div className="text-[10px] text-muted-foreground pl-1">+{dayOrders.length - 3} {t('calendar.more')}</div>
                     )}
                   </div>
                 )}
@@ -228,7 +228,7 @@ export default function ReorderCalendar() {
             <span className="font-semibold text-sm">
               {t('calendar.ordersFor')} {format(new Date(selectedDay), 'EEEE, MMMM d, yyyy')}
             </span>
-            <Badge variant="secondary" className="ml-2">{selectedOrders.length} items</Badge>
+            <Badge variant="secondary" className="ml-2">{selectedOrders.length} {t('common.items')}</Badge>
           </div>
           <div className="overflow-auto">
             <table className="data-table">

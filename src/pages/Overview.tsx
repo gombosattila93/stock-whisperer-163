@@ -400,8 +400,8 @@ export default function Overview() {
                                 <Info style={{ width: 12, height: 12 }} />
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                              <p>Every 1% USD strengthening increases your stock purchase cost by approximately <strong>€{(financialKpis?.usdStrengthImpactEur ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></p>
+                             <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                               <p>{t('overview.usdImpactTooltip')} <strong>€{(financialKpis?.usdStrengthImpactEur ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></p>
                             </TooltipContent>
                           </UiTooltip>
                         </TooltipProvider>
@@ -419,7 +419,7 @@ export default function Overview() {
             {financialKpis && financialKpis.totalFxExposure > 0 && (
               <p className="text-xs text-muted-foreground mb-8 px-1">
                 {t('overview.fxSummary')}: €{financialKpis.totalFxExposure.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                {' '}(EUR: {financialKpis.eurPct.toFixed(0)}% | USD: {financialKpis.usdPct.toFixed(0)}% | HUF impact: ±€{financialKpis.hufImpactEur.toLocaleString(undefined, { maximumFractionDigits: 0 })} {t('overview.hufImpact')})
+                {' '}(EUR: {financialKpis.eurPct.toFixed(0)}% | USD: {financialKpis.usdPct.toFixed(0)}% | {t('overview.hufImpactLabel')}: ±€{financialKpis.hufImpactEur.toLocaleString(undefined, { maximumFractionDigits: 0 })} {t('overview.hufImpact')})
               </p>
             )}
             {(!financialKpis || financialKpis.totalFxExposure === 0) && <div className="mb-8" />}

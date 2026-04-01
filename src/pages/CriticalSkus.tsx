@@ -31,6 +31,7 @@ function CurrencyBadge({ currency }: { currency: 'USD' | 'EUR' }) {
 }
 
 function MarginCell({ marginPct, marginEur }: { marginPct: number | null; marginEur: number | null }) {
+  const { t } = useLanguage();
   if (marginPct === null) return <span className="text-muted-foreground">—</span>;
   const color = marginPct < 0 ? 'text-destructive font-semibold' : marginPct < 15 ? 'text-warning-foreground' : 'text-foreground';
   return (
@@ -40,7 +41,7 @@ function MarginCell({ marginPct, marginEur }: { marginPct: number | null; margin
           <span className={`text-right ${color}`}>{marginPct.toFixed(1)}%</span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">Margin: €{marginEur?.toFixed(2) ?? '—'}/unit</p>
+          <p className="text-xs">{t('critical.marginTooltip')}: €{marginEur?.toFixed(2) ?? '—'}/{t('common.units')}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -150,22 +151,22 @@ export default function CriticalSkus() {
                   {s.insufficientData && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
                       <Badge variant="outline" className="text-[9px] ml-1.5 border-warning/50 text-warning-foreground">{t('critical.limitedData')}</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Less than 30% of the demand window has sales data</p></TooltipContent></Tooltip></TooltipProvider>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.limitedDataTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.singleRecordEstimate && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-[9px] ml-1 border-muted-foreground/30">1 record</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Safety stock estimated — only 1 sale record</p></TooltipContent></Tooltip></TooltipProvider>
+                      <Badge variant="outline" className="text-[9px] ml-1 border-muted-foreground/30">{t('critical.singleRecord')}</Badge>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.singleRecordTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.safetyStockCapped && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
                       <Badge variant="outline" className="text-[9px] ml-1 border-destructive/30 text-destructive">{t('critical.ssCapped')}</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Safety stock capped — highly erratic demand</p></TooltipContent></Tooltip></TooltipProvider>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.ssCappedTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.shelfLifeLtWarning && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <Badge variant="destructive" className="text-[9px] ml-1">⚠ Shelf &lt; LT</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Shelf life shorter than lead time — order only on demand</p></TooltipContent></Tooltip></TooltipProvider>
+                      <Badge variant="destructive" className="text-[9px] ml-1">{t('critical.shelfLtWarning')}</Badge>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.shelfLtTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                 </div>
               ),
@@ -232,7 +233,7 @@ export default function CriticalSkus() {
                   {s.pastDueOrders && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
                       <Badge variant="outline" className="text-[9px] border-warning/50 text-warning-foreground mt-0.5">{t('critical.pastDue')}</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Order excluded from effective stock — delivery likely already arrived</p></TooltipContent></Tooltip></TooltipProvider>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.orderExcludedTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                 </div>
               ),
@@ -292,7 +293,7 @@ export default function CriticalSkus() {
                     <div>
                       <span className="font-medium">{s.reserved_qty}</span>
                       <div className={`text-[10px] ${s.available_qty < 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-                        avail: {s.available_qty}
+                        {t('critical.avail')}: {s.available_qty}
                       </div>
                       {s.available_qty < 0 && (
                         <Badge variant="destructive" className="text-[9px] mt-0.5">{t('critical.deficit')}</Badge>
@@ -317,7 +318,7 @@ export default function CriticalSkus() {
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="text-xs">Alternative supplier with shorter lead time ({alt.lead_time_days}d vs {s.lead_time_days}d)</p>
+                        <p className="text-xs">{t('critical.altSupplierTooltip')} ({alt.lead_time_days}d vs {s.lead_time_days}d)</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

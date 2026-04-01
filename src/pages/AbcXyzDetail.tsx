@@ -263,7 +263,7 @@ export default function AbcXyzDetail() {
                       <tr key={`${s.sku}-expand`}>
                         <td colSpan={colCount} className="px-4 py-3 bg-muted/10">
                           <div className="max-w-2xl">
-                            <h4 className="text-xs font-semibold mb-2">Supplier Options for {s.sku}</h4>
+                            <h4 className="text-xs font-semibold mb-2">{t('abcxyz.supplierOptions')} {s.sku}</h4>
                             <SupplierOptionsEditor
                               sku={s.sku}
                               options={opts}

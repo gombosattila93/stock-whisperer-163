@@ -160,7 +160,7 @@ export default function CriticalSkus() {
                   {s.safetyStockCapped && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>
                       <Badge variant="outline" className="text-[9px] ml-1 border-destructive/30 text-destructive">{t('critical.ssCapped')}</Badge>
-                    </TooltipTrigger><TooltipContent><p className="text-xs">Safety stock capped — highly erratic demand</p></TooltipContent></Tooltip></TooltipProvider>
+                    </TooltipTrigger><TooltipContent><p className="text-xs">{t('critical.ssCappedTooltip')}</p></TooltipContent></Tooltip></TooltipProvider>
                   )}
                   {s.shelfLifeLtWarning && (
                     <TooltipProvider><Tooltip><TooltipTrigger asChild>

@@ -292,7 +292,7 @@ export default function CriticalSkus() {
                     <div>
                       <span className="font-medium">{s.reserved_qty}</span>
                       <div className={`text-[10px] ${s.available_qty < 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-                        avail: {s.available_qty}
+                        {t('critical.avail')}: {s.available_qty}
                       </div>
                       {s.available_qty < 0 && (
                         <Badge variant="destructive" className="text-[9px] mt-0.5">{t('critical.deficit')}</Badge>

@@ -40,7 +40,7 @@ function MarginCell({ marginPct, marginEur }: { marginPct: number | null; margin
           <span className={`text-right ${color}`}>{marginPct.toFixed(1)}%</span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">Margin: €{marginEur?.toFixed(2) ?? '—'}/unit</p>
+          <p className="text-xs">{t('critical.marginTooltip')}: €{marginEur?.toFixed(2) ?? '—'}/{t('common.units')}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

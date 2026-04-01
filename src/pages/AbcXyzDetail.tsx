@@ -26,21 +26,29 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { useLanguage } from "@/lib/i18n";
 
-const TIER_BADGE: Record<SkuCapability['tier'], { label: string; className: string }> = {
-  full: { label: 'Complete', className: 'bg-primary/10 text-primary border-primary/30' },
-  partial: { label: 'Partial', className: 'bg-warning/10 text-warning-foreground border-warning/30' },
-  'stock-only': { label: 'Stock only', className: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
-  'sales-only': { label: 'Sales only', className: 'bg-orange-500/10 text-orange-600 border-orange-500/30' },
-  minimal: { label: 'Minimal', className: 'bg-muted text-muted-foreground border-border' },
+const TIER_BADGE_CLASS: Record<SkuCapability['tier'], string> = {
+  full: 'bg-primary/10 text-primary border-primary/30',
+  partial: 'bg-warning/10 text-warning-foreground border-warning/30',
+  'stock-only': 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+  'sales-only': 'bg-orange-500/10 text-orange-600 border-orange-500/30',
+  minimal: 'bg-muted text-muted-foreground border-border',
 };
 
-function getMissingList(cap: SkuCapability): string[] {
+const TIER_LABEL_KEY: Record<SkuCapability['tier'], string> = {
+  full: 'tier.full',
+  partial: 'tier.partial',
+  'stock-only': 'tier.stockOnly',
+  'sales-only': 'tier.salesOnly',
+  minimal: 'tier.minimal',
+};
+
+function getMissingList(cap: SkuCapability, t: (key: any) => string): string[] {
   const missing: string[] = [];
-  if (!cap.hasPrice) missing.push('unit_price (ABC disabled)');
-  if (!cap.hasLeadTime) missing.push('lead_time_days (reorder disabled)');
-  if (!cap.hasStockData) missing.push('stock_qty (stock analysis disabled)');
-  if (!cap.hasDemandHistory) missing.push('sales data (demand analysis disabled)');
-  if (!cap.hasOrderData) missing.push('ordered_qty');
+  if (!cap.hasPrice) missing.push(t('missing.unitPrice'));
+  if (!cap.hasLeadTime) missing.push(t('missing.leadTime'));
+  if (!cap.hasStockData) missing.push(t('missing.stockData'));
+  if (!cap.hasDemandHistory) missing.push(t('missing.salesData'));
+  if (!cap.hasOrderData) missing.push(t('missing.orderedQty'));
   return missing;
 }
 

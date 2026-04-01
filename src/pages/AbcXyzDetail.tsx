@@ -196,7 +196,7 @@ export default function AbcXyzDetail() {
                         {s.abc_class === 'N/A' ? (
                           <TooltipProvider><Tooltip><TooltipTrigger asChild>
                             <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-muted text-muted-foreground cursor-help">N/A</span>
-                          </TooltipTrigger><TooltipContent><p className="text-xs">{s.abcInfo || 'Price data required for ABC'}</p></TooltipContent></Tooltip></TooltipProvider>
+                          </TooltipTrigger><TooltipContent><p className="text-xs">{s.abcInfo || t('abcxyz.priceDataRequired')}</p></TooltipContent></Tooltip></TooltipProvider>
                         ) : (
                           <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
                             s.abc_class === 'A' ? 'bg-primary/10 text-primary' :

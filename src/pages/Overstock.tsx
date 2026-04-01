@@ -249,7 +249,7 @@ export default function Overstock() {
                                 </span>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="text-xs">€{s.priceData.marginEur?.toFixed(2) ?? '—'}/unit margin</p>
+                                <p className="text-xs">€{s.priceData.marginEur?.toFixed(2) ?? '—'}/{t('overstock.unitMargin')}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

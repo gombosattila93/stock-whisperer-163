@@ -264,7 +264,7 @@ export default function Suppliers() {
                                 }}
                               >
                                 <Mail className="h-3.5 w-3.5" />
-                                Draft Email
+                                {t('suppliers.draftEmail')}
                               </Button>
                             </div>
                             <table className="w-full text-xs">

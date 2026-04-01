@@ -252,7 +252,7 @@ export default function Suppliers() {
                           <div className="bg-muted/30 px-8 py-3">
                             <div className="flex items-center justify-between mb-2">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Reorder List — {row.supplier}
+                                {t('suppliers.reorderList')} — {row.supplier}
                               </p>
                               <Button
                                 variant="outline"

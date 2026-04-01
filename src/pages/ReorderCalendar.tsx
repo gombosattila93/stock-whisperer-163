@@ -200,10 +200,10 @@ export default function ReorderCalendar() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="text-xs">
-                              <p className="font-semibold">{order.sku} — {order.sku_name}</p>
-                              <p>Supplier: {order.supplier}</p>
-                              <p>Order qty: {order.suggested_order_qty}</p>
-                              <p>Lead time: {order.lead_time_days}d → delivery {format(order.deliveryDate, 'MMM d')}</p>
+                             <p className="font-semibold">{order.sku} — {order.sku_name}</p>
+                              <p>{t('calendar.supplier')}: {order.supplier}</p>
+                              <p>{t('calendar.orderQtyLabel')}: {order.suggested_order_qty}</p>
+                              <p>{t('calendar.leadTimeLabel')}: {order.lead_time_days}d → {t('calendar.delivery')} {format(order.deliveryDate, 'MMM d')}</p>
                             </div>
                           </TooltipContent>
                         </Tooltip>

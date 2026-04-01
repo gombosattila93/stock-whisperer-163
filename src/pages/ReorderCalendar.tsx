@@ -210,7 +210,7 @@ export default function ReorderCalendar() {
                       </TooltipProvider>
                     ))}
                     {dayOrders.length > 3 && (
-                      <div className="text-[10px] text-muted-foreground pl-1">+{dayOrders.length - 3} more</div>
+                      <div className="text-[10px] text-muted-foreground pl-1">+{dayOrders.length - 3} {t('calendar.more')}</div>
                     )}
                   </div>
                 )}

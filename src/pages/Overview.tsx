@@ -13,7 +13,7 @@ import {
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
-import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
+import { getStrategyOptions, ReorderStrategy } from "@/lib/reorderStrategies";
 import { Badge } from "@/components/ui/badge";
 import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";

@@ -77,6 +77,7 @@ export default function ReorderList() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap, fxRates } = useInventory();
   const { t } = useLanguage();
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
+  const strategyOptions = useMemo(() => getStrategyOptions(t), [t]);
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);

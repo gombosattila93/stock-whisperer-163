@@ -63,9 +63,7 @@ const STRATEGY_COLORS: Record<ReorderStrategy, string> = {
   periodic: 'hsl(280, 67%, 55%)',
 };
 
-const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
-  STRATEGY_OPTIONS.map(o => [o.value, o.label])
-) as Record<ReorderStrategy, string>;
+// Moved inside component to use t()
 
 export default function Overview() {
   const { filtered, hasData, costSettings, reservedQtyMap, fxRates } = useInventory();

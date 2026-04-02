@@ -133,7 +133,7 @@ export default function ReorderList() {
       .filter(s => s.effective_stock <= s.reorder_point! && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
-        const result = computeReorder(s, effectiveStrategy, eoqSettings);
+        const result = computeReorder(s, effectiveStrategy, eoqSettings, t);
         // Get primary supplier MOQ
         const supplierOpts = skuSupplierOptions[s.sku] || [];
         const primaryOpt = supplierOpts.find(o => o.is_primary) || supplierOpts[0];

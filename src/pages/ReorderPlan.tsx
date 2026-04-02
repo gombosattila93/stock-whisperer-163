@@ -74,7 +74,7 @@ export default function ReorderPlan() {
       .filter(s => s.reorder_point !== null && s.effective_stock <= s.reorder_point && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || 'rop';
-        const result = computeReorder(s, effectiveStrategy as ReorderStrategy, eoqSettings);
+        const result = computeReorder(s, effectiveStrategy as ReorderStrategy, eoqSettings, t);
         const supplierOpts = skuSupplierOptions[s.sku] || [];
         const primaryOpt = supplierOpts.find(o => o.is_primary) || supplierOpts[0];
         const moq = primaryOpt?.moq || 1;

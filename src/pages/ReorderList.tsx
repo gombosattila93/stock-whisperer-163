@@ -398,7 +398,7 @@ export default function ReorderList() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {STRATEGY_OPTIONS.map((opt) => (
+              {strategyOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   <div className="flex flex-col">
                     <span>{opt.label}</span>
@@ -442,7 +442,7 @@ export default function ReorderList() {
                 <SelectItem value="__global__">
                   <span className="text-muted-foreground">{t('reorder.resetToDefault')}</span>
                 </SelectItem>
-                {STRATEGY_OPTIONS.map((opt) => (
+                {strategyOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
@@ -568,7 +568,7 @@ export default function ReorderList() {
                             <SelectItem value="__global__">
                               <span className="text-muted-foreground">{t('common.default')}</span>
                             </SelectItem>
-                            {STRATEGY_OPTIONS.map((opt) => (
+                            {strategyOptions.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
                               </SelectItem>

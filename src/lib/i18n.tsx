@@ -42,6 +42,7 @@ const translations = {
   "common.default": { en: "Default", hu: "Alapértelmezett" },
   "common.reset": { en: "Reset", hu: "Visszaállítás" },
   "common.today": { en: "Today", hu: "Ma" },
+  "common.dayAbbr": { en: "d", hu: "n" },
   "common.close": { en: "Close", hu: "Bezárás" },
   "common.supplier": { en: "Supplier", hu: "Beszállító" },
   "common.category": { en: "Category", hu: "Kategória" },

@@ -13,7 +13,7 @@ import {
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { AbcClass, XyzClass, SkuCapability } from "@/lib/types";
 import { loadSkuOverrides } from "@/lib/persistence";
-import { STRATEGY_OPTIONS, ReorderStrategy } from "@/lib/reorderStrategies";
+import { getStrategyOptions, ReorderStrategy } from "@/lib/reorderStrategies";
 import { Badge } from "@/components/ui/badge";
 import { useMemo, useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
@@ -63,9 +63,7 @@ const STRATEGY_COLORS: Record<ReorderStrategy, string> = {
   periodic: 'hsl(280, 67%, 55%)',
 };
 
-const STRATEGY_LABEL_MAP: Record<ReorderStrategy, string> = Object.fromEntries(
-  STRATEGY_OPTIONS.map(o => [o.value, o.label])
-) as Record<ReorderStrategy, string>;
+// Moved inside component to use t()
 
 export default function Overview() {
   const { filtered, hasData, costSettings, reservedQtyMap, fxRates } = useInventory();
@@ -77,6 +75,11 @@ export default function Overview() {
     loadSkuOverrides().then(setOverridesLoaded);
   }, [filtered]);
 
+  const strategyLabelMap = useMemo(() => {
+    const opts = getStrategyOptions(t);
+    return Object.fromEntries(opts.map(o => [o.value, o.label])) as Record<ReorderStrategy, string>;
+  }, [t]);
+
   const strategyDistribution = useMemo(() => {
     if (filtered.length === 0) return [];
     const counts: Record<ReorderStrategy, number> = { rop: 0, eoq: 0, minmax: 0, periodic: 0 };
@@ -87,11 +90,11 @@ export default function Overview() {
     return Object.entries(counts)
       .filter(([, count]) => count > 0)
       .map(([key, count]) => ({
-        name: STRATEGY_LABEL_MAP[key as ReorderStrategy],
+        name: strategyLabelMap[key as ReorderStrategy],
         value: count,
         color: STRATEGY_COLORS[key as ReorderStrategy],
       }));
-  }, [filtered, overridesLoaded]);
+  }, [filtered, overridesLoaded, strategyLabelMap]);
 
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
   const reservedStockValue = useMemo(() =>

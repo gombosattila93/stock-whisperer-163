@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ExportButton } from "@/components/ExportButton";
 import { getUrgency } from "@/lib/calculations";
 import { purchaseToEur } from "@/lib/fxRates";
-import { computeReorder, STRATEGY_OPTIONS, ReorderStrategy, EoqSettings, DEFAULT_EOQ_SETTINGS } from "@/lib/reorderStrategies";
+import { computeReorder, getStrategyOptions, ReorderStrategy, EoqSettings, DEFAULT_EOQ_SETTINGS } from "@/lib/reorderStrategies";
 import { SkuStrategyOverrides } from "@/lib/skuStrategyOverrides";
 import { loadSkuOverrides, saveSkuOverrides, loadEoqSettings, saveEoqSettings } from "@/lib/persistence";
 import { SortableHeader, useSortableTable } from "@/components/SortableHeader";
@@ -77,6 +77,7 @@ export default function ReorderList() {
   const { filtered, hasData, stockOverrides, setStockOverride, costSettings, skuSupplierOptions, reservedQtyMap, fxRates } = useInventory();
   const { t } = useLanguage();
   const hasReservations = Object.keys(reservedQtyMap).length > 0;
+  const strategyOptions = useMemo(() => getStrategyOptions(t), [t]);
   const [globalStrategy, setGlobalStrategy] = useState<ReorderStrategy>('rop');
   const [skuOverrides, setSkuOverrides] = useState<SkuStrategyOverrides>({});
   const [eoqSettings, setEoqSettings] = useState<EoqSettings>(DEFAULT_EOQ_SETTINGS);
@@ -133,7 +134,7 @@ export default function ReorderList() {
       .filter(s => s.effective_stock <= s.reorder_point! && s.avg_daily_demand > 0)
       .map(s => {
         const effectiveStrategy = skuOverrides[s.sku] || globalStrategy;
-        const result = computeReorder(s, effectiveStrategy, eoqSettings);
+        const result = computeReorder(s, effectiveStrategy, eoqSettings, t);
         // Get primary supplier MOQ
         const supplierOpts = skuSupplierOptions[s.sku] || [];
         const primaryOpt = supplierOpts.find(o => o.is_primary) || supplierOpts[0];
@@ -397,7 +398,7 @@ export default function ReorderList() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {STRATEGY_OPTIONS.map((opt) => (
+              {strategyOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   <div className="flex flex-col">
                     <span>{opt.label}</span>
@@ -441,7 +442,7 @@ export default function ReorderList() {
                 <SelectItem value="__global__">
                   <span className="text-muted-foreground">{t('reorder.resetToDefault')}</span>
                 </SelectItem>
-                {STRATEGY_OPTIONS.map((opt) => (
+                {strategyOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
@@ -567,7 +568,7 @@ export default function ReorderList() {
                             <SelectItem value="__global__">
                               <span className="text-muted-foreground">{t('common.default')}</span>
                             </SelectItem>
-                            {STRATEGY_OPTIONS.map((opt) => (
+                            {strategyOptions.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
                               </SelectItem>
